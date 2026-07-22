@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/*
+  قيم الهوية البصرية مطابقة لـ packages/config/src/brand.ts — لازم تبقى متزامنة يدوياً
+  لأن Tailwind v4 (CSS-first) ما يقدر يستورد ثوابت TypeScript مباشرة.
+*/
+@theme {
+  --color-brand-background: #f8f8f6;
+  --color-brand-primary: #b82f36;
+}
+
+body {
+  background-color: var(--color-brand-background);
+}
