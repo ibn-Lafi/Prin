@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@brin/config": "workspace:*",
+    "@brin/database": "workspace:*",
+    "@brin/utils": "workspace:*",
     "next": "16.2.11",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
