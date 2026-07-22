@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { normalizeSaudiPhone } from "@brin/utils";
 import { sendOtpAction, verifyOtpAction } from "./actions";
 
 type Step = "phone" | "otp";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") ?? "/account";
   const [isPending, startTransition] = useTransition();
   const [step, setStep] = useState<Step>("phone");
   const [phoneInput, setPhoneInput] = useState("");
@@ -43,7 +53,7 @@ export default function LoginPage() {
         setError(result.error);
         return;
       }
-      router.push("/account");
+      router.push(redirectTo);
     });
   }
 
