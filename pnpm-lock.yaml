@@ -78,6 +78,12 @@ importers:
       '@brin/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@brin/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@brin/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       next:
         specifier: 16.2.11
         version: 16.2.11(@babel/core@7.29.7)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -183,6 +189,9 @@ importers:
 
   packages/utils:
     devDependencies:
+      '@types/node':
+        specifier: ^22.20.1
+        version: 22.20.1
       typescript:
         specifier: 5.9.3
         version: 5.9.3
