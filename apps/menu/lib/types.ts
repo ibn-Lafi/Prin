@@ -30,6 +30,8 @@ export type Product = {
   calories: number | null;
   price: number;
   image_url: string | null;
+  is_available: boolean;
+  deleted_at: string | null;
   modifier_groups: ModifierGroup[];
 };
 
@@ -39,6 +41,8 @@ export type Combo = {
   description: string | null;
   price: number;
   image_url: string | null;
+  is_available: boolean;
+  deleted_at: string | null;
 };
 
 export type Reward = {

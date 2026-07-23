@@ -4,7 +4,7 @@ import { formatCurrency } from "@brin/utils";
 import type { Combo } from "@/lib/types";
 import { useCart } from "@/hooks/useCart";
 
-export function ComboCard({ combo }: { combo: Combo }) {
+export function ComboCard({ combo, disabled = false }: { combo: Combo; disabled?: boolean }) {
   const { addItem } = useCart();
 
   return (
@@ -22,6 +22,7 @@ export function ComboCard({ combo }: { combo: Combo }) {
       <span className="font-bold">{formatCurrency(combo.price)}</span>
       <button
         type="button"
+        disabled={disabled}
         onClick={() =>
           addItem({
             productId: combo.id,
@@ -31,7 +32,7 @@ export function ComboCard({ combo }: { combo: Combo }) {
             modifiers: [],
           })
         }
-        className="rounded bg-[var(--color-brand-primary)] px-3 py-2 text-white"
+        className="rounded bg-[var(--color-brand-primary)] px-3 py-2 text-white disabled:opacity-40"
       >
         أضف للسلة
       </button>
