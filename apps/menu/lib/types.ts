@@ -40,3 +40,21 @@ export type Combo = {
   price: number;
   image_url: string | null;
 };
+
+export type Reward = {
+  id: string;
+  name: string;
+  description: string | null;
+  points_cost: number;
+  image_url: string | null;
+};
+
+export type OrderSummary = {
+  id: string;
+  daily_order_number: number;
+  order_date: string;
+  channel: "pos" | "online";
+  status: string;
+  total: number;
+  created_at: string;
+};
