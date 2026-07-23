@@ -119,9 +119,7 @@ export function MenuBrowser({
   if (!combosTabInserted && visibleCombos.length > 0) {
     categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة" });
   }
-  if (rewards.length > 0) {
-    categoryTabs.push({ id: REWARDS_TAB_ID, label: "استبدل" });
-  }
+  categoryTabs.push({ id: REWARDS_TAB_ID, label: "استبدل" });
 
   return (
     <main className="mx-auto max-w-5xl pb-28">
@@ -144,11 +142,17 @@ export function MenuBrowser({
             <p className="text-xs text-[var(--color-brand-muted)]">
               الاستبدال الفعلي يُفعَّل بمرحلة نظام الولاء الكاملة — القائمة هنا للاطّلاع حالياً.
             </p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-              {rewards.map((reward) => (
-                <RewardCard key={reward.id} reward={reward} pointsBalance={pointsBalance} />
-              ))}
-            </div>
+            {rewards.length === 0 ? (
+              <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
+                ما فيه مكافآت متاحة حالياً.
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
+                {rewards.map((reward) => (
+                  <RewardCard key={reward.id} reward={reward} pointsBalance={pointsBalance} />
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
