@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { UtensilsCrossed } from "lucide-react";
 import { isRestaurantOpen } from "@brin/utils";
 import { createSupabaseBrowserClient } from "@brin/database";
 import type { Category, Combo, Product } from "@/lib/types";
@@ -8,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
 import { ProductModal } from "@/components/ProductModal";
 import { ClosedBanner } from "@/components/ClosedBanner";
+import { FloatingCartBar } from "@/components/FloatingCartBar";
 
 const COMBOS_TAB_ID = "__combos__";
 
@@ -91,56 +93,65 @@ export function MenuBrowser({
   const visibleCombos = combos.filter(isVisible);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6">
-      {!isOpen && <ClosedBanner />}
-
-      <div className="mb-6 flex gap-2 overflow-x-auto border-b pb-2">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            onClick={() => setActiveTab(category.id)}
-            className={`shrink-0 rounded-full px-4 py-2 ${
-              activeTab === category.id
-                ? "bg-[var(--color-brand-primary)] text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            {category.name}
-          </button>
-        ))}
-        {visibleCombos.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setActiveTab(COMBOS_TAB_ID)}
-            className={`shrink-0 rounded-full px-4 py-2 ${
-              activeTab === COMBOS_TAB_ID
-                ? "bg-[var(--color-brand-primary)] text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            الوجبات
-          </button>
-        )}
-      </div>
-
-      {activeTab === COMBOS_TAB_ID ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {visibleCombos.map((combo) => (
-            <ComboCard key={combo.id} combo={combo} disabled={!isOpen} />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {visibleProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onSelect={() => setSelectedProduct(product)}
-            />
-          ))}
+    <main className="mx-auto max-w-3xl pb-28">
+      {!isOpen && (
+        <div className="px-4 pt-4">
+          <ClosedBanner />
         </div>
       )}
+
+      <div className="sticky top-[57px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
+        <div className="flex gap-2 overflow-x-auto">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setActiveTab(category.id)}
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === category.id
+                  ? "bg-[var(--color-brand-primary)] text-white"
+                  : "bg-[var(--color-brand-card)] text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
+          {visibleCombos.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab(COMBOS_TAB_ID)}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === COMBOS_TAB_ID
+                  ? "bg-[var(--color-brand-primary)] text-white"
+                  : "bg-[var(--color-brand-card)] text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
+              }`}
+            >
+              <UtensilsCrossed className="h-4 w-4" strokeWidth={1.75} />
+              الوجبات
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 pt-2">
+        {activeTab === COMBOS_TAB_ID ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {visibleCombos.map((combo) => (
+              <ComboCard key={combo.id} combo={combo} disabled={!isOpen} />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {visibleProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onSelect={() => setSelectedProduct(product)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {selectedProduct && (
         <ProductModal
@@ -149,6 +160,8 @@ export function MenuBrowser({
           disabled={!isOpen}
         />
       )}
+
+      <FloatingCartBar />
     </main>
   );
 }

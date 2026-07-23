@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Minus, Plus, X } from "lucide-react";
 import { formatCurrency, roundMoney } from "@brin/utils";
 import type { Product } from "@/lib/types";
 import { useCart, type CartModifier } from "@/hooks/useCart";
@@ -71,15 +72,22 @@ export function ProductModal({
   }
 
   return (
-    <div className="fixed inset-0 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 sm:rounded-2xl">
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-center">
+      <div className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-[var(--color-brand-card)] p-5 sm:rounded-3xl">
         <div className="mb-4 flex items-start justify-between">
           <div>
             <h2 className="text-lg font-bold">{product.name}</h2>
-            {product.description && <p className="text-sm text-gray-500">{product.description}</p>}
+            {product.description && (
+              <p className="text-sm text-[var(--color-brand-muted)]">{product.description}</p>
+            )}
           </div>
-          <button type="button" onClick={onClose} className="text-gray-400">
-            ✕
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-background)] text-[var(--color-brand-muted)]"
+            aria-label="إغلاق"
+          >
+            <X className="h-4 w-4" strokeWidth={2} />
           </button>
         </div>
 
@@ -87,63 +95,84 @@ export function ProductModal({
           <fieldset key={group.id} className="mb-4">
             <legend className="mb-2 font-semibold">
               {group.name}
-              {group.is_required && <span className="text-xs text-red-600"> (إجباري)</span>}
+              {group.is_required && (
+                <span className="mr-2 rounded-full bg-[var(--color-brand-primary-light)] px-2 py-0.5 text-xs font-normal text-[var(--color-brand-primary)]">
+                  إجباري
+                </span>
+              )}
             </legend>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1">
               {group.modifiers
                 .filter((m) => m.is_available)
-                .map((modifier) => (
-                  <label key={modifier.id} className="flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <input
-                        type={group.max_select === 1 ? "radio" : "checkbox"}
-                        name={group.id}
-                        checked={(selections[group.id] ?? []).includes(modifier.id)}
-                        onChange={() => toggleModifier(group.id, modifier.id, group.max_select)}
-                      />
-                      {modifier.name}
-                    </span>
-                    {modifier.price_delta > 0 && (
-                      <span>+{formatCurrency(modifier.price_delta)}</span>
-                    )}
-                  </label>
-                ))}
+                .map((modifier) => {
+                  const checked = (selections[group.id] ?? []).includes(modifier.id);
+                  return (
+                    <label
+                      key={modifier.id}
+                      className={`flex items-center justify-between rounded-xl border px-3 py-2.5 transition-colors ${
+                        checked
+                          ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
+                          : "border-[var(--color-brand-border)]"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <input
+                          type={group.max_select === 1 ? "radio" : "checkbox"}
+                          name={group.id}
+                          checked={checked}
+                          onChange={() => toggleModifier(group.id, modifier.id, group.max_select)}
+                          className="accent-[var(--color-brand-primary)]"
+                        />
+                        {modifier.name}
+                      </span>
+                      {modifier.price_delta > 0 && (
+                        <span className="text-sm text-[var(--color-brand-muted)]">
+                          +{formatCurrency(modifier.price_delta)}
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
             </div>
           </fieldset>
         ))}
 
-        <div className="mb-4 flex items-center gap-3">
+        <div className="mb-4 flex items-center justify-center gap-4">
           <button
             type="button"
             onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="h-8 w-8 rounded-full border"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-background)] text-[var(--color-brand-text)] ring-1 ring-[var(--color-brand-border)]"
+            aria-label="إنقاص الكمية"
           >
-            −
+            <Minus className="h-4 w-4" strokeWidth={2} />
           </button>
-          <span>{quantity}</span>
+          <span className="min-w-6 text-center text-lg font-bold">{quantity}</span>
           <button
             type="button"
             onClick={() => setQuantity((q) => q + 1)}
-            className="h-8 w-8 rounded-full border"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-background)] text-[var(--color-brand-text)] ring-1 ring-[var(--color-brand-border)]"
+            aria-label="زيادة الكمية"
           >
-            +
+            <Plus className="h-4 w-4" strokeWidth={2} />
           </button>
         </div>
 
         {missingRequiredGroups.length > 0 && (
-          <p className="mb-2 text-sm text-red-600">
+          <p className="mb-2 text-center text-sm text-[var(--color-brand-primary)]">
             لازم تختار: {missingRequiredGroups.map((g) => g.name).join("، ")}
           </p>
         )}
         {disabled && (
-          <p className="mb-2 text-sm text-yellow-700">المطعم مغلق حالياً — الطلب غير ممكن.</p>
+          <p className="mb-2 text-center text-sm text-[var(--color-brand-primary)]">
+            المطعم مغلق حالياً — الطلب غير ممكن.
+          </p>
         )}
 
         <button
           type="button"
           onClick={handleAddToCart}
           disabled={missingRequiredGroups.length > 0 || disabled}
-          className="w-full rounded bg-[var(--color-brand-primary)] px-4 py-3 text-white disabled:opacity-50"
+          className="w-full rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:opacity-50"
         >
           أضف للسلة — {formatCurrency(totalPrice)}
         </button>
