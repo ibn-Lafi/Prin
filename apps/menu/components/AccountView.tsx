@@ -40,12 +40,12 @@ export function AccountView({
       <p className="mb-4 text-sm text-[var(--color-brand-muted)]">{phone}</p>
 
       <section className="mb-6 grid grid-cols-2 gap-3">
-        <div className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-4 text-center ring-1 ring-[var(--color-brand-border)]">
+        <div className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-4 text-center shadow-sm">
           <Sparkles className="mb-1 h-5 w-5 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
           <p className="text-2xl font-bold text-[var(--color-brand-primary)]">{pointsBalance}</p>
           <p className="text-xs text-[var(--color-brand-muted)]">نقاط الولاء</p>
         </div>
-        <div className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-4 text-center ring-1 ring-[var(--color-brand-border)]">
+        <div className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-4 text-center shadow-sm">
           <Package className="mb-1 h-5 w-5 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
           <p className="text-2xl font-bold">{formatCurrency(totalSpent)}</p>
           <p className="text-xs text-[var(--color-brand-muted)]">إجمالي الإنفاق</p>
@@ -77,7 +77,7 @@ export function AccountView({
           {orders.map((order) => (
             <div
               key={order.id}
-              className="flex items-center justify-between rounded-2xl bg-[var(--color-brand-card)] p-3.5 ring-1 ring-[var(--color-brand-border)]"
+              className="flex items-center justify-between rounded-2xl bg-[var(--color-brand-card)] p-3.5 shadow-sm"
             >
               <div>
                 <p className="font-semibold">
@@ -106,7 +106,7 @@ export function AccountView({
             return (
               <div
                 key={reward.id}
-                className="flex items-center justify-between rounded-2xl bg-[var(--color-brand-card)] p-3.5 ring-1 ring-[var(--color-brand-border)]"
+                className="flex items-center justify-between rounded-2xl bg-[var(--color-brand-card)] p-3.5 shadow-sm"
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-primary-light)]">

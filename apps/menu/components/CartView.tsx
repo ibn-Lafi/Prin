@@ -37,7 +37,7 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
         {items.map((item) => (
           <div
             key={item.cartItemId}
-            className="rounded-2xl bg-[var(--color-brand-card)] p-3.5 shadow-sm ring-1 ring-[var(--color-brand-border)]"
+            className="rounded-2xl bg-[var(--color-brand-card)] p-3.5 shadow-sm"
           >
             <div className="flex items-start justify-between">
               <div>
@@ -62,7 +62,7 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
                 <button
                   type="button"
                   onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-brand-background)] ring-1 ring-[var(--color-brand-border)]"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-brand-background)] shadow-sm"
                   aria-label="إنقاص الكمية"
                 >
                   <Minus className="h-3.5 w-3.5" strokeWidth={2} />
@@ -71,7 +71,7 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
                 <button
                   type="button"
                   onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-brand-background)] ring-1 ring-[var(--color-brand-border)]"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-brand-background)] shadow-sm"
                   aria-label="زيادة الكمية"
                 >
                   <Plus className="h-3.5 w-3.5" strokeWidth={2} />
@@ -85,7 +85,7 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
         ))}
       </div>
 
-      <div className="mt-6 flex flex-col gap-1.5 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
+      <div className="mt-6 flex flex-col gap-1.5 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
           <span>المجموع الفرعي</span>
           <span>{formatCurrency(subtotal)}</span>

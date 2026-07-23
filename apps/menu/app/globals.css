@@ -14,9 +14,13 @@
   --color-brand-muted: #756e6a;
   --color-brand-border: #e8e4de;
   --color-brand-card: #ffffff;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Segoe UI Arabic", Tahoma, Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
   background-color: var(--color-brand-background);
   color: var(--color-brand-text);
+  font-family: var(--font-sans);
 }

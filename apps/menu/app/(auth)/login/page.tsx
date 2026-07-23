@@ -75,7 +75,7 @@ function LoginForm() {
       </div>
 
       {step === "phone" && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
+        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
           <label className="flex flex-col gap-1.5">
             <span className="text-sm text-[var(--color-brand-muted)]">رقم الجوال</span>
             <input
@@ -99,7 +99,7 @@ function LoginForm() {
       )}
 
       {step === "otp" && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
+        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
           <p className="text-center text-sm text-[var(--color-brand-muted)]">
             أرسلنا كود التحقق لرقم {normalizedPhone}
           </p>

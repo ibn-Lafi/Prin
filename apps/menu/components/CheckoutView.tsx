@@ -34,7 +34,7 @@ export function CheckoutView({
     <main className="mx-auto max-w-md px-4 py-6">
       <h1 className="mb-4 text-xl font-bold">تأكيد الطلب</h1>
 
-      <section className="mb-4 flex flex-col gap-2 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
+      <section className="mb-4 flex flex-col gap-2 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <p className="mb-1 font-semibold">معلومات الاستلام</p>
         <p className="flex items-center gap-2 text-sm text-[var(--color-brand-muted)]">
           <Phone className="h-4 w-4" strokeWidth={1.75} />
@@ -46,7 +46,7 @@ export function CheckoutView({
         </p>
       </section>
 
-      <section className="mb-4 flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
+      <section className="mb-4 flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         {items.map((item) => (
           <div
             key={item.cartItemId}
@@ -67,7 +67,7 @@ export function CheckoutView({
         ))}
       </section>
 
-      <section className="mb-6 flex flex-col gap-1.5 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
+      <section className="mb-6 flex flex-col gap-1.5 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
           <span>المجموع الفرعي</span>
           <span>{formatCurrency(subtotal)}</span>
