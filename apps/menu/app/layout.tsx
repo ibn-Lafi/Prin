@@ -11,7 +11,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ar" dir="rtl">
       <body>
-        <header className="sticky top-0 z-30 flex items-center justify-between bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-[var(--color-brand-background)]/95 px-4 backdrop-blur">
           <span className="text-xl font-extrabold tracking-tight text-[var(--color-brand-primary)]">
             BRIN
           </span>

@@ -117,8 +117,8 @@ export function MenuBrowser({
 
   return (
     <main className="mx-auto max-w-5xl pb-28">
-      <div className="sticky top-[61px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
-        <div className="flex gap-2.5 overflow-x-auto pb-1">
+      <div className="sticky top-16 z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 pt-3 pb-2 backdrop-blur">
+        <div className="flex gap-2.5 overflow-x-auto py-1.5">
           <CategoryTab
             label="الكل"
             active={activeTab === ALL_TAB_ID}
