@@ -8,6 +8,7 @@ import { ComboCard } from "@/components/ComboCard";
 import { ProductModal } from "@/components/ProductModal";
 import { FloatingCartBar } from "@/components/FloatingCartBar";
 
+const ALL_TAB_ID = "__all__";
 const COMBOS_TAB_ID = "__combos__";
 
 function isVisible(row: { is_available: boolean; deleted_at: string | null }): boolean {
@@ -62,10 +63,7 @@ export function MenuBrowser({
   products: Product[];
   combos: Combo[];
 }) {
-  const hasVisibleCombos = initialCombos.some(isVisible);
-  const [activeTab, setActiveTab] = useState<string>(
-    hasVisibleCombos ? COMBOS_TAB_ID : (categories[0]?.id ?? COMBOS_TAB_ID),
-  );
+  const [activeTab, setActiveTab] = useState<string>(ALL_TAB_ID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
@@ -106,13 +104,27 @@ export function MenuBrowser({
     };
   }, []);
 
-  const visibleProducts = products.filter((p) => isVisible(p) && p.category_id === activeTab);
+  const allProducts = products.filter(isVisible);
   const visibleCombos = combos.filter(isVisible);
+
+  const showCombos = activeTab === ALL_TAB_ID || activeTab === COMBOS_TAB_ID;
+  const visibleProducts =
+    activeTab === ALL_TAB_ID
+      ? allProducts
+      : activeTab === COMBOS_TAB_ID
+        ? []
+        : allProducts.filter((p) => p.category_id === activeTab);
 
   return (
     <main className="mx-auto max-w-5xl pb-28">
       <div className="sticky top-[61px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
         <div className="flex gap-3 overflow-x-auto pb-1">
+          <CategoryTab
+            emoji="🌐"
+            label="الكل"
+            active={activeTab === ALL_TAB_ID}
+            onClick={() => setActiveTab(ALL_TAB_ID)}
+          />
           {visibleCombos.length > 0 && (
             <CategoryTab
               emoji="🍽️"
@@ -135,15 +147,14 @@ export function MenuBrowser({
 
       <div className="px-4 pt-4">
         <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-          {activeTab === COMBOS_TAB_ID
-            ? visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)
-            : visibleProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onSelect={() => setSelectedProduct(product)}
-                />
-              ))}
+          {showCombos && visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)}
+          {visibleProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onSelect={() => setSelectedProduct(product)}
+            />
+          ))}
         </div>
       </div>
 
