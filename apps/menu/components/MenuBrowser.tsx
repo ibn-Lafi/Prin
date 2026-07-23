@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isRestaurantOpen } from "@brin/utils";
+import { UtensilsCrossed } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
 import type { Category, Combo, Product } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
 import { ProductModal } from "@/components/ProductModal";
-import { ClosedBanner } from "@/components/ClosedBanner";
+import { FloatingCartBar } from "@/components/FloatingCartBar";
 
 const COMBOS_TAB_ID = "__combos__";
 
@@ -19,25 +19,18 @@ export function MenuBrowser({
   categories,
   products: initialProducts,
   combos: initialCombos,
-  initialOpeningTime,
-  initialClosingTime,
-  initialIsAcceptingOrders,
 }: {
   categories: Category[];
   products: Product[];
   combos: Combo[];
-  initialOpeningTime: string;
-  initialClosingTime: string;
-  initialIsAcceptingOrders: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
-  const [openingTime, setOpeningTime] = useState(initialOpeningTime);
-  const [closingTime, setClosingTime] = useState(initialClosingTime);
-  const [isAcceptingOrders, setIsAcceptingOrders] = useState(initialIsAcceptingOrders);
 
+  // العميل يتصفح ويضيف للسلة عادي بأي وقت — تقييد ساعات العمل يظهر فقط
+  // بصفحة الدفع (/checkout)، مو أثناء التصفح.
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
 
@@ -65,20 +58,6 @@ export function MenuBrowser({
           return prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c));
         });
       })
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "restaurant_settings" },
-        (payload) => {
-          const updated = payload.new as {
-            opening_time: string;
-            closing_time: string;
-            is_accepting_orders: boolean;
-          };
-          setOpeningTime(updated.opening_time);
-          setClosingTime(updated.closing_time);
-          setIsAcceptingOrders(updated.is_accepting_orders);
-        },
-      )
       .subscribe();
 
     return () => {
@@ -86,69 +65,88 @@ export function MenuBrowser({
     };
   }, []);
 
-  const isOpen = isRestaurantOpen(openingTime, closingTime, isAcceptingOrders);
   const visibleProducts = products.filter((p) => isVisible(p) && p.category_id === activeTab);
   const visibleCombos = combos.filter(isVisible);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-6">
-      {!isOpen && <ClosedBanner />}
-
-      <div className="mb-6 flex gap-2 overflow-x-auto border-b pb-2">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            onClick={() => setActiveTab(category.id)}
-            className={`shrink-0 rounded-full px-4 py-2 ${
-              activeTab === category.id
-                ? "bg-[var(--color-brand-primary)] text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            {category.name}
-          </button>
-        ))}
-        {visibleCombos.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setActiveTab(COMBOS_TAB_ID)}
-            className={`shrink-0 rounded-full px-4 py-2 ${
-              activeTab === COMBOS_TAB_ID
-                ? "bg-[var(--color-brand-primary)] text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            الوجبات
-          </button>
-        )}
+    <main className="mx-auto max-w-3xl pb-28">
+      <div className="sticky top-[57px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
+        <div className="flex gap-4 overflow-x-auto">
+          {categories.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              onClick={() => setActiveTab(category.id)}
+              className="flex shrink-0 flex-col items-center gap-1.5"
+            >
+              <span
+                className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold transition-colors ${
+                  activeTab === category.id
+                    ? "bg-[var(--color-brand-primary)] text-white"
+                    : "bg-[var(--color-brand-card)] text-[var(--color-brand-primary)] ring-1 ring-[var(--color-brand-border)]"
+                }`}
+              >
+                {category.name.slice(0, 1)}
+              </span>
+              <span
+                className={`text-xs font-medium ${
+                  activeTab === category.id
+                    ? "text-[var(--color-brand-primary)]"
+                    : "text-[var(--color-brand-muted)]"
+                }`}
+              >
+                {category.name}
+              </span>
+            </button>
+          ))}
+          {visibleCombos.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab(COMBOS_TAB_ID)}
+              className="flex shrink-0 flex-col items-center gap-1.5"
+            >
+              <span
+                className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${
+                  activeTab === COMBOS_TAB_ID
+                    ? "bg-[var(--color-brand-primary)] text-white"
+                    : "bg-[var(--color-brand-card)] text-[var(--color-brand-primary)] ring-1 ring-[var(--color-brand-border)]"
+                }`}
+              >
+                <UtensilsCrossed className="h-6 w-6" strokeWidth={1.75} />
+              </span>
+              <span
+                className={`text-xs font-medium ${
+                  activeTab === COMBOS_TAB_ID
+                    ? "text-[var(--color-brand-primary)]"
+                    : "text-[var(--color-brand-muted)]"
+                }`}
+              >
+                الوجبات
+              </span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {activeTab === COMBOS_TAB_ID ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {visibleCombos.map((combo) => (
-            <ComboCard key={combo.id} combo={combo} disabled={!isOpen} />
-          ))}
+      <div className="px-4 pt-2">
+        <div className="flex flex-col rounded-2xl bg-[var(--color-brand-card)] px-4 ring-1 ring-[var(--color-brand-border)]">
+          {activeTab === COMBOS_TAB_ID
+            ? visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)
+            : visibleProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onSelect={() => setSelectedProduct(product)}
+                />
+              ))}
         </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {visibleProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onSelect={() => setSelectedProduct(product)}
-            />
-          ))}
-        </div>
-      )}
+      </div>
 
       {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          disabled={!isOpen}
-        />
+        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
       )}
+
+      <FloatingCartBar />
     </main>
   );
 }

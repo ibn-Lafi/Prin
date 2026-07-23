@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --turbopack -p 3000",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start -p 3000",
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
@@ -14,6 +14,7 @@
     "@brin/config": "workspace:*",
     "@brin/database": "workspace:*",
     "@brin/utils": "workspace:*",
+    "lucide-react": "^1.25.0",
     "next": "16.2.11",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
