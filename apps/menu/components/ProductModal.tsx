@@ -86,10 +86,19 @@ export function ProductModal({ product, onClose }: { product: Product; onClose: 
           </button>
         </div>
 
+        <div className="flex shrink-0 items-center justify-between bg-[var(--color-brand-text)] p-4">
+          <div className="flex flex-col">
+            <span className="font-semibold text-white">{product.name}</span>
+            {product.calories !== null && (
+              <span className="text-xs text-white/60">{product.calories} سعرة</span>
+            )}
+          </div>
+          <span className="font-bold text-white">{formatCurrency(product.price)}</span>
+        </div>
+
         <div className="flex-1 overflow-y-auto p-5">
-          <h2 className="text-lg font-bold">{product.name}</h2>
           {product.description && (
-            <p className="mt-1 text-sm text-[var(--color-brand-muted)]">{product.description}</p>
+            <p className="text-sm text-[var(--color-brand-muted)]">{product.description}</p>
           )}
 
           {product.modifier_groups.map((group) => {

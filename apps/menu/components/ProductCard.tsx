@@ -1,13 +1,17 @@
 "use client";
 
-import { UtensilsCrossed } from "lucide-react";
+import { Plus, UtensilsCrossed } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
 import type { Product } from "@/lib/types";
 
 export function ProductCard({ product, onSelect }: { product: Product; onSelect: () => void }) {
   return (
-    <button type="button" onClick={onSelect} className="flex flex-col text-right">
-      <div className="mb-2.5 flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-brand-primary-light)]">
+    <button
+      type="button"
+      onClick={onSelect}
+      className="flex flex-col overflow-hidden rounded-2xl text-right shadow-md shadow-black/5"
+    >
+      <div className="flex aspect-[4/3] w-full items-center justify-center bg-[var(--color-brand-primary-light)]">
         {product.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
@@ -18,11 +22,20 @@ export function ProductCard({ product, onSelect }: { product: Product; onSelect:
           />
         )}
       </div>
-      <span className="line-clamp-1 font-semibold">{product.name}</span>
-      {product.calories !== null && (
-        <span className="text-sm text-[var(--color-brand-muted)]">{product.calories} سعرة</span>
-      )}
-      <span className="mt-0.5 font-bold">{formatCurrency(product.price)}</span>
+      <div className="flex flex-col gap-2 bg-[var(--color-brand-text)] p-3">
+        <span className="line-clamp-1 font-semibold text-white">{product.name}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            {product.calories !== null && (
+              <span className="text-xs text-white/60">{product.calories} سعرة</span>
+            )}
+            <span className="font-bold text-white">{formatCurrency(product.price)}</span>
+          </div>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-primary)]">
+            <Plus className="h-4 w-4 text-white" strokeWidth={2.5} />
+          </span>
+        </div>
+      </div>
     </button>
   );
 }

@@ -20,9 +20,9 @@ export function ComboCard({ combo }: { combo: Combo }) {
           modifiers: [],
         })
       }
-      className="flex flex-col text-right"
+      className="flex flex-col overflow-hidden rounded-2xl text-right shadow-md shadow-black/5"
     >
-      <div className="relative mb-2.5 flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-brand-primary-light)]">
+      <div className="flex aspect-[4/3] w-full items-center justify-center bg-[var(--color-brand-primary-light)]">
         {combo.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={combo.image_url} alt={combo.name} className="h-full w-full object-cover" />
@@ -32,17 +32,21 @@ export function ComboCard({ combo }: { combo: Combo }) {
             strokeWidth={1.5}
           />
         )}
-        <span className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-full bg-white text-[var(--color-brand-primary)] shadow-md">
-          <Plus className="h-4 w-4" strokeWidth={2.5} />
-        </span>
       </div>
-      <span className="line-clamp-1 font-semibold">{combo.name}</span>
-      {combo.description && (
-        <span className="line-clamp-1 text-sm text-[var(--color-brand-muted)]">
-          {combo.description}
-        </span>
-      )}
-      <span className="mt-0.5 font-bold">{formatCurrency(combo.price)}</span>
+      <div className="flex flex-col gap-2 bg-[var(--color-brand-text)] p-3">
+        <span className="line-clamp-1 font-semibold text-white">{combo.name}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            {combo.description && (
+              <span className="line-clamp-1 text-xs text-white/60">{combo.description}</span>
+            )}
+            <span className="font-bold text-white">{formatCurrency(combo.price)}</span>
+          </div>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-primary)]">
+            <Plus className="h-4 w-4 text-white" strokeWidth={2.5} />
+          </span>
+        </div>
+      </div>
     </button>
   );
 }
