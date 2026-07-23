@@ -107,12 +107,12 @@ export function MenuBrowser({
   for (const category of categories) {
     categoryTabs.push({ id: category.id, label: category.name });
     if (!combosTabInserted && category.name.includes("برجر") && visibleCombos.length > 0) {
-      categoryTabs.push({ id: COMBOS_TAB_ID, label: "الوجبات" });
+      categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة" });
       combosTabInserted = true;
     }
   }
   if (!combosTabInserted && visibleCombos.length > 0) {
-    categoryTabs.unshift({ id: COMBOS_TAB_ID, label: "الوجبات" });
+    categoryTabs.unshift({ id: COMBOS_TAB_ID, label: "وجبة" });
   }
 
   return (
