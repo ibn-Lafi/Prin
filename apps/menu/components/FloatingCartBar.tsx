@@ -19,7 +19,7 @@ export function FloatingCartBar() {
       >
         <span className="flex items-center gap-2 font-semibold">
           <ShoppingBag className="h-5 w-5" strokeWidth={1.75} />
-          {count} صنف بالسلة
+          عرض الطلبات ({count})
         </span>
         <span className="font-bold">{formatCurrency(subtotal)}</span>
       </Link>

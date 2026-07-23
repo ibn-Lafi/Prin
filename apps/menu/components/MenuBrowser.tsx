@@ -71,56 +71,75 @@ export function MenuBrowser({
   return (
     <main className="mx-auto max-w-3xl pb-28">
       <div className="sticky top-[57px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-4 overflow-x-auto">
           {categories.map((category) => (
             <button
               key={category.id}
               type="button"
               onClick={() => setActiveTab(category.id)}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === category.id
-                  ? "bg-[var(--color-brand-primary)] text-white"
-                  : "bg-[var(--color-brand-card)] text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
-              }`}
+              className="flex shrink-0 flex-col items-center gap-1.5"
             >
-              {category.name}
+              <span
+                className={`flex h-14 w-14 items-center justify-center rounded-full text-lg font-bold transition-colors ${
+                  activeTab === category.id
+                    ? "bg-[var(--color-brand-primary)] text-white"
+                    : "bg-[var(--color-brand-card)] text-[var(--color-brand-primary)] ring-1 ring-[var(--color-brand-border)]"
+                }`}
+              >
+                {category.name.slice(0, 1)}
+              </span>
+              <span
+                className={`text-xs font-medium ${
+                  activeTab === category.id
+                    ? "text-[var(--color-brand-primary)]"
+                    : "text-[var(--color-brand-muted)]"
+                }`}
+              >
+                {category.name}
+              </span>
             </button>
           ))}
           {visibleCombos.length > 0 && (
             <button
               type="button"
               onClick={() => setActiveTab(COMBOS_TAB_ID)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === COMBOS_TAB_ID
-                  ? "bg-[var(--color-brand-primary)] text-white"
-                  : "bg-[var(--color-brand-card)] text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
-              }`}
+              className="flex shrink-0 flex-col items-center gap-1.5"
             >
-              <UtensilsCrossed className="h-4 w-4" strokeWidth={1.75} />
-              الوجبات
+              <span
+                className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${
+                  activeTab === COMBOS_TAB_ID
+                    ? "bg-[var(--color-brand-primary)] text-white"
+                    : "bg-[var(--color-brand-card)] text-[var(--color-brand-primary)] ring-1 ring-[var(--color-brand-border)]"
+                }`}
+              >
+                <UtensilsCrossed className="h-6 w-6" strokeWidth={1.75} />
+              </span>
+              <span
+                className={`text-xs font-medium ${
+                  activeTab === COMBOS_TAB_ID
+                    ? "text-[var(--color-brand-primary)]"
+                    : "text-[var(--color-brand-muted)]"
+                }`}
+              >
+                الوجبات
+              </span>
             </button>
           )}
         </div>
       </div>
 
       <div className="px-4 pt-2">
-        {activeTab === COMBOS_TAB_ID ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {visibleCombos.map((combo) => (
-              <ComboCard key={combo.id} combo={combo} />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {visibleProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onSelect={() => setSelectedProduct(product)}
-              />
-            ))}
-          </div>
-        )}
+        <div className="flex flex-col rounded-2xl bg-[var(--color-brand-card)] px-4 ring-1 ring-[var(--color-brand-border)]">
+          {activeTab === COMBOS_TAB_ID
+            ? visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)
+            : visibleProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onSelect={() => setSelectedProduct(product)}
+                />
+              ))}
+        </div>
       </div>
 
       {selectedProduct && (
