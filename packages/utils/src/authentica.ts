@@ -35,14 +35,19 @@ function assertValidPhone(phone: string): void {
 }
 
 async function callAuthentica(path: string, body: Record<string, string>): Promise<void> {
+  // نقرأ متغيرات البيئة قبل try عمداً — لو كانت مفقودة نبي رسالة الخطأ
+  // المحددة (اسم المتغير الناقص)، مو رسالة "مشكلة شبكة" العامة المضللة.
+  const baseUrl = getBaseUrl();
+  const apiKey = getApiKey();
+
   let response: Response;
   try {
-    response = await fetch(`${getBaseUrl()}${path}`, {
+    response = await fetch(`${baseUrl}${path}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        "X-Authorization": getApiKey(),
+        "X-Authorization": apiKey,
       },
       body: JSON.stringify(body),
     });
