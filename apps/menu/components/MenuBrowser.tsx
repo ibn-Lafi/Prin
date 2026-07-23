@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { createSupabaseBrowserClient } from "@brin/database";
-import type { Category, Combo, Product } from "@/lib/types";
+import type { Category, Combo, Product, Reward } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
+import { RewardCard } from "@/components/RewardCard";
 import { ProductModal } from "@/components/ProductModal";
 import { FloatingCartBar } from "@/components/FloatingCartBar";
 
-const ALL_TAB_ID = "__all__";
 const COMBOS_TAB_ID = "__combos__";
+const REWARDS_TAB_ID = "__rewards__";
 
 function isVisible(row: { is_available: boolean; deleted_at: string | null }): boolean {
   return row.is_available && row.deleted_at === null;
@@ -43,12 +44,16 @@ export function MenuBrowser({
   categories,
   products: initialProducts,
   combos: initialCombos,
+  rewards,
+  pointsBalance,
 }: {
   categories: Category[];
   products: Product[];
   combos: Combo[];
+  rewards: Reward[];
+  pointsBalance: number | null;
 }) {
-  const [activeTab, setActiveTab] = useState<string>(ALL_TAB_ID);
+  const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
@@ -91,39 +96,37 @@ export function MenuBrowser({
 
   const allProducts = products.filter(isVisible);
   const visibleCombos = combos.filter(isVisible);
-
-  const showCombos = activeTab === ALL_TAB_ID || activeTab === COMBOS_TAB_ID;
   const visibleProducts =
-    activeTab === ALL_TAB_ID
-      ? allProducts
-      : activeTab === COMBOS_TAB_ID
-        ? []
-        : allProducts.filter((p) => p.category_id === activeTab);
+    activeTab === COMBOS_TAB_ID || activeTab === REWARDS_TAB_ID
+      ? []
+      : allProducts.filter((p) => p.category_id === activeTab);
 
-  // ترتيب التبويبات المطلوب: الكل - برجر - وجبات - اضافات - مشروبات —
-  // تبويب الوجبات يُدرج مباشرة بعد صنف البرجر بدل أن يكون ثابتاً بالبداية أو النهاية.
+  // ترتيب التبويبات المطلوب: برجر - اضافات - وجبة - مشروبات - استبدل —
+  // تبويب الوجبات يُدرج مباشرة بعد صنف الإضافات، وتبويب الاستبدال بالنقاط دائماً في النهاية.
   const categoryTabs: { id: string; label: string }[] = [];
   let combosTabInserted = false;
   for (const category of categories) {
     categoryTabs.push({ id: category.id, label: category.name });
-    if (!combosTabInserted && category.name.includes("برجر") && visibleCombos.length > 0) {
+    if (
+      !combosTabInserted &&
+      (category.name.includes("اضاف") || category.name.includes("إضاف")) &&
+      visibleCombos.length > 0
+    ) {
       categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة" });
       combosTabInserted = true;
     }
   }
   if (!combosTabInserted && visibleCombos.length > 0) {
-    categoryTabs.unshift({ id: COMBOS_TAB_ID, label: "وجبة" });
+    categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة" });
+  }
+  if (rewards.length > 0) {
+    categoryTabs.push({ id: REWARDS_TAB_ID, label: "استبدل" });
   }
 
   return (
     <main className="mx-auto max-w-5xl pb-28">
       <div className="sticky top-16 z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 pt-3 pb-2 backdrop-blur">
         <div className="flex gap-2.5 overflow-x-auto py-1.5">
-          <CategoryTab
-            label="الكل"
-            active={activeTab === ALL_TAB_ID}
-            onClick={() => setActiveTab(ALL_TAB_ID)}
-          />
           {categoryTabs.map((tab) => (
             <CategoryTab
               key={tab.id}
@@ -136,16 +139,30 @@ export function MenuBrowser({
       </div>
 
       <div className="px-4 pt-4">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-          {showCombos && visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)}
-          {visibleProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onSelect={() => setSelectedProduct(product)}
-            />
-          ))}
-        </div>
+        {activeTab === REWARDS_TAB_ID ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-xs text-[var(--color-brand-muted)]">
+              الاستبدال الفعلي يُفعَّل بمرحلة نظام الولاء الكاملة — القائمة هنا للاطّلاع حالياً.
+            </p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
+              {rewards.map((reward) => (
+                <RewardCard key={reward.id} reward={reward} pointsBalance={pointsBalance} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
+            {activeTab === COMBOS_TAB_ID &&
+              visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)}
+            {visibleProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onSelect={() => setSelectedProduct(product)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {selectedProduct && (
