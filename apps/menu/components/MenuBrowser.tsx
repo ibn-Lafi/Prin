@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Beef, CupSoda, IceCreamCone, Search, Soup, UtensilsCrossed } from "lucide-react";
+import { CupSoda, IceCreamCone, Popcorn, Sandwich, UtensilsCrossed } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
 import type { Category, Combo, Product } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
@@ -17,11 +17,45 @@ function isVisible(row: { is_available: boolean; deleted_at: string | null }): b
 }
 
 function iconForCategory(name: string): LucideIcon {
-  if (name.includes("برجر")) return Beef;
+  if (name.includes("برجر")) return Sandwich;
   if (name.includes("مشروب")) return CupSoda;
   if (name.includes("حلو")) return IceCreamCone;
-  if (name.includes("اضاف") || name.includes("إضاف") || name.includes("مقبل")) return Soup;
+  if (name.includes("اضاف") || name.includes("إضاف") || name.includes("مقبل")) return Popcorn;
   return UtensilsCrossed;
+}
+
+function CategoryTab({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex shrink-0 flex-col items-center gap-2 border-b-2 pb-2 transition-colors ${
+        active ? "border-[var(--color-brand-text)]" : "border-transparent"
+      }`}
+    >
+      <Icon
+        className={active ? "h-6 w-6 text-[var(--color-brand-text)]" : "h-6 w-6 text-[var(--color-brand-muted)]"}
+        strokeWidth={active ? 2.25 : 1.5}
+      />
+      <span
+        className={`text-xs whitespace-nowrap ${
+          active ? "font-semibold text-[var(--color-brand-text)]" : "font-medium text-[var(--color-brand-muted)]"
+        }`}
+      >
+        {label}
+      </span>
+    </button>
+  );
 }
 
 export function MenuBrowser({
@@ -33,11 +67,13 @@ export function MenuBrowser({
   products: Product[];
   combos: Combo[];
 }) {
-  const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
+  const hasVisibleCombos = initialCombos.some(isVisible);
+  const [activeTab, setActiveTab] = useState<string>(
+    hasVisibleCombos ? COMBOS_TAB_ID : (categories[0]?.id ?? COMBOS_TAB_ID),
+  );
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
-  const [searchQuery, setSearchQuery] = useState("");
 
   // العميل يتصفح ويضيف للسلة عادي بأي وقت — تقييد ساعات العمل يظهر فقط
   // بصفحة الدفع (/checkout)، مو أثناء التصفح.
@@ -75,137 +111,45 @@ export function MenuBrowser({
     };
   }, []);
 
-  const query = searchQuery.trim().toLowerCase();
-  const isSearching = query.length > 0;
-
-  const searchedProducts = useMemo(
-    () => products.filter((p) => isVisible(p) && p.name.toLowerCase().includes(query)),
-    [products, query],
-  );
-  const searchedCombos = useMemo(
-    () => combos.filter((c) => isVisible(c) && c.name.toLowerCase().includes(query)),
-    [combos, query],
-  );
-
   const visibleProducts = products.filter((p) => isVisible(p) && p.category_id === activeTab);
   const visibleCombos = combos.filter(isVisible);
 
   return (
     <main className="mx-auto max-w-5xl pb-28">
-      <div className="sticky top-[61px] z-20 -mx-px flex flex-col gap-3 bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
-        <label className="flex items-center gap-2.5 rounded-full bg-[var(--color-brand-card)] px-4 py-3 shadow-sm ring-1 ring-[var(--color-brand-border)]">
-          <Search className="h-4.5 w-4.5 shrink-0 text-[var(--color-brand-muted)]" strokeWidth={2} />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ابحث في المنيو"
-            className="w-full bg-transparent text-sm outline-none placeholder:text-[var(--color-brand-muted)]"
-          />
-        </label>
-
-        {!isSearching && (
-          <div className="flex gap-6 overflow-x-auto">
-            {categories.map((category) => {
-              const Icon = iconForCategory(category.name);
-              const active = activeTab === category.id;
-              return (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() => setActiveTab(category.id)}
-                  className={`flex shrink-0 flex-col items-center gap-1.5 border-b-2 pb-2 transition-colors ${
-                    active ? "border-[var(--color-brand-text)]" : "border-transparent"
-                  }`}
-                >
-                  <Icon
-                    className={active ? "h-5 w-5 text-[var(--color-brand-text)]" : "h-5 w-5 text-[var(--color-brand-muted)]"}
-                    strokeWidth={1.75}
-                  />
-                  <span
-                    className={`text-xs whitespace-nowrap ${
-                      active
-                        ? "font-semibold text-[var(--color-brand-text)]"
-                        : "font-medium text-[var(--color-brand-muted)]"
-                    }`}
-                  >
-                    {category.name}
-                  </span>
-                </button>
-              );
-            })}
-            {visibleCombos.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setActiveTab(COMBOS_TAB_ID)}
-                className={`flex shrink-0 flex-col items-center gap-1.5 border-b-2 pb-2 transition-colors ${
-                  activeTab === COMBOS_TAB_ID ? "border-[var(--color-brand-text)]" : "border-transparent"
-                }`}
-              >
-                <UtensilsCrossed
-                  className={
-                    activeTab === COMBOS_TAB_ID
-                      ? "h-5 w-5 text-[var(--color-brand-text)]"
-                      : "h-5 w-5 text-[var(--color-brand-muted)]"
-                  }
-                  strokeWidth={1.75}
-                />
-                <span
-                  className={`text-xs whitespace-nowrap ${
-                    activeTab === COMBOS_TAB_ID
-                      ? "font-semibold text-[var(--color-brand-text)]"
-                      : "font-medium text-[var(--color-brand-muted)]"
-                  }`}
-                >
-                  الوجبات
-                </span>
-              </button>
-            )}
-          </div>
-        )}
+      <div className="sticky top-[61px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
+        <div className="flex gap-7 overflow-x-auto">
+          {visibleCombos.length > 0 && (
+            <CategoryTab
+              icon={UtensilsCrossed}
+              label="الوجبات"
+              active={activeTab === COMBOS_TAB_ID}
+              onClick={() => setActiveTab(COMBOS_TAB_ID)}
+            />
+          )}
+          {categories.map((category) => (
+            <CategoryTab
+              key={category.id}
+              icon={iconForCategory(category.name)}
+              label={category.name}
+              active={activeTab === category.id}
+              onClick={() => setActiveTab(category.id)}
+            />
+          ))}
+        </div>
       </div>
 
       <div className="px-4 pt-4">
-        {isSearching ? (
-          searchedProducts.length === 0 && searchedCombos.length === 0 ? (
-            <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
-              ما فيه نتائج مطابقة لـ &quot;{searchQuery.trim()}&quot;
-            </p>
-          ) : (
-            <div className="flex flex-col gap-6">
-              {searchedProducts.length > 0 && (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-                  {searchedProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onSelect={() => setSelectedProduct(product)}
-                    />
-                  ))}
-                </div>
-              )}
-              {searchedCombos.length > 0 && (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-                  {searchedCombos.map((combo) => (
-                    <ComboCard key={combo.id} combo={combo} />
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        ) : (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-            {activeTab === COMBOS_TAB_ID
-              ? visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)
-              : visibleProducts.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onSelect={() => setSelectedProduct(product)}
-                  />
-                ))}
-          </div>
-        )}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
+          {activeTab === COMBOS_TAB_ID
+            ? visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)
+            : visibleProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onSelect={() => setSelectedProduct(product)}
+                />
+              ))}
+        </div>
       </div>
 
       {selectedProduct && (
