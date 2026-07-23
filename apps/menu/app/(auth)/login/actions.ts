@@ -44,6 +44,7 @@ export async function verifyOtpAction(phone: string, otp: string): Promise<AuthA
       password: randomPassword,
     });
     if (createError || !createdUser.user) {
+      console.error("[login] auth.admin.createUser failed:", createError);
       return { error: "تعذّر إنشاء الحساب" };
     }
     authUserId = createdUser.user.id;
@@ -64,6 +65,7 @@ export async function verifyOtpAction(phone: string, otp: string): Promise<AuthA
   });
 
   if (signInError || !signInData.session) {
+    console.error("[login] auth.signInWithPassword failed:", signInError);
     return { error: "تعذّر تسجيل الدخول" };
   }
 
