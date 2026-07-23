@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { UtensilsCrossed } from "lucide-react";
-import { isRestaurantOpen } from "@brin/utils";
 import { createSupabaseBrowserClient } from "@brin/database";
 import type { Category, Combo, Product } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
 import { ProductModal } from "@/components/ProductModal";
-import { ClosedBanner } from "@/components/ClosedBanner";
 import { FloatingCartBar } from "@/components/FloatingCartBar";
 
 const COMBOS_TAB_ID = "__combos__";
@@ -21,25 +19,18 @@ export function MenuBrowser({
   categories,
   products: initialProducts,
   combos: initialCombos,
-  initialOpeningTime,
-  initialClosingTime,
-  initialIsAcceptingOrders,
 }: {
   categories: Category[];
   products: Product[];
   combos: Combo[];
-  initialOpeningTime: string;
-  initialClosingTime: string;
-  initialIsAcceptingOrders: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
-  const [openingTime, setOpeningTime] = useState(initialOpeningTime);
-  const [closingTime, setClosingTime] = useState(initialClosingTime);
-  const [isAcceptingOrders, setIsAcceptingOrders] = useState(initialIsAcceptingOrders);
 
+  // العميل يتصفح ويضيف للسلة عادي بأي وقت — تقييد ساعات العمل يظهر فقط
+  // بصفحة الدفع (/checkout)، مو أثناء التصفح.
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
 
@@ -67,20 +58,6 @@ export function MenuBrowser({
           return prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c));
         });
       })
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "restaurant_settings" },
-        (payload) => {
-          const updated = payload.new as {
-            opening_time: string;
-            closing_time: string;
-            is_accepting_orders: boolean;
-          };
-          setOpeningTime(updated.opening_time);
-          setClosingTime(updated.closing_time);
-          setIsAcceptingOrders(updated.is_accepting_orders);
-        },
-      )
       .subscribe();
 
     return () => {
@@ -88,18 +65,11 @@ export function MenuBrowser({
     };
   }, []);
 
-  const isOpen = isRestaurantOpen(openingTime, closingTime, isAcceptingOrders);
   const visibleProducts = products.filter((p) => isVisible(p) && p.category_id === activeTab);
   const visibleCombos = combos.filter(isVisible);
 
   return (
     <main className="mx-auto max-w-3xl pb-28">
-      {!isOpen && (
-        <div className="px-4 pt-4">
-          <ClosedBanner />
-        </div>
-      )}
-
       <div className="sticky top-[57px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
         <div className="flex gap-2 overflow-x-auto">
           {categories.map((category) => (
@@ -137,7 +107,7 @@ export function MenuBrowser({
         {activeTab === COMBOS_TAB_ID ? (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {visibleCombos.map((combo) => (
-              <ComboCard key={combo.id} combo={combo} disabled={!isOpen} />
+              <ComboCard key={combo.id} combo={combo} />
             ))}
           </div>
         ) : (
@@ -154,11 +124,7 @@ export function MenuBrowser({
       </div>
 
       {selectedProduct && (
-        <ProductModal
-          product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          disabled={!isOpen}
-        />
+        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
       )}
 
       <FloatingCartBar />

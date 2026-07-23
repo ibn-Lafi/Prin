@@ -6,15 +6,7 @@ import { formatCurrency, roundMoney } from "@brin/utils";
 import type { Product } from "@/lib/types";
 import { useCart, type CartModifier } from "@/hooks/useCart";
 
-export function ProductModal({
-  product,
-  onClose,
-  disabled = false,
-}: {
-  product: Product;
-  onClose: () => void;
-  disabled?: boolean;
-}) {
+export function ProductModal({ product, onClose }: { product: Product; onClose: () => void }) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -162,16 +154,10 @@ export function ProductModal({
             لازم تختار: {missingRequiredGroups.map((g) => g.name).join("، ")}
           </p>
         )}
-        {disabled && (
-          <p className="mb-2 text-center text-sm text-[var(--color-brand-primary)]">
-            المطعم مغلق حالياً — الطلب غير ممكن.
-          </p>
-        )}
-
         <button
           type="button"
           onClick={handleAddToCart}
-          disabled={missingRequiredGroups.length > 0 || disabled}
+          disabled={missingRequiredGroups.length > 0}
           className="w-full rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:opacity-50"
         >
           أضف للسلة — {formatCurrency(totalPrice)}

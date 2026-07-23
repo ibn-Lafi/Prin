@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, CreditCard, MapPin, Phone } from "lucide-react";
+import { Clock, CreditCard, MapPin, Phone, Store } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useCart } from "@/hooks/useCart";
 
 export function CheckoutView({
   customerPhone,
   taxRatePercent,
+  isOpen,
 }: {
   customerPhone: string;
   taxRatePercent: number;
+  isOpen: boolean;
 }) {
   const { items, itemTotal, subtotal } = useCart();
 
@@ -81,11 +83,28 @@ export function CheckoutView({
       </section>
 
       <section className="rounded-2xl border border-dashed border-[var(--color-brand-border)] p-4 text-center">
-        <Clock className="mx-auto mb-2 h-6 w-6 text-[var(--color-brand-muted)]" strokeWidth={1.5} />
-        <p className="mb-3 text-sm text-[var(--color-brand-muted)]">
-          الدفع الإلكتروني (مدى / Apple Pay / بطاقات) قيد التفعيل حالياً — الطلبات الإلكترونية غير
-          متاحة مؤقتاً.
-        </p>
+        {isOpen ? (
+          <>
+            <Clock
+              className="mx-auto mb-2 h-6 w-6 text-[var(--color-brand-muted)]"
+              strokeWidth={1.5}
+            />
+            <p className="mb-3 text-sm text-[var(--color-brand-muted)]">
+              الدفع الإلكتروني (مدى / Apple Pay / بطاقات) قيد التفعيل حالياً — الطلبات الإلكترونية
+              غير متاحة مؤقتاً.
+            </p>
+          </>
+        ) : (
+          <>
+            <Store
+              className="mx-auto mb-2 h-6 w-6 text-[var(--color-brand-primary)]"
+              strokeWidth={1.5}
+            />
+            <p className="mb-3 text-sm font-medium text-[var(--color-brand-primary)]">
+              المطعم مغلق حالياً خارج ساعات العمل — الطلبات الإلكترونية غير متاحة الآن.
+            </p>
+          </>
+        )}
         <button
           type="button"
           disabled
