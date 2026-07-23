@@ -86,11 +86,11 @@ export function ProductModal({ product, onClose }: { product: Product; onClose: 
           </button>
         </div>
 
-        <div className="flex shrink-0 items-center justify-between bg-[var(--color-brand-text)] p-4">
+        <div className="flex w-full shrink-0 items-center justify-between bg-[var(--color-brand-primary)] p-4">
           <div className="flex flex-col">
             <span className="font-semibold text-white">{product.name}</span>
             {product.calories !== null && (
-              <span className="text-xs text-white/60">{product.calories} سعرة</span>
+              <span className="text-xs text-white/70">{product.calories} سعرة</span>
             )}
           </div>
           <span className="font-bold text-white">{formatCurrency(product.price)}</span>
