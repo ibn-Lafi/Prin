@@ -15,7 +15,7 @@ export function FloatingCartBar() {
     <div className="fixed inset-x-0 bottom-5 z-30 flex justify-center px-4">
       <Link
         href="/cart"
-        className="flex items-center gap-2.5 rounded-full bg-[var(--color-brand-text)] px-5 py-3.5 text-sm text-white shadow-xl shadow-black/25"
+        className="flex items-center gap-2.5 rounded-full bg-[var(--color-brand-primary)] px-5 py-3.5 text-sm text-white shadow-xl shadow-black/25"
       >
         <ShoppingBag className="h-4 w-4" strokeWidth={2} />
         <span className="font-semibold">عرض الطلبات ({count})</span>
