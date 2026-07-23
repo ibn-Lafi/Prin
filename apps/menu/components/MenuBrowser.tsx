@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { LucideIcon } from "lucide-react";
-import { CupSoda, IceCreamCone, Popcorn, Sandwich, UtensilsCrossed } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
 import type { Category, Combo, Product } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
@@ -16,21 +14,21 @@ function isVisible(row: { is_available: boolean; deleted_at: string | null }): b
   return row.is_available && row.deleted_at === null;
 }
 
-function iconForCategory(name: string): LucideIcon {
-  if (name.includes("برجر")) return Sandwich;
-  if (name.includes("مشروب")) return CupSoda;
-  if (name.includes("حلو")) return IceCreamCone;
-  if (name.includes("اضاف") || name.includes("إضاف") || name.includes("مقبل")) return Popcorn;
-  return UtensilsCrossed;
+function emojiForCategory(name: string): string {
+  if (name.includes("برجر")) return "🍔";
+  if (name.includes("مشروب")) return "🥤";
+  if (name.includes("حلو")) return "🍰";
+  if (name.includes("اضاف") || name.includes("إضاف") || name.includes("مقبل")) return "🍟";
+  return "🍴";
 }
 
 function CategoryTab({
-  icon: Icon,
+  emoji,
   label,
   active,
   onClick,
 }: {
-  icon: LucideIcon;
+  emoji: string;
   label: string;
   active: boolean;
   onClick: () => void;
@@ -39,16 +37,13 @@ function CategoryTab({
     <button
       type="button"
       onClick={onClick}
-      className={`flex shrink-0 flex-col items-center gap-2 border-b-2 pb-2 transition-colors ${
-        active ? "border-[var(--color-brand-text)]" : "border-transparent"
+      className={`flex shrink-0 items-center gap-2 rounded-full bg-[var(--color-brand-card)] px-4 py-2.5 shadow-[0_3px_0_0_rgba(33,28,28,0.1)] ring-1 transition-all duration-100 active:translate-y-[3px] active:shadow-none ${
+        active ? "ring-2 ring-[var(--color-brand-text)]" : "ring-1 ring-[var(--color-brand-border)]"
       }`}
     >
-      <Icon
-        className={active ? "h-6 w-6 text-[var(--color-brand-text)]" : "h-6 w-6 text-[var(--color-brand-muted)]"}
-        strokeWidth={active ? 2.25 : 1.5}
-      />
+      <span className="text-lg leading-none">{emoji}</span>
       <span
-        className={`text-xs whitespace-nowrap ${
+        className={`text-sm whitespace-nowrap ${
           active ? "font-semibold text-[var(--color-brand-text)]" : "font-medium text-[var(--color-brand-muted)]"
         }`}
       >
@@ -117,10 +112,10 @@ export function MenuBrowser({
   return (
     <main className="mx-auto max-w-5xl pb-28">
       <div className="sticky top-[61px] z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 py-3 backdrop-blur">
-        <div className="flex gap-7 overflow-x-auto">
+        <div className="flex gap-3 overflow-x-auto pb-1">
           {visibleCombos.length > 0 && (
             <CategoryTab
-              icon={UtensilsCrossed}
+              emoji="🍽️"
               label="الوجبات"
               active={activeTab === COMBOS_TAB_ID}
               onClick={() => setActiveTab(COMBOS_TAB_ID)}
@@ -129,7 +124,7 @@ export function MenuBrowser({
           {categories.map((category) => (
             <CategoryTab
               key={category.id}
-              icon={iconForCategory(category.name)}
+              emoji={emojiForCategory(category.name)}
               label={category.name}
               active={activeTab === category.id}
               onClick={() => setActiveTab(category.id)}

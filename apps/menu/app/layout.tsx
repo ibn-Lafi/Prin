@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AccountBadgeLink } from "../components/AccountBadgeLink";
 import { CartBadgeLink } from "../components/CartBadgeLink";
 
 export const metadata: Metadata = {
@@ -14,7 +15,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <span className="text-xl font-extrabold tracking-tight text-[var(--color-brand-primary)]">
             BRIN
           </span>
-          <CartBadgeLink />
+          <div className="flex items-center gap-2">
+            <AccountBadgeLink />
+            <CartBadgeLink />
+          </div>
         </header>
         {children}
       </body>
