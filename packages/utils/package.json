@@ -9,7 +9,11 @@
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },
+  "dependencies": {
+    "bcryptjs": "^3.0.3"
+  },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.20.1",
     "typescript": "5.9.3"
   }
