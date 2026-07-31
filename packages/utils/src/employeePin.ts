@@ -4,3 +4,8 @@ import bcrypt from "bcryptjs";
 export async function verifyEmployeePin(pin: string, pinHash: string): Promise<boolean> {
   return bcrypt.compare(pin, pinHash);
 }
+
+/** يُنشئ هاش bcrypt لكود PIN جديد — لإنشاء/تعديل موظف من لوحة الإدارة. */
+export async function hashEmployeePin(pin: string): Promise<string> {
+  return bcrypt.hash(pin, 10);
+}

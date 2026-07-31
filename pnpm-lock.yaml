@@ -41,6 +41,15 @@ importers:
       '@brin/config':
         specifier: workspace:*
         version: link:../../packages/config
+      '@brin/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@brin/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
+      lucide-react:
+        specifier: ^1.25.0
+        version: 1.25.0(react@19.2.8)
       next:
         specifier: 16.2.11
         version: 16.2.11(@babel/core@7.29.7)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
