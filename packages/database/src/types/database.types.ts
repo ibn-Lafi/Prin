@@ -562,6 +562,21 @@ export type Database = {
         Args: { p_date: string };
         Returns: number;
       };
+      create_pos_order: {
+        Args: {
+          p_employee_id: string;
+          p_customer_phone: string | null;
+          p_customer_name: string | null;
+          p_items: Json;
+          p_payments: Json;
+        };
+        Returns: {
+          order_id: string;
+          daily_order_number: number;
+          order_date: string;
+          total: number;
+        }[];
+      };
     };
     Enums: {
       [_ in never]: never;

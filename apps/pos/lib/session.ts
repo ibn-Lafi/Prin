@@ -4,7 +4,7 @@ import {
   verifyEmployeeSessionToken,
   type EmployeeRole,
   type EmployeeSessionPayload,
-} from "@brin/utils";
+} from "@brin/utils/server";
 
 const SESSION_COOKIE_NAME = "brin_pos_session";
 

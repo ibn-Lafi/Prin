@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { verifyEmployeePin, type EmployeeRole } from "@brin/utils";
+import { verifyEmployeePin, type EmployeeRole } from "@brin/utils/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { createSession } from "@/lib/session";
 
