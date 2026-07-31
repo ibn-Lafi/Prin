@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { X } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import { X, Search, Gift } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useOrderTicket } from "@/hooks/useOrderTicket";
-import { createOrderAction } from "@/app/(protected)/orders/actions";
+import {
+  createOrderAction,
+  lookupCustomerAction,
+  listActiveRewardsAction,
+} from "@/app/(protected)/orders/actions";
 import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
+import type { CustomerLookup, Reward } from "@/lib/types";
 
 export function CheckoutDialog({
   taxRatePercent,
@@ -15,11 +20,13 @@ export function CheckoutDialog({
   onClose: () => void;
 }) {
   const { items, subtotal, clear } = useOrderTicket();
-  const tax = calculateTax(subtotal, taxRatePercent);
-  const total = roundMoney(subtotal + tax);
 
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [customer, setCustomer] = useState<CustomerLookup | null>(null);
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
   const [cashAmount, setCashAmount] = useState("");
   const [cardAmount, setCardAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,10 +35,45 @@ export function CheckoutDialog({
   );
   const [isPending, startTransition] = useTransition();
 
+  useEffect(() => {
+    listActiveRewardsAction().then(setRewards);
+  }, []);
+
+  const affordableRewards = customer
+    ? rewards.filter((r) => customer.pointsBalance >= r.pointsCost)
+    : [];
+
+  // نقيّد الاختيار الفعّال بقائمة المتاح بها فعلاً — لو تغيّر رصيد العميل (مثلاً بعد
+  // بحث ثانٍ) وأصبحت المكافأة المختارة سابقاً غير متاحة، يلغى الخصم تلقائياً بدل
+  // ما يبقى مطبّقاً بصمت وهو مو ظاهر كمُختار بالقائمة.
+  const selectedReward = affordableRewards.find((r) => r.id === selectedRewardId) ?? null;
+  const discount = selectedReward ? Math.min(selectedReward.discountAmount, subtotal) : 0;
+  const discountedSubtotal = roundMoney(subtotal - discount);
+  const tax = calculateTax(discountedSubtotal, taxRatePercent);
+  const total = roundMoney(discountedSubtotal + tax);
+
   const cash = Number(cashAmount) || 0;
   const card = Number(cardAmount) || 0;
   const paid = roundMoney(cash + card);
   const remaining = roundMoney(total - paid);
+
+  function handlePhoneChange(value: string) {
+    setCustomerPhone(value);
+    setCustomer(null);
+    setSelectedRewardId(null);
+  }
+
+  async function handleLookup() {
+    const phone = customerPhone.trim();
+    if (!phone) return;
+    setIsLookingUp(true);
+    const result = await lookupCustomerAction(phone);
+    setIsLookingUp(false);
+    setCustomer(result);
+    if (result?.fullName && !customerName.trim()) {
+      setCustomerName(result.fullName);
+    }
+  }
 
   function fillAllCash() {
     setCashAmount(total.toFixed(2));
@@ -69,6 +111,7 @@ export function CheckoutDialog({
         customerPhone: customerPhone.trim() || null,
         customerName: customerName.trim() || null,
         payments,
+        rewardId: selectedReward?.id ?? null,
       });
 
       if (result.error) {
@@ -122,32 +165,28 @@ export function CheckoutDialog({
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
-          <div className="mb-5 flex flex-col gap-1 rounded-2xl bg-[var(--color-brand-background)] p-4">
-            <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
-              <span>المجموع الفرعي</span>
-              <span>{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
-              <span>الضريبة ({taxRatePercent}%)</span>
-              <span>{formatCurrency(tax)}</span>
-            </div>
-            <div className="mt-1 flex justify-between border-t border-[var(--color-brand-border)] pt-2 text-lg font-bold">
-              <span>الإجمالي</span>
-              <span>{formatCurrency(total)}</span>
-            </div>
-          </div>
-
           <div className="mb-5">
             <p className="mb-2 font-semibold">عميل (اختياري)</p>
             <div className="flex flex-col gap-2">
-              <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="رقم الجوال"
-                value={customerPhone}
-                onChange={(e) => setCustomerPhone(e.target.value)}
-                className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="رقم الجوال"
+                  value={customerPhone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  className="flex-1 rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
+                />
+                <button
+                  type="button"
+                  onClick={handleLookup}
+                  disabled={!customerPhone.trim() || isLookingUp}
+                  className="flex items-center justify-center rounded-xl bg-[var(--color-brand-background)] px-3 ring-1 ring-[var(--color-brand-border)] disabled:opacity-50"
+                  aria-label="بحث عن العميل"
+                >
+                  <Search className="h-4 w-4" strokeWidth={1.75} />
+                </button>
+              </div>
               <input
                 type="text"
                 placeholder="الاسم (اختياري)"
@@ -155,6 +194,80 @@ export function CheckoutDialog({
                 onChange={(e) => setCustomerName(e.target.value)}
                 className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
               />
+            </div>
+
+            {isLookingUp && (
+              <p className="mt-2 text-sm text-[var(--color-brand-muted)]">جارِ البحث...</p>
+            )}
+
+            {!isLookingUp && customer && (
+              <div className="mt-3 rounded-2xl bg-[var(--color-brand-background)] p-3">
+                <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+                  <Gift className="h-4 w-4 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
+                  رصيد النقاط: {customer.pointsBalance}
+                </p>
+                {affordableRewards.length === 0 ? (
+                  <p className="text-xs text-[var(--color-brand-muted)]">لا توجد مكافآت متاحة برصيده الحالي</p>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRewardId(null)}
+                      className={`rounded-xl border px-3 py-2 text-right text-sm ${
+                        selectedRewardId === null
+                          ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
+                          : "border-[var(--color-brand-border)]"
+                      }`}
+                    >
+                      بدون استبدال
+                    </button>
+                    {affordableRewards.map((reward) => (
+                      <button
+                        key={reward.id}
+                        type="button"
+                        onClick={() => setSelectedRewardId(reward.id)}
+                        className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
+                          selectedRewardId === reward.id
+                            ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
+                            : "border-[var(--color-brand-border)]"
+                        }`}
+                      >
+                        <span>{reward.name} — {reward.pointsCost} نقطة</span>
+                        <span className="text-[var(--color-brand-muted)]">
+                          -{formatCurrency(reward.discountAmount)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!isLookingUp && customerPhone.trim() && customer === null && (
+              <p className="mt-2 text-xs text-[var(--color-brand-muted)]">
+                عميل جديد — بدون نقاط ولاء سابقة
+              </p>
+            )}
+          </div>
+
+          <div className="mb-5 flex flex-col gap-1 rounded-2xl bg-[var(--color-brand-background)] p-4">
+            <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
+              <span>المجموع الفرعي</span>
+              <span>{formatCurrency(subtotal)}</span>
+            </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
+                <span>خصم — {selectedReward?.name}</span>
+                <span>-{formatCurrency(discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
+              <span>الضريبة ({taxRatePercent}%)</span>
+              <span>{formatCurrency(tax)}</span>
+            </div>
+            <div className="mt-1 flex justify-between border-t border-[var(--color-brand-border)] pt-2 text-lg font-bold">
+              <span>الإجمالي</span>
+              <span>{formatCurrency(total)}</span>
             </div>
           </div>
 

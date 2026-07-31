@@ -11,8 +11,10 @@ type OrderForPrint = {
   subtotal: number;
   tax_amount: number;
   total: number;
+  discount_amount: number;
   created_at: string;
   customers: { full_name: string | null; phone: string } | null;
+  rewards: { name: string } | null;
   order_items: {
     id: string;
     quantity: number;
@@ -34,8 +36,9 @@ export async function queueOrderPrintJobs(orderId: string): Promise<void> {
     supabase
       .from("orders")
       .select(
-        `id, order_date, daily_order_number, channel, subtotal, tax_amount, total, created_at,
+        `id, order_date, daily_order_number, channel, subtotal, tax_amount, total, discount_amount, created_at,
          customers ( full_name, phone ),
+         rewards ( name ),
          order_items ( id, quantity, unit_price, notes,
            products ( name ), combos ( name ),
            order_item_modifiers ( price_delta, modifiers ( name ) ) )`,
@@ -90,7 +93,9 @@ export async function queueOrderPrintJobs(orderId: string): Promise<void> {
     customerName: order.customers?.full_name ?? null,
     customerPhone: order.customers?.phone ?? null,
     items,
-    subtotal: order.subtotal,
+    subtotal: order.subtotal + order.discount_amount,
+    discountAmount: order.discount_amount,
+    redeemedRewardName: order.rewards?.name ?? null,
     taxRate: settings?.tax_rate_percent ?? 15,
     taxAmount: order.tax_amount,
     total: order.total,

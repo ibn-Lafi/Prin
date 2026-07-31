@@ -365,6 +365,8 @@ export type Database = {
           subtotal: number;
           tax_amount: number;
           total: number;
+          discount_amount: number;
+          redeemed_reward_id: string | null;
           customer_id: string | null;
           employee_id: string | null;
           cancelled_by_employee_id: string | null;
@@ -382,6 +384,8 @@ export type Database = {
           subtotal: number;
           tax_amount: number;
           total: number;
+          discount_amount?: number;
+          redeemed_reward_id?: string | null;
           customer_id?: string | null;
           employee_id?: string | null;
           cancelled_by_employee_id?: string | null;
@@ -399,6 +403,8 @@ export type Database = {
           subtotal?: number;
           tax_amount?: number;
           total?: number;
+          discount_amount?: number;
+          redeemed_reward_id?: string | null;
           customer_id?: string | null;
           employee_id?: string | null;
           cancelled_by_employee_id?: string | null;
@@ -589,6 +595,7 @@ export type Database = {
           name: string;
           description: string | null;
           points_cost: number;
+          discount_amount: number;
           image_url: string | null;
           is_active: boolean;
           created_at: string;
@@ -599,6 +606,7 @@ export type Database = {
           name: string;
           description?: string | null;
           points_cost: number;
+          discount_amount?: number;
           image_url?: string | null;
           is_active?: boolean;
           created_at?: string;
@@ -609,6 +617,7 @@ export type Database = {
           name?: string;
           description?: string | null;
           points_cost?: number;
+          discount_amount?: number;
           image_url?: string | null;
           is_active?: boolean;
           created_at?: string;
@@ -632,12 +641,14 @@ export type Database = {
           p_customer_name: string | null;
           p_items: Json;
           p_payments: Json;
+          p_reward_id?: string | null;
         };
         Returns: {
           order_id: string;
           daily_order_number: number;
           order_date: string;
           total: number;
+          discount_amount: number;
         }[];
       };
     };

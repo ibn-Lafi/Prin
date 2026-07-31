@@ -63,3 +63,17 @@ export type PrintAgentStatus = {
   kitchenPrinterConnected: boolean;
   customerPrinterConnected: boolean;
 };
+
+export type CustomerLookup = {
+  id: string;
+  fullName: string | null;
+  pointsBalance: number;
+};
+
+export type Reward = {
+  id: string;
+  name: string;
+  description: string | null;
+  pointsCost: number;
+  discountAmount: number;
+};

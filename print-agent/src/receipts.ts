@@ -73,6 +73,12 @@ export function renderCustomerReceipt(
 
   printer.drawLine();
   printer.leftRight(amount(payload.subtotal), "المجموع الفرعي");
+  if (payload.discountAmount > 0) {
+    printer.leftRight(
+      `-${amount(payload.discountAmount)}`,
+      payload.redeemedRewardName ? `خصم — ${payload.redeemedRewardName}` : "خصم",
+    );
+  }
   printer.leftRight(amount(payload.taxAmount), `الضريبة (${payload.taxRate}%)`);
   printer.bold(true);
   printer.leftRight(amount(payload.total), "الإجمالي");
