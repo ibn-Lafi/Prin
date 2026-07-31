@@ -442,6 +442,69 @@ export type Database = {
         };
         Relationships: [];
       };
+      print_agent_status: {
+        Row: {
+          id: number;
+          last_heartbeat_at: string | null;
+          kitchen_printer_connected: boolean;
+          customer_printer_connected: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          last_heartbeat_at?: string | null;
+          kitchen_printer_connected?: boolean;
+          customer_printer_connected?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          id?: number;
+          last_heartbeat_at?: string | null;
+          kitchen_printer_connected?: boolean;
+          customer_printer_connected?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      print_jobs: {
+        Row: {
+          id: string;
+          order_id: string;
+          target: string;
+          status: string;
+          payload: Json;
+          attempts: number;
+          error_message: string | null;
+          printed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          target: string;
+          status?: string;
+          payload: Json;
+          attempts?: number;
+          error_message?: string | null;
+          printed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          target?: string;
+          status?: string;
+          payload?: Json;
+          attempts?: number;
+          error_message?: string | null;
+          printed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;

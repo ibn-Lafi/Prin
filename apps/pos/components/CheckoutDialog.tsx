@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useOrderTicket } from "@/hooks/useOrderTicket";
 import { createOrderAction } from "@/app/(protected)/orders/actions";
+import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
 
 export function CheckoutDialog({
   taxRatePercent,
@@ -22,7 +23,9 @@ export function CheckoutDialog({
   const [cashAmount, setCashAmount] = useState("");
   const [cardAmount, setCardAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [confirmation, setConfirmation] = useState<{ dailyOrderNumber: number } | null>(null);
+  const [confirmation, setConfirmation] = useState<{ orderId: string; dailyOrderNumber: number } | null>(
+    null,
+  );
   const [isPending, startTransition] = useTransition();
 
   const cash = Number(cashAmount) || 0;
@@ -74,7 +77,7 @@ export function CheckoutDialog({
       }
 
       clear();
-      setConfirmation({ dailyOrderNumber: result.dailyOrderNumber! });
+      setConfirmation({ orderId: result.orderId!, dailyOrderNumber: result.dailyOrderNumber! });
     });
   }
 
@@ -90,9 +93,7 @@ export function CheckoutDialog({
           <p className="text-3xl font-extrabold text-[var(--color-brand-primary)]">
             #{confirmation.dailyOrderNumber}
           </p>
-          <p className="text-xs text-[var(--color-brand-muted)]">
-            الطباعة التلقائية مؤجّلة لمرحلة لاحقة — سجّل الطلب يدوياً بالمطبخ حالياً.
-          </p>
+          <PrintStatusIndicator orderId={confirmation.orderId} />
           <button
             type="button"
             onClick={onClose}

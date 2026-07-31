@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession, clearSession } from "@/lib/session";
-import type { IncomingOrder } from "@/lib/types";
+import { queueOrderPrintJobs } from "@/lib/printing";
+import type { IncomingOrder, PrintAgentStatus, PrintJobStatus } from "@/lib/types";
 
 // شكل نتيجة الاستعلام المتداخل (Nested Select) — نصرّحه يدوياً ونكسره بـ "as"
 // عند القراءة، بنفس نمط apps/menu، لأن database.types.ts لا يحمل معلومات
@@ -108,5 +109,42 @@ export async function acceptIncomingOrderAction(orderId: string): Promise<{ erro
     return { error: "الطلب تم استلامه مسبقاً من جهاز آخر" };
   }
 
+  await queueOrderPrintJobs(orderId);
+
   return {};
+}
+
+/** يُستطلَع (polling) بعد إنشاء/استلام أي طلب لعرض حالة الطباعة بالواجهة. */
+export async function getPrintJobStatusAction(orderId: string): Promise<PrintJobStatus[]> {
+  const session = await getSession();
+  if (!session) return [];
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data } = await supabase
+    .from("print_jobs")
+    .select("target, status")
+    .eq("order_id", orderId);
+
+  return (data ?? []) as PrintJobStatus[];
+}
+
+/** يُستطلَع دورياً بواجهة الكاشير لإظهار تنبيه فقد اتصال الطابعة/جهاز الطباعة. */
+export async function getPrintAgentStatusAction(): Promise<PrintAgentStatus | null> {
+  const session = await getSession();
+  if (!session) return null;
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data } = await supabase
+    .from("print_agent_status")
+    .select("last_heartbeat_at, kitchen_printer_connected, customer_printer_connected")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  return {
+    lastHeartbeatAt: data.last_heartbeat_at,
+    kitchenPrinterConnected: data.kitchen_printer_connected,
+    customerPrinterConnected: data.customer_printer_connected,
+  };
 }

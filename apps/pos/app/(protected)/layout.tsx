@@ -4,6 +4,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { logoutAction } from "./actions";
 import { IncomingOrdersWatcher } from "@/components/IncomingOrdersWatcher";
+import { PrintAgentStatusBanner } from "@/components/PrintAgentStatusBanner";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -42,6 +43,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           </form>
         </div>
       </header>
+      <PrintAgentStatusBanner />
       {children}
       <IncomingOrdersWatcher />
     </div>

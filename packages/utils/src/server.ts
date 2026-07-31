@@ -8,3 +8,4 @@ export {
   type EmployeeRole,
   type EmployeeSessionPayload,
 } from "./employeeSession";
+export { buildZatcaQrBase64 } from "./zatca";

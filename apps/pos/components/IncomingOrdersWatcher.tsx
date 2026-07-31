@@ -6,6 +6,7 @@ import type { IncomingOrder } from "@/lib/types";
 import { fetchIncomingOrderDetailsAction, acceptIncomingOrderAction } from "@/app/(protected)/actions";
 import { playAlertSound } from "@/lib/alertSound";
 import { IncomingOrderPopup } from "@/components/IncomingOrderPopup";
+import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
 
 // يستمع لأي تغيير على الطلبات الأونلاين — بمجرد ما تتحول حالة طلب إلى
 // "received" (يعني الدفع نجح عبر Webhook Moyasar)، هذا الإشعار وحده يكفي
@@ -14,6 +15,7 @@ import { IncomingOrderPopup } from "@/components/IncomingOrderPopup";
 export function IncomingOrdersWatcher() {
   const [queue, setQueue] = useState<IncomingOrder[]>([]);
   const [isAccepting, setIsAccepting] = useState(false);
+  const [printingOrder, setPrintingOrder] = useState<IncomingOrder | null>(null);
 
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
@@ -56,8 +58,24 @@ export function IncomingOrdersWatcher() {
     const result = await acceptIncomingOrderAction(current.id);
     setIsAccepting(false);
     if (!result.error) {
+      setPrintingOrder(current);
       setQueue((prev) => prev.slice(1));
+      setTimeout(() => setPrintingOrder(null), 5000);
     }
+  }
+
+  if (printingOrder) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+        <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-3xl bg-[var(--color-brand-card)] p-8 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100 text-2xl font-bold text-green-700">
+            ✓
+          </div>
+          <h2 className="text-lg font-bold">تم استلام الطلب #{printingOrder.dailyOrderNumber}</h2>
+          <PrintStatusIndicator orderId={printingOrder.id} />
+        </div>
+      </div>
+    );
   }
 
   if (!current) return null;

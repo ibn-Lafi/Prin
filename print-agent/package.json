@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
+    "start": "tsx src/index.ts",
     "lint": "eslint .",
     "type-check": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@brin/database": "workspace:*",
+    "@brin/utils": "workspace:*",
+    "dotenv": "^17.4.2",
+    "node-thermal-printer": "^4.6.0"
+  },
   "devDependencies": {
     "@types/node": "^22.20.1",
     "tsx": "^4.23.1",

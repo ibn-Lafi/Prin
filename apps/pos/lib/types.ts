@@ -52,3 +52,14 @@ export type IncomingOrder = {
   customerPhone: string | null;
   items: { id: string; name: string; quantity: number; modifiers: string[] }[];
 };
+
+export type PrintJobStatus = {
+  target: "kitchen" | "customer";
+  status: "pending" | "printed" | "failed";
+};
+
+export type PrintAgentStatus = {
+  lastHeartbeatAt: string | null;
+  kitchenPrinterConnected: boolean;
+  customerPrinterConnected: boolean;
+};

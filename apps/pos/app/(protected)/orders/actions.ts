@@ -2,6 +2,7 @@
 
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
+import { queueOrderPrintJobs } from "@/lib/printing";
 
 export type CreateOrderItem = {
   kind: "product" | "combo";
@@ -24,6 +25,7 @@ export type CreateOrderInput = {
 
 export type CreateOrderResult = {
   error?: string;
+  orderId?: string;
   dailyOrderNumber?: number;
 };
 
@@ -55,5 +57,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     return { error: "تعذّر إنشاء الطلب" };
   }
 
-  return { dailyOrderNumber: created.daily_order_number };
+  await queueOrderPrintJobs(created.order_id);
+
+  return { orderId: created.order_id, dailyOrderNumber: created.daily_order_number };
 }
