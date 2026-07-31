@@ -43,3 +43,12 @@ export type Combo = {
   is_available: boolean;
   deleted_at: string | null;
 };
+
+export type IncomingOrder = {
+  id: string;
+  dailyOrderNumber: number;
+  total: number;
+  customerName: string | null;
+  customerPhone: string | null;
+  items: { id: string; name: string; quantity: number; modifiers: string[] }[];
+};

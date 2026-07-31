@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { logoutAction } from "./actions";
+import { IncomingOrdersWatcher } from "@/components/IncomingOrdersWatcher";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -42,6 +43,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         </div>
       </header>
       {children}
+      <IncomingOrdersWatcher />
     </div>
   );
 }

@@ -1,0 +1,93 @@
+"use client";
+
+import { Bell, Phone, User } from "lucide-react";
+import { formatCurrency } from "@brin/utils";
+import type { IncomingOrder } from "@/lib/types";
+
+export function IncomingOrderPopup({
+  order,
+  remainingCount,
+  isAccepting,
+  onAccept,
+}: {
+  order: IncomingOrder;
+  remainingCount: number;
+  isAccepting: boolean;
+  onAccept: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+      <div className="flex w-full max-w-md flex-col overflow-hidden rounded-3xl bg-[var(--color-brand-card)]">
+        <div className="flex items-center gap-3 bg-[var(--color-brand-primary)] p-5 text-white">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <Bell className="h-6 w-6" strokeWidth={1.75} />
+          </div>
+          <div>
+            <p className="text-sm opacity-90">طلب إلكتروني جديد</p>
+            <p className="text-2xl font-extrabold">#{order.dailyOrderNumber}</p>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5">
+          {(order.customerName || order.customerPhone) && (
+            <div className="mb-4 flex flex-col gap-1 rounded-2xl bg-[var(--color-brand-background)] p-3 text-sm">
+              {order.customerName && (
+                <span className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
+                  {order.customerName}
+                </span>
+              )}
+              {order.customerPhone && (
+                <span className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
+                  {order.customerPhone}
+                </span>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {order.items.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-start justify-between border-b border-[var(--color-brand-border)] pb-2 last:border-0"
+              >
+                <div>
+                  <p className="font-semibold">
+                    {item.name} × {item.quantity}
+                  </p>
+                  {item.modifiers.length > 0 && (
+                    <p className="text-xs text-[var(--color-brand-muted)]">
+                      {item.modifiers.join("، ")}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex justify-between border-t border-[var(--color-brand-border)] pt-3 text-lg font-bold">
+            <span>الإجمالي</span>
+            <span>{formatCurrency(order.total)}</span>
+          </div>
+        </div>
+
+        <div className="shrink-0 border-t border-[var(--color-brand-border)] p-4">
+          {remainingCount > 0 && (
+            <p className="mb-2 text-center text-xs text-[var(--color-brand-muted)]">
+              +{remainingCount} طلب آخر بالانتظار
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={onAccept}
+            disabled={isAccepting}
+            className="w-full rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:opacity-50"
+          >
+            {isAccepting ? "جارِ الاستلام..." : "استلام وطباعة"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
