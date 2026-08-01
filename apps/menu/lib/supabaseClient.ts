@@ -11,8 +11,15 @@ export async function getSupabaseServerClient() {
   return createSupabaseServerClient({
     getAll: () => cookieStore.getAll(),
     setAll: (cookiesToSet) => {
-      for (const { name, value, options } of cookiesToSet) {
-        cookieStore.set(name, value, options);
+      try {
+        for (const { name, value, options } of cookiesToSet) {
+          cookieStore.set(name, value, options);
+        }
+      } catch {
+        // setAll استُدعيت أثناء Server Component (مو Server Action/Route Handler) —
+        // Next.js يمنع تعديل الكوكيز هناك. تجاهلها آمن هنا لأن الجلسة تُقرأ
+        // بنجاح بأي حال؛ فقط تجديد التوكن التلقائي يتأجل لأقرب Server Action.
+        // بدون try/catch هذا الخطأ يطلع كـ unhandledRejection ويسقّط السيرفر كامل.
       }
     },
   });
