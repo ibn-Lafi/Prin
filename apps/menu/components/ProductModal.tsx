@@ -3,10 +3,20 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, Circle, Minus, Plus, UtensilsCrossed, X } from "lucide-react";
 import { formatCurrency, roundMoney } from "@brin/utils";
-import type { Product } from "@/lib/types";
+import type { ModifierGroup } from "@/lib/types";
 import { useCart, type CartModifier } from "@/hooks/useCart";
 
-export function ProductModal({ product, onClose }: { product: Product; onClose: () => void }) {
+type OrderableItem = {
+  id: string;
+  name: string;
+  price: number;
+  description?: string | null;
+  calories?: number | null;
+  image_url: string | null;
+  modifier_groups: ModifierGroup[];
+};
+
+export function ProductModal({ item, onClose }: { item: OrderableItem; onClose: () => void }) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -32,31 +42,31 @@ export function ProductModal({ product, onClose }: { product: Product; onClose: 
     });
   }
 
-  const missingRequiredGroups = product.modifier_groups.filter(
+  const missingRequiredGroups = item.modifier_groups.filter(
     (group) => group.is_required && (selections[group.id]?.length ?? 0) < group.min_select,
   );
 
   const selectedModifiers: CartModifier[] = useMemo(
     () =>
-      product.modifier_groups.flatMap((group) =>
+      item.modifier_groups.flatMap((group) =>
         (selections[group.id] ?? []).map((modifierId) => {
           const modifier = group.modifiers.find((m) => m.id === modifierId);
           return { modifierId, name: modifier?.name ?? "", priceDelta: modifier?.price_delta ?? 0 };
         }),
       ),
-    [product.modifier_groups, selections],
+    [item.modifier_groups, selections],
   );
 
   const modifiersTotal = selectedModifiers.reduce((sum, m) => sum + m.priceDelta, 0);
-  const totalPrice = roundMoney((product.price + modifiersTotal) * quantity);
+  const totalPrice = roundMoney((item.price + modifiersTotal) * quantity);
 
   function handleAddToCart() {
     if (missingRequiredGroups.length > 0) return;
 
     addItem({
-      productId: product.id,
-      name: product.name,
-      unitPrice: product.price,
+      productId: item.id,
+      name: item.name,
+      unitPrice: item.price,
       quantity,
       modifiers: selectedModifiers,
     });
@@ -67,9 +77,9 @@ export function ProductModal({ product, onClose }: { product: Product; onClose: 
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
       <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-[var(--color-brand-card)] sm:rounded-3xl">
         <div className="relative flex aspect-[16/10] w-full shrink-0 items-center justify-center bg-[var(--color-brand-primary-light)]">
-          {product.image_url ? (
+          {item.image_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.image_url} alt={product.name} className="h-full w-full object-cover" />
+            <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
           ) : (
             <UtensilsCrossed
               className="h-14 w-14 text-[var(--color-brand-primary)]/40"
@@ -88,20 +98,18 @@ export function ProductModal({ product, onClose }: { product: Product; onClose: 
 
         <div className="flex w-full shrink-0 items-center justify-between bg-[var(--color-brand-primary)] p-4">
           <div className="flex flex-col">
-            <span className="font-semibold text-white">{product.name}</span>
-            {product.calories !== null && (
-              <span className="text-xs text-white/70">{product.calories} سعرة</span>
-            )}
+            <span className="font-semibold text-white">{item.name}</span>
+            {item.calories != null && <span className="text-xs text-white/70">{item.calories} سعرة</span>}
           </div>
-          <span className="font-bold text-white">{formatCurrency(product.price)}</span>
+          <span className="font-bold text-white">{formatCurrency(item.price)}</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
-          {product.description && (
-            <p className="text-sm text-[var(--color-brand-muted)]">{product.description}</p>
+          {item.description && (
+            <p className="text-sm text-[var(--color-brand-muted)]">{item.description}</p>
           )}
 
-          {product.modifier_groups.map((group) => {
+          {item.modifier_groups.map((group) => {
             const selectedCount = selections[group.id]?.length ?? 0;
             return (
               <fieldset key={group.id} className="mt-5">

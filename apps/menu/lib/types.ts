@@ -43,6 +43,7 @@ export type Combo = {
   image_url: string | null;
   is_available: boolean;
   deleted_at: string | null;
+  modifier_groups: ModifierGroup[];
 };
 
 export type Reward = {

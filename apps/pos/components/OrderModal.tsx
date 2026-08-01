@@ -3,10 +3,25 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, Circle, Minus, Plus, X } from "lucide-react";
 import { formatCurrency, roundMoney } from "@brin/utils";
-import type { Product } from "@/lib/types";
+import type { ModifierGroup } from "@/lib/types";
 import { addItem, type TicketModifier } from "@/hooks/useOrderTicket";
 
-export function OrderModal({ product, onClose }: { product: Product; onClose: () => void }) {
+type OrderableItem = {
+  id: string;
+  name: string;
+  price: number;
+  modifier_groups: ModifierGroup[];
+};
+
+export function OrderModal({
+  item,
+  kind,
+  onClose,
+}: {
+  item: OrderableItem;
+  kind: "product" | "combo";
+  onClose: () => void;
+}) {
   const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
 
@@ -28,31 +43,31 @@ export function OrderModal({ product, onClose }: { product: Product; onClose: ()
     });
   }
 
-  const missingRequiredGroups = product.modifier_groups.filter(
+  const missingRequiredGroups = item.modifier_groups.filter(
     (group) => group.is_required && (selections[group.id]?.length ?? 0) < group.min_select,
   );
 
   const selectedModifiers: TicketModifier[] = useMemo(
     () =>
-      product.modifier_groups.flatMap((group) =>
+      item.modifier_groups.flatMap((group) =>
         (selections[group.id] ?? []).map((modifierId) => {
           const modifier = group.modifiers.find((m) => m.id === modifierId);
           return { modifierId, name: modifier?.name ?? "", priceDelta: modifier?.price_delta ?? 0 };
         }),
       ),
-    [product.modifier_groups, selections],
+    [item.modifier_groups, selections],
   );
 
   const modifiersTotal = selectedModifiers.reduce((sum, m) => sum + m.priceDelta, 0);
-  const totalPrice = roundMoney((product.price + modifiersTotal) * quantity);
+  const totalPrice = roundMoney((item.price + modifiersTotal) * quantity);
 
   function handleAdd() {
     if (missingRequiredGroups.length > 0) return;
     addItem({
-      kind: "product",
-      refId: product.id,
-      name: product.name,
-      unitPrice: product.price,
+      kind,
+      refId: item.id,
+      name: item.name,
+      unitPrice: item.price,
       quantity,
       modifiers: selectedModifiers,
     });
@@ -63,7 +78,7 @@ export function OrderModal({ product, onClose }: { product: Product; onClose: ()
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
       <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-[var(--color-brand-card)]">
         <div className="flex items-center justify-between border-b border-[var(--color-brand-border)] p-4">
-          <h2 className="text-lg font-bold">{product.name}</h2>
+          <h2 className="text-lg font-bold">{item.name}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -75,7 +90,7 @@ export function OrderModal({ product, onClose }: { product: Product; onClose: ()
         </div>
 
         <div className="flex-1 overflow-y-auto p-5">
-          {product.modifier_groups.map((group) => {
+          {item.modifier_groups.map((group) => {
             const selectedCount = selections[group.id]?.length ?? 0;
             return (
               <fieldset key={group.id} className="mb-5">

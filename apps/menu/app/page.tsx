@@ -17,7 +17,9 @@ export default async function MenuHomePage() {
         .order("name"),
       supabase
         .from("combos")
-        .select("id, name, description, price, image_url, is_available, deleted_at")
+        .select(
+          "id, name, description, price, image_url, is_available, deleted_at, modifier_groups(id, name, is_required, min_select, max_select, display_order, modifiers(id, name, price_delta, is_available, display_order))",
+        )
         .order("name"),
       supabase
         .from("rewards")
@@ -28,7 +30,7 @@ export default async function MenuHomePage() {
 
   const categories = unwrapQuery<Category[]>(categoriesResult);
   const products = unwrapQuery<Product[]>(productsResult as never);
-  const combos = unwrapQuery<Combo[]>(combosResult);
+  const combos = unwrapQuery<Combo[]>(combosResult as never);
   const rewards = unwrapQuery<Reward[]>(rewardsResult);
 
   let pointsBalance: number | null = null;

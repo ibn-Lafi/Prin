@@ -23,7 +23,9 @@ export function ProductGrid({
   combos: Combo[];
 }) {
   const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedItem, setSelectedItem] = useState<
+    { item: Product; kind: "product" } | { item: Combo; kind: "combo" } | null
+  >(null);
 
   const visibleCombos = combos.filter(isVisible);
   const visibleProducts = products.filter((p) => isVisible(p) && p.category_id === activeTab);
@@ -40,18 +42,22 @@ export function ProductGrid({
       });
       return;
     }
-    setSelectedProduct(product);
+    setSelectedItem({ item: product, kind: "product" });
   }
 
   function handleComboTap(combo: Combo) {
-    addItem({
-      kind: "combo",
-      refId: combo.id,
-      name: combo.name,
-      unitPrice: combo.price,
-      quantity: 1,
-      modifiers: [],
-    });
+    if (combo.modifier_groups.length === 0) {
+      addItem({
+        kind: "combo",
+        refId: combo.id,
+        name: combo.name,
+        unitPrice: combo.price,
+        quantity: 1,
+        modifiers: [],
+      });
+      return;
+    }
+    setSelectedItem({ item: combo, kind: "combo" });
   }
 
   return (
@@ -152,8 +158,8 @@ export function ProductGrid({
         </div>
       </div>
 
-      {selectedProduct && (
-        <OrderModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+      {selectedItem && (
+        <OrderModal item={selectedItem.item} kind={selectedItem.kind} onClose={() => setSelectedItem(null)} />
       )}
     </div>
   );

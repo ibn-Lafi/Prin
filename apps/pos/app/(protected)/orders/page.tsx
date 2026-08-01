@@ -22,7 +22,9 @@ export default async function OrdersPage() {
       .order("name"),
     supabase
       .from("combos")
-      .select("id, name, description, price, image_url, is_available, deleted_at")
+      .select(
+        "id, name, description, price, image_url, is_available, deleted_at, modifier_groups(id, name, is_required, min_select, max_select, display_order, modifiers(id, name, price_delta, is_available, display_order))",
+      )
       .is("deleted_at", null)
       .order("name"),
     supabase.from("restaurant_settings").select("tax_rate_percent").eq("id", 1).single(),
@@ -30,7 +32,7 @@ export default async function OrdersPage() {
 
   const categories = unwrapQuery<Category[]>(categoriesResult);
   const products = unwrapQuery<Product[]>(productsResult as never);
-  const combos = unwrapQuery<Combo[]>(combosResult);
+  const combos = unwrapQuery<Combo[]>(combosResult as never);
 
   return (
     <POSOrderBuilder

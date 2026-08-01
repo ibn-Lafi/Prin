@@ -68,7 +68,7 @@ export function MenuBrowser({
   pointsBalance: number | null;
 }) {
   const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Product | Combo | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
   const [query, setQuery] = useState("");
@@ -98,7 +98,7 @@ export function MenuBrowser({
           }
           const updated = payload.new as Combo;
           const exists = prev.some((c) => c.id === updated.id);
-          if (!exists) return [...prev, updated];
+          if (!exists) return [...prev, { ...updated, modifier_groups: [] }];
           return prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c));
         });
       })
@@ -189,21 +189,21 @@ export function MenuBrowser({
         ) : (
           <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
             {activeTab === COMBOS_TAB_ID &&
-              visibleCombos.map((combo) => <ComboCard key={combo.id} combo={combo} />)}
+              visibleCombos.map((combo) => (
+                <ComboCard key={combo.id} combo={combo} onSelect={() => setSelectedItem(combo)} />
+              ))}
             {visibleProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                onSelect={() => setSelectedProduct(product)}
+                onSelect={() => setSelectedItem(product)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {selectedProduct && (
-        <ProductModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
-      )}
+      {selectedItem && <ProductModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
 
       <FloatingCartBar />
     </main>

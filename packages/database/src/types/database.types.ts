@@ -308,7 +308,8 @@ export type Database = {
       modifier_groups: {
         Row: {
           id: string;
-          product_id: string;
+          product_id: string | null;
+          combo_id: string | null;
           name: string;
           is_required: boolean;
           min_select: number;
@@ -318,7 +319,8 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          product_id: string;
+          product_id?: string | null;
+          combo_id?: string | null;
           name: string;
           is_required?: boolean;
           min_select?: number;
@@ -328,7 +330,8 @@ export type Database = {
         };
         Update: {
           id?: string;
-          product_id?: string;
+          product_id?: string | null;
+          combo_id?: string | null;
           name?: string;
           is_required?: boolean;
           min_select?: number;

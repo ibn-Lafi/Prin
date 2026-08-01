@@ -83,7 +83,7 @@ export type ComboItem = {
   quantity: number;
 };
 
-export type ComboWithItems = Combo & { combo_items: ComboItem[] };
+export type ComboWithItems = Combo & { combo_items: ComboItem[]; modifier_groups: ModifierGroup[] };
 
 export type DiscountCode = {
   id: string;

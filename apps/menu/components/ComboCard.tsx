@@ -5,25 +5,30 @@ import { formatCurrency } from "@brin/utils";
 import type { Combo } from "@/lib/types";
 import { useCart } from "@/hooks/useCart";
 
-export function ComboCard({ combo }: { combo: Combo }) {
+export function ComboCard({ combo, onSelect }: { combo: Combo; onSelect: () => void }) {
   const { addItem } = useCart();
   const available = combo.is_available;
+  const hasModifiers = combo.modifier_groups.length > 0;
+
+  function handleClick() {
+    if (!available) return;
+    if (hasModifiers) {
+      onSelect();
+      return;
+    }
+    addItem({
+      productId: combo.id,
+      name: combo.name,
+      unitPrice: combo.price,
+      quantity: 1,
+      modifiers: [],
+    });
+  }
 
   return (
     <button
       type="button"
-      onClick={
-        available
-          ? () =>
-              addItem({
-                productId: combo.id,
-                name: combo.name,
-                unitPrice: combo.price,
-                quantity: 1,
-                modifiers: [],
-              })
-          : undefined
-      }
+      onClick={handleClick}
       disabled={!available}
       className="flex w-full flex-col overflow-hidden rounded-2xl bg-[var(--color-brand-card)] text-right shadow-md shadow-black/5 disabled:opacity-70"
     >
