@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession, clearSession } from "@/lib/session";
 import { queueOrderPrintJobs } from "@/lib/printing";
-import type { IncomingOrder, PrintAgentStatus, PrintJobStatus } from "@/lib/types";
+import type { ActiveOnlineOrder, IncomingOrder, PrintAgentStatus, PrintJobStatus } from "@/lib/types";
 
 // شكل نتيجة الاستعلام المتداخل (Nested Select) — نصرّحه يدوياً ونكسره بـ "as"
 // عند القراءة، بنفس نمط apps/menu، لأن database.types.ts لا يحمل معلومات
@@ -110,6 +110,57 @@ export async function acceptIncomingOrderAction(orderId: string): Promise<{ erro
   }
 
   await queueOrderPrintJobs(orderId);
+
+  return {};
+}
+
+/** قائمة الطلبات الإلكترونية النشطة (بانتظار القبول أو قيد التحضير) — تغذّي
+ * شريط الطلبات العلوي بالكاشير. */
+export async function listActiveOnlineOrdersAction(): Promise<ActiveOnlineOrder[]> {
+  const session = await getSession();
+  if (!session) return [];
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data } = await supabase
+    .from("orders")
+    .select("id, daily_order_number, status, total")
+    .eq("channel", "online")
+    .in("status", ["received", "accepted"])
+    .order("created_at", { ascending: true });
+
+  return (data ?? []).map((order) => ({
+    id: order.id,
+    dailyOrderNumber: order.daily_order_number,
+    status: order.status as "received" | "accepted",
+    total: order.total,
+  }));
+}
+
+/** يحوّل طلب إلكتروني من "accepted" إلى "completed" — يُستخدم لما يُسلَّم
+ * الطلب فعلياً للعميل بالفرع، فيخرج من قائمة الطلبات النشطة بالكاشير ويظهر
+ * ضمن "الطلبات السابقة" بالمنيو الإلكتروني. */
+export async function completeOnlineOrderAction(orderId: string): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) {
+    return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data, error } = await supabase
+    .from("orders")
+    .update({ status: "completed" })
+    .eq("id", orderId)
+    .eq("status", "accepted")
+    .eq("channel", "online")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return { error: "تعذّر تحديث حالة الطلب" };
+  }
+  if (!data) {
+    return { error: "تعذّر تحديث الطلب — تأكد أنه بحالة قيد التحضير" };
+  }
 
   return {};
 }

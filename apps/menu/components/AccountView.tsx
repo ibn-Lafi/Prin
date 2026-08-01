@@ -9,6 +9,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending_payment: "بانتظار الدفع",
   received: "تم الاستلام",
   accepted: "قيد التحضير",
+  completed: "مكتمل",
   cancelled: "ملغي",
 };
 

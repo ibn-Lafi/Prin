@@ -4,6 +4,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { logoutAction } from "./actions";
 import { IncomingOrdersWatcher } from "@/components/IncomingOrdersWatcher";
+import { OnlineOrdersHeaderList } from "@/components/OnlineOrdersHeaderList";
 import { PrintAgentStatusBanner } from "@/components/PrintAgentStatusBanner";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           BRIN — الكاشير
         </span>
         <div className="flex items-center gap-3">
+          <OnlineOrdersHeaderList />
           <span className="text-sm">
             <span className="font-semibold">{employee.full_name}</span>
             <span className="mr-1 text-[var(--color-brand-muted)]">({roleLabel})</span>

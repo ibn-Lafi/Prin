@@ -59,6 +59,13 @@ export type PrintJobStatus = {
   status: "pending" | "printed" | "failed";
 };
 
+export type ActiveOnlineOrder = {
+  id: string;
+  dailyOrderNumber: number;
+  status: "received" | "accepted";
+  total: number;
+};
+
 export type PrintAgentStatus = {
   lastHeartbeatAt: string | null;
   kitchenPrinterConnected: boolean;

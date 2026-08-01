@@ -70,3 +70,14 @@ export type OrderSummary = {
   total: number;
   created_at: string;
 };
+
+export type OrderItemDetail = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  quantity: number;
+  unitPrice: number;
+  modifiers: { modifierId: string; name: string; priceDelta: number }[];
+};
+
+export type OrderWithItems = OrderSummary & { items: OrderItemDetail[] };

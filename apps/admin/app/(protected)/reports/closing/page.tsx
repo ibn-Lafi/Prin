@@ -21,7 +21,7 @@ export default async function CashClosingPage({
     supabase
       .from("orders")
       .select("payments ( method, amount )")
-      .in("status", ["received", "accepted"])
+      .in("status", ["received", "accepted", "completed"])
       .eq("order_date", closingDate),
     supabase
       .from("cash_closings")

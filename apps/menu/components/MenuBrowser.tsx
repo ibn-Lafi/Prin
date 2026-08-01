@@ -8,7 +8,6 @@ import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
 import { RewardCard } from "@/components/RewardCard";
 import { ProductModal } from "@/components/ProductModal";
-import { FloatingCartBar } from "@/components/FloatingCartBar";
 
 const COMBOS_TAB_ID = "__combos__";
 const REWARDS_TAB_ID = "__rewards__";
@@ -204,8 +203,6 @@ export function MenuBrowser({
       </div>
 
       {selectedItem && <ProductModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
-
-      <FloatingCartBar />
     </main>
   );
 }

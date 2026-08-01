@@ -7,6 +7,7 @@ const STATUS_LABELS: Record<string, string> = {
   pending_payment: "بانتظار الدفع",
   received: "مستلم",
   accepted: "مقبول",
+  completed: "مكتمل",
   cancelled: "ملغى",
 };
 
@@ -106,6 +107,7 @@ export default async function OrdersPage({
             <option value="pending_payment">بانتظار الدفع</option>
             <option value="received">مستلم</option>
             <option value="accepted">مقبول</option>
+            <option value="completed">مكتمل</option>
             <option value="cancelled">ملغى</option>
           </select>
         </label>

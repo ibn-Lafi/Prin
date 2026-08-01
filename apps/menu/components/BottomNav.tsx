@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ShoppingBag, User } from "lucide-react";
+import { ClipboardList, Home, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
 
 const NAV_ITEMS = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/cart", label: "السلة", icon: ShoppingBag },
+  { href: "/orders", label: "الطلبات", icon: ClipboardList },
   { href: "/account", label: "حسابي", icon: User },
 ];
 

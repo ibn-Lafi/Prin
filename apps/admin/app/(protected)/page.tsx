@@ -14,7 +14,7 @@ export default async function DashboardPage() {
     .from("orders")
     .select("total, channel")
     .eq("order_date", today)
-    .in("status", ["received", "accepted"]);
+    .in("status", ["received", "accepted", "completed"]);
 
   const orderCount = orders?.length ?? 0;
   const totalSales = (orders ?? []).reduce((sum, o) => sum + o.total, 0);

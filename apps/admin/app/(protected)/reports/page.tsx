@@ -50,7 +50,7 @@ export default async function ReportsPage({
   const { data: rawOrders } = await supabase
     .from("orders")
     .select("total, tax_amount, employee_id, payments ( method, amount )")
-    .in("status", ["received", "accepted"])
+    .in("status", ["received", "accepted", "completed"])
     .gte("order_date", from)
     .lte("order_date", to);
 
