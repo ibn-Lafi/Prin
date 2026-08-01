@@ -1,38 +1,25 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Delete, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { loginAction } from "./actions";
 
-const KEYPAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
-
 export default function LoginPage() {
-  const [pin, setPin] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function handleKey(key: string) {
-    if (isPending) return;
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-
-    if (key === "⌫") {
-      setPin((current) => current.slice(0, -1));
-      return;
-    }
-
-    if (pin.length >= 4) return;
-    const next = pin + key;
-    setPin(next);
-
-    if (next.length === 4) {
-      startTransition(async () => {
-        const result = await loginAction(next);
-        if (result?.error) {
-          setError(result.error);
-          setPin("");
-        }
-      });
-    }
+    startTransition(async () => {
+      const result = await loginAction(username, password);
+      if (result?.error) {
+        setError(result.error);
+      }
+    });
   }
 
   return (
@@ -42,39 +29,57 @@ export default function LoginPage() {
           <ShieldCheck className="h-6 w-6 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
         </div>
         <h1 className="text-xl font-bold">دخول لوحة الإدارة</h1>
-        <p className="text-sm text-[var(--color-brand-muted)]">أدخل كود PIN الخاص بحساب المدير</p>
+        <p className="text-sm text-[var(--color-brand-muted)]">
+          أدخل اسم المستخدم وكلمة المرور الخاصة بحساب المدير
+        </p>
       </div>
 
-      <div className="flex gap-3" aria-hidden>
-        {[0, 1, 2, 3].map((i) => (
-          <span
-            key={i}
-            className={`h-4 w-4 rounded-full ${
-              i < pin.length ? "bg-[var(--color-brand-primary)]" : "bg-[var(--color-brand-border)]"
-            }`}
+      <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
+        <input
+          type="text"
+          autoComplete="username"
+          placeholder="اسم المستخدم"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          disabled={isPending}
+          className="w-full rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-card)] px-4 py-3 outline-none focus:border-[var(--color-brand-primary)] disabled:opacity-50"
+        />
+        <div className="relative">
+          <input
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder="كلمة المرور"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={isPending}
+            className="w-full rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-card)] px-4 py-3 pl-11 outline-none focus:border-[var(--color-brand-primary)] disabled:opacity-50"
           />
-        ))}
-      </div>
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute top-1/2 left-3 -translate-y-1/2 text-[var(--color-brand-muted)]"
+            aria-label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4.5 w-4.5" strokeWidth={1.75} />
+            ) : (
+              <Eye className="h-4.5 w-4.5" strokeWidth={1.75} />
+            )}
+          </button>
+        </div>
 
-      <p className="h-5 text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>
-
-      <div className="grid grid-cols-3 gap-4">
-        {KEYPAD.map((key, index) =>
-          key === "" ? (
-            <span key={index} />
-          ) : (
-            <button
-              key={index}
-              type="button"
-              onClick={() => handleKey(key)}
-              disabled={isPending}
-              className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-brand-card)] text-xl font-semibold text-[var(--color-brand-text)] shadow-md shadow-black/5 transition-all duration-100 active:translate-y-0.5 active:shadow-sm disabled:opacity-50"
-            >
-              {key === "⌫" ? <Delete className="h-5 w-5" strokeWidth={1.75} /> : key}
-            </button>
-          ),
+        {error && (
+          <p className="text-center text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>
         )}
-      </div>
+
+        <button
+          type="submit"
+          disabled={isPending || !username || !password}
+          className="mt-2 w-full rounded-xl bg-[var(--color-brand-primary)] px-4 py-3 font-semibold text-white disabled:opacity-50"
+        >
+          {isPending ? "جارِ الدخول..." : "دخول"}
+        </button>
+      </form>
     </main>
   );
 }

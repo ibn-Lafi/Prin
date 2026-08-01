@@ -2,6 +2,7 @@
 // (bcryptjs، تواقيع الجلسات) — أبداً لا تُستورد من مكوّن "use client"، عشان
 // Webpack ما يحاول يحزم node:crypto ضمن حزمة المتصفح (Unhandled Scheme error).
 export { verifyEmployeePin, hashEmployeePin } from "./employeePin";
+export { hashPassword, verifyPassword } from "./password";
 export {
   createEmployeeSessionToken,
   verifyEmployeeSessionToken,

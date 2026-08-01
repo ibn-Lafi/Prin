@@ -1,40 +1,40 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { verifyEmployeePin } from "@brin/utils/server";
+import { verifyPassword } from "@brin/utils/server";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { createSession } from "@/lib/session";
 
 export type LoginResult = { error?: string };
 
-export async function loginAction(pin: string): Promise<LoginResult> {
-  if (!/^\d{4}$/.test(pin)) {
-    return { error: "أدخل كود مكوّن من 4 أرقام" };
+export async function loginAction(username: string, password: string): Promise<LoginResult> {
+  const normalizedUsername = username.trim().toLowerCase();
+  if (!normalizedUsername || !password) {
+    return { error: "أدخل اسم المستخدم وكلمة المرور" };
   }
 
   const supabase = createSupabaseServiceRoleClient();
-  const { data: managers, error } = await supabase
+  const { data: manager, error } = await supabase
     .from("employees")
-    .select("id, pin_hash")
+    .select("id, password_hash")
     .eq("is_active", true)
-    .eq("role", "manager");
+    .eq("role", "manager")
+    .eq("username", normalizedUsername)
+    .maybeSingle();
 
   if (error) {
     return { error: "تعذّر الاتصال بقاعدة البيانات" };
   }
 
-  for (const manager of managers ?? []) {
-    const matches = await verifyEmployeePin(pin, manager.pin_hash);
-    if (matches) {
-      await createSession(manager.id);
-      await supabase.from("audit_log").insert({
-        employee_id: manager.id,
-        action_type: "employee_login",
-        description: "تسجيل دخول بلوحة الإدارة",
-      });
-      redirect("/");
-    }
+  if (!manager?.password_hash || !(await verifyPassword(password, manager.password_hash))) {
+    return { error: "اسم المستخدم أو كلمة المرور غير صحيحة" };
   }
 
-  return { error: "كود غير صحيح" };
+  await createSession(manager.id);
+  await supabase.from("audit_log").insert({
+    employee_id: manager.id,
+    action_type: "employee_login",
+    description: "تسجيل دخول بلوحة الإدارة",
+  });
+  redirect("/");
 }

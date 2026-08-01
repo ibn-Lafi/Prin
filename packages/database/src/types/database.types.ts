@@ -240,6 +240,8 @@ export type Database = {
           pin_hash: string;
           role: string;
           is_active: boolean;
+          username: string | null;
+          password_hash: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -249,6 +251,8 @@ export type Database = {
           pin_hash: string;
           role: string;
           is_active?: boolean;
+          username?: string | null;
+          password_hash?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -258,6 +262,8 @@ export type Database = {
           pin_hash?: string;
           role?: string;
           is_active?: boolean;
+          username?: string | null;
+          password_hash?: string | null;
           created_at?: string;
           updated_at?: string;
         };

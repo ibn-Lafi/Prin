@@ -3,6 +3,7 @@ export type Employee = {
   full_name: string;
   role: string;
   is_active: boolean;
+  username: string | null;
   created_at: string;
 };
 

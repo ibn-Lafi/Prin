@@ -34,6 +34,7 @@ insert into rewards (name, description, points_cost) values
   ('بيبسي مجاني', 'استبدل نقاطك بمشروب مجاني', 500),
   ('خصم 10 ريال', 'خصم مباشر على طلبك القادم', 800);
 
--- موظف مدير تجريبي — PIN التطوير: 1234 (لا يُستخدم إطلاقاً بالإنتاج)
-insert into employees (full_name, pin_hash, role) values
-  ('مدير تجريبي', crypt('1234', gen_salt('bf')), 'manager');
+-- موظف مدير تجريبي — PIN الكاشير: 1234، دخول لوحة الإدارة: admin / admin1234
+-- (بيانات تطوير محلي فقط، لا تُستخدم إطلاقاً بالإنتاج)
+insert into employees (full_name, pin_hash, role, username, password_hash) values
+  ('مدير تجريبي', crypt('1234', gen_salt('bf')), 'manager', 'admin', crypt('admin1234', gen_salt('bf')));
