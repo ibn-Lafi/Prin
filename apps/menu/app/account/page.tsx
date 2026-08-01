@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
-import { unwrapQuery } from "@brin/database";
 import { getSupabaseServerClient } from "@/lib/supabaseClient";
-import type { OrderSummary, Reward } from "@/lib/types";
 import { AccountView } from "@/components/AccountView";
 
 export default async function AccountPage() {
@@ -14,34 +12,23 @@ export default async function AccountPage() {
     redirect("/login?redirectTo=/account");
   }
 
-  const { data: customer } = await supabase
-    .from("customers")
-    .select("full_name, phone, points_balance")
-    .eq("auth_user_id", user.id)
-    .maybeSingle();
-
-  const [ordersResult, rewardsResult] = await Promise.all([
+  const [{ data: customer }, { data: orders }] = await Promise.all([
     supabase
-      .from("orders")
-      .select("id, daily_order_number, order_date, channel, status, total, created_at")
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("rewards")
-      .select("id, name, description, points_cost, discount_amount, image_url")
-      .order("points_cost"),
+      .from("customers")
+      .select("full_name, phone, points_balance")
+      .eq("auth_user_id", user.id)
+      .maybeSingle(),
+    supabase.from("orders").select("total"),
   ]);
 
-  const orders = unwrapQuery<OrderSummary[]>(ordersResult as never);
-  const rewards = unwrapQuery<Reward[]>(rewardsResult);
-  const totalSpent = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalSpent = (orders ?? []).reduce((sum, order) => sum + order.total, 0);
 
   return (
     <AccountView
+      fullName={customer?.full_name ?? ""}
       phone={customer?.phone ?? user.phone ?? ""}
       pointsBalance={customer?.points_balance ?? 0}
       totalSpent={totalSpent}
-      orders={orders}
-      rewards={rewards}
     />
   );
 }
