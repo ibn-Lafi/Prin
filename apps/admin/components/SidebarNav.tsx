@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Gift, Settings } from "lucide-react";
+import { LayoutDashboard, Tags, UtensilsCrossed, Sandwich, Users, Gift, Settings } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "الرئيسية", icon: LayoutDashboard },
+  { href: "/categories", label: "الفئات", icon: Tags },
+  { href: "/products", label: "المنتجات", icon: UtensilsCrossed },
+  { href: "/combos", label: "الوجبات", icon: Sandwich },
   { href: "/employees", label: "الموظفون", icon: Users },
   { href: "/rewards", label: "الولاء والمكافآت", icon: Gift },
   { href: "/settings", label: "الإعدادات العامة", icon: Settings },
@@ -17,7 +20,8 @@ export function SidebarNav() {
   return (
     <nav className="flex flex-col gap-1 p-3">
       {NAV_ITEMS.map((item) => {
-        const isActive = pathname === item.href;
+        const isActive =
+          item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
         const Icon = item.icon;
         return (
           <Link
