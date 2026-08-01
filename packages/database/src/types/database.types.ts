@@ -443,6 +443,8 @@ export type Database = {
           total: number;
           discount_amount: number;
           redeemed_reward_id: string | null;
+          code_discount_amount: number;
+          discount_code_id: string | null;
           customer_id: string | null;
           employee_id: string | null;
           cancelled_by_employee_id: string | null;
@@ -462,6 +464,8 @@ export type Database = {
           total: number;
           discount_amount?: number;
           redeemed_reward_id?: string | null;
+          code_discount_amount?: number;
+          discount_code_id?: string | null;
           customer_id?: string | null;
           employee_id?: string | null;
           cancelled_by_employee_id?: string | null;
@@ -481,6 +485,8 @@ export type Database = {
           total?: number;
           discount_amount?: number;
           redeemed_reward_id?: string | null;
+          code_discount_amount?: number;
+          discount_code_id?: string | null;
           customer_id?: string | null;
           employee_id?: string | null;
           cancelled_by_employee_id?: string | null;
@@ -718,6 +724,7 @@ export type Database = {
           p_items: Json;
           p_payments: Json;
           p_reward_id?: string | null;
+          p_discount_code?: string | null;
         };
         Returns: {
           order_id: string;
@@ -725,6 +732,7 @@ export type Database = {
           order_date: string;
           total: number;
           discount_amount: number;
+          code_discount_amount: number;
         }[];
       };
     };

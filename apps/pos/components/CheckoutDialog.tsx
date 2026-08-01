@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { X, Search, Gift } from "lucide-react";
+import { X, Search, Gift, Tag } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useOrderTicket } from "@/hooks/useOrderTicket";
 import {
   createOrderAction,
   lookupCustomerAction,
   listActiveRewardsAction,
+  lookupDiscountCodeAction,
 } from "@/app/(protected)/orders/actions";
 import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
-import type { CustomerLookup, Reward } from "@/lib/types";
+import type { CustomerLookup, Reward, DiscountCodePreview } from "@/lib/types";
 
 export function CheckoutDialog({
   taxRatePercent,
@@ -27,6 +28,10 @@ export function CheckoutDialog({
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
+  const [discountCodeInput, setDiscountCodeInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<DiscountCodePreview | null>(null);
+  const [isApplyingCode, setIsApplyingCode] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [cashAmount, setCashAmount] = useState("");
   const [cardAmount, setCardAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -47,8 +52,21 @@ export function CheckoutDialog({
   // بحث ثانٍ) وأصبحت المكافأة المختارة سابقاً غير متاحة، يلغى الخصم تلقائياً بدل
   // ما يبقى مطبّقاً بصمت وهو مو ظاهر كمُختار بالقائمة.
   const selectedReward = affordableRewards.find((r) => r.id === selectedRewardId) ?? null;
-  const discount = selectedReward ? Math.min(selectedReward.discountAmount, subtotal) : 0;
-  const discountedSubtotal = roundMoney(subtotal - discount);
+  const rewardDiscount = selectedReward ? Math.min(selectedReward.discountAmount, subtotal) : 0;
+  const afterReward = roundMoney(subtotal - rewardDiscount);
+
+  // نفس ترتيب create_pos_order بالضبط: المكافأة أولاً على المجموع الأصلي،
+  // ثم الكود على الناتج — أي معاينة هنا لازم تطابق حساب الخادم وإلا يفشل
+  // الإرسال بخطأ "مجموع الدفعات لا يساوي الإجمالي".
+  const codeDiscount = appliedCode
+    ? Math.min(
+        appliedCode.discountType === "percentage"
+          ? roundMoney((afterReward * appliedCode.value) / 100)
+          : appliedCode.value,
+        afterReward,
+      )
+    : 0;
+  const discountedSubtotal = roundMoney(afterReward - codeDiscount);
   const tax = calculateTax(discountedSubtotal, taxRatePercent);
   const total = roundMoney(discountedSubtotal + tax);
 
@@ -73,6 +91,24 @@ export function CheckoutDialog({
     if (result?.fullName && !customerName.trim()) {
       setCustomerName(result.fullName);
     }
+  }
+
+  async function handleApplyCode() {
+    setCodeError(null);
+    setIsApplyingCode(true);
+    const result = await lookupDiscountCodeAction(discountCodeInput, subtotal);
+    setIsApplyingCode(false);
+    if (result.error) {
+      setCodeError(result.error);
+      return;
+    }
+    setAppliedCode(result.preview ?? null);
+  }
+
+  function handleRemoveCode() {
+    setAppliedCode(null);
+    setDiscountCodeInput("");
+    setCodeError(null);
   }
 
   function fillAllCash() {
@@ -112,6 +148,7 @@ export function CheckoutDialog({
         customerName: customerName.trim() || null,
         payments,
         rewardId: selectedReward?.id ?? null,
+        discountCode: appliedCode?.code ?? null,
       });
 
       if (result.error) {
@@ -250,15 +287,62 @@ export function CheckoutDialog({
             )}
           </div>
 
+          <div className="mb-5">
+            <p className="mb-2 font-semibold">كود خصم (اختياري)</p>
+            {appliedCode ? (
+              <div className="flex items-center justify-between rounded-xl bg-[var(--color-brand-primary-light)] px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-brand-primary)]">
+                  <Tag className="h-4 w-4" strokeWidth={1.75} />
+                  {appliedCode.code}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleRemoveCode}
+                  className="text-[var(--color-brand-primary)]"
+                  aria-label="إزالة الكود"
+                >
+                  <X className="h-4 w-4" strokeWidth={2} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="أدخل الكود"
+                  value={discountCodeInput}
+                  onChange={(e) => setDiscountCodeInput(e.target.value)}
+                  className="flex-1 rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 uppercase outline-none focus:border-[var(--color-brand-primary)]"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCode}
+                  disabled={!discountCodeInput.trim() || isApplyingCode}
+                  className="rounded-xl bg-[var(--color-brand-background)] px-4 text-sm font-medium ring-1 ring-[var(--color-brand-border)] disabled:opacity-50"
+                >
+                  {isApplyingCode ? "..." : "تطبيق"}
+                </button>
+              </div>
+            )}
+            {codeError && (
+              <p className="mt-1.5 text-xs font-medium text-[var(--color-brand-primary)]">{codeError}</p>
+            )}
+          </div>
+
           <div className="mb-5 flex flex-col gap-1 rounded-2xl bg-[var(--color-brand-background)] p-4">
             <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
               <span>المجموع الفرعي</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
-            {discount > 0 && (
+            {rewardDiscount > 0 && (
               <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
                 <span>خصم — {selectedReward?.name}</span>
-                <span>-{formatCurrency(discount)}</span>
+                <span>-{formatCurrency(rewardDiscount)}</span>
+              </div>
+            )}
+            {codeDiscount > 0 && (
+              <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
+                <span>خصم — كود {appliedCode?.code}</span>
+                <span>-{formatCurrency(codeDiscount)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">

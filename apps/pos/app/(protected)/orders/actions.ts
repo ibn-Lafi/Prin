@@ -3,7 +3,7 @@
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { queueOrderPrintJobs } from "@/lib/printing";
-import type { CustomerLookup, Reward } from "@/lib/types";
+import type { CustomerLookup, Reward, DiscountCodePreview } from "@/lib/types";
 
 export type CreateOrderItem = {
   kind: "product" | "combo";
@@ -23,6 +23,7 @@ export type CreateOrderInput = {
   customerName: string | null;
   payments: CreateOrderPayment[];
   rewardId: string | null;
+  discountCode: string | null;
 };
 
 export type CreateOrderResult = {
@@ -49,6 +50,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     p_items: input.items,
     p_payments: input.payments,
     p_reward_id: input.rewardId,
+    p_discount_code: input.discountCode,
   });
 
   if (error) {
@@ -103,4 +105,51 @@ export async function listActiveRewardsAction(): Promise<Reward[]> {
     pointsCost: reward.points_cost,
     discountAmount: reward.discount_amount,
   }));
+}
+
+/**
+ * معاينة فقط — للسماح للواجهة تعرض الخصم قبل الإرسال. الفحص الحقيقي
+ * (النافذ، الحد الأدنى، عدد الاستخدامات) يُعاد كاملاً وبشكل ذرّي داخل
+ * create_pos_order وقت الإرسال الفعلي، فما نثق بنتيجة هذي الدالة وحدها.
+ */
+export async function lookupDiscountCodeAction(
+  code: string,
+  subtotal: number,
+): Promise<{ error?: string; preview?: DiscountCodePreview }> {
+  const session = await getSession();
+  if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+
+  const trimmed = code.trim();
+  if (!trimmed) return { error: "أدخل كود الخصم" };
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data } = await supabase
+    .from("discount_codes")
+    .select("code, discount_type, value, min_order_amount, valid_from, valid_until, max_uses, times_used, is_active")
+    .eq("code", trimmed.toUpperCase())
+    .maybeSingle();
+
+  if (!data || !data.is_active) return { error: "كود الخصم غير صالح" };
+
+  const now = new Date();
+  if (data.valid_from && now < new Date(data.valid_from)) {
+    return { error: "كود الخصم لم يبدأ بعد" };
+  }
+  if (data.valid_until && now > new Date(data.valid_until)) {
+    return { error: "انتهت صلاحية كود الخصم" };
+  }
+  if (data.max_uses !== null && data.times_used >= data.max_uses) {
+    return { error: "تم الوصول للحد الأقصى لاستخدام هذا الكود" };
+  }
+  if (subtotal < data.min_order_amount) {
+    return { error: `الحد الأدنى لاستخدام هذا الكود ${data.min_order_amount} ريال` };
+  }
+
+  return {
+    preview: {
+      code: data.code,
+      discountType: data.discount_type as "percentage" | "fixed",
+      value: data.value,
+    },
+  };
 }

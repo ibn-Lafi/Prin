@@ -79,6 +79,12 @@ export function renderCustomerReceipt(
       payload.redeemedRewardName ? `خصم — ${payload.redeemedRewardName}` : "خصم",
     );
   }
+  if (payload.codeDiscountAmount > 0) {
+    printer.leftRight(
+      `-${amount(payload.codeDiscountAmount)}`,
+      payload.discountCode ? `خصم — كود ${payload.discountCode}` : "خصم كود",
+    );
+  }
   printer.leftRight(amount(payload.taxAmount), `الضريبة (${payload.taxRate}%)`);
   printer.bold(true);
   printer.leftRight(amount(payload.total), "الإجمالي");

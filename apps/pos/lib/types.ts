@@ -77,3 +77,9 @@ export type Reward = {
   pointsCost: number;
   discountAmount: number;
 };
+
+export type DiscountCodePreview = {
+  code: string;
+  discountType: "percentage" | "fixed";
+  value: number;
+};

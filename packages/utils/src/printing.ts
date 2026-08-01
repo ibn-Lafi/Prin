@@ -34,6 +34,8 @@ export type CustomerPrintPayload = {
   subtotal: number;
   discountAmount: number;
   redeemedRewardName: string | null;
+  codeDiscountAmount: number;
+  discountCode: string | null;
   taxRate: number;
   taxAmount: number;
   total: number;
