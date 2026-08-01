@@ -21,7 +21,7 @@ export default async function MenuHomePage() {
         .order("name"),
       supabase
         .from("rewards")
-        .select("id, name, description, points_cost, image_url")
+        .select("id, name, description, points_cost, discount_amount, image_url")
         .order("points_cost"),
       supabase.auth.getUser(),
     ]);

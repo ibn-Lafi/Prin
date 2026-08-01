@@ -27,7 +27,7 @@ export default async function AccountPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("rewards")
-      .select("id, name, description, points_cost, image_url")
+      .select("id, name, description, points_cost, discount_amount, image_url")
       .order("points_cost"),
   ]);
 

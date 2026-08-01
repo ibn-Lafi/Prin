@@ -50,7 +50,14 @@ export type Reward = {
   name: string;
   description: string | null;
   points_cost: number;
+  discount_amount: number;
   image_url: string | null;
+};
+
+export type DiscountCodePreview = {
+  code: string;
+  discountType: "percentage" | "fixed";
+  value: number;
 };
 
 export type OrderSummary = {
