@@ -64,7 +64,7 @@ export function ProductModal({ product, onClose }: { product: Product; onClose: 
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
       <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-[var(--color-brand-card)] sm:rounded-3xl">
         <div className="relative flex aspect-[16/10] w-full shrink-0 items-center justify-center bg-[var(--color-brand-primary-light)]">
           {product.image_url ? (

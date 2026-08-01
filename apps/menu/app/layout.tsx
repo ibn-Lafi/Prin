@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { getSupabaseServerClient } from "@/lib/supabaseClient";
-import { AccountBadgeLink } from "../components/AccountBadgeLink";
-import { CartBadgeLink } from "../components/CartBadgeLink";
-import { PointsBadge } from "../components/PointsBadge";
+import { MenuHeader } from "../components/MenuHeader";
+import { BottomNav } from "../components/BottomNav";
 
 export const metadata: Metadata = {
   title: "BRIN — المنيو الإلكتروني",
@@ -28,17 +27,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="ar" dir="rtl">
       <body>
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between bg-[var(--color-brand-background)]/95 px-4 backdrop-blur">
-          <span className="text-xl font-extrabold tracking-tight text-[var(--color-brand-primary)]">
-            BRIN
-          </span>
-          <div className="flex items-center gap-2">
-            {pointsBalance !== null && <PointsBadge points={pointsBalance} />}
-            <AccountBadgeLink />
-            <CartBadgeLink />
-          </div>
-        </header>
+        <MenuHeader pointsBalance={pointsBalance} />
         {children}
+        <BottomNav />
       </body>
     </html>
   );

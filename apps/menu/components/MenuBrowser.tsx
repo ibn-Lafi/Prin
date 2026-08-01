@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Gift, Search, ShoppingBag, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
 import type { Category, Combo, Product, Reward } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
@@ -12,30 +13,43 @@ import { FloatingCartBar } from "@/components/FloatingCartBar";
 const COMBOS_TAB_ID = "__combos__";
 const REWARDS_TAB_ID = "__rewards__";
 
-function isVisible(row: { is_available: boolean; deleted_at: string | null }): boolean {
-  return row.is_available && row.deleted_at === null;
+function isPresent(row: { deleted_at: string | null }): boolean {
+  return row.deleted_at === null;
+}
+
+function matchesQuery(name: string, query: string): boolean {
+  return !query || name.toLowerCase().includes(query);
 }
 
 function CategoryTab({
   label,
   active,
+  icon: Icon,
   onClick,
 }: {
   label: string;
   active: boolean;
+  icon: LucideIcon;
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`shrink-0 whitespace-nowrap rounded-full bg-[var(--color-brand-card)] px-3.5 py-2 text-sm shadow-md shadow-black/5 transition-all duration-100 active:translate-y-0.5 active:shadow-sm ${
-        active
-          ? "font-semibold text-[var(--color-brand-text)] ring-2 ring-[var(--color-brand-text)]"
-          : "font-medium text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
-      }`}
-    >
-      {label}
+    <button type="button" onClick={onClick} className="flex shrink-0 flex-col items-center gap-1.5">
+      <span
+        className={`flex h-14 w-14 items-center justify-center rounded-full transition-all duration-100 active:scale-95 ${
+          active
+            ? "bg-[var(--color-brand-primary)] ring-2 ring-[var(--color-brand-primary)] ring-offset-2 ring-offset-[var(--color-brand-background)]"
+            : "bg-[var(--color-brand-primary-light)]"
+        }`}
+      >
+        <Icon className={`h-6 w-6 ${active ? "text-white" : "text-[var(--color-brand-primary)]"}`} strokeWidth={1.75} />
+      </span>
+      <span
+        className={`whitespace-nowrap text-xs ${
+          active ? "font-semibold text-[var(--color-brand-text)]" : "text-[var(--color-brand-muted)]"
+        }`}
+      >
+        {label}
+      </span>
     </button>
   );
 }
@@ -57,6 +71,7 @@ export function MenuBrowser({
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
+  const [query, setQuery] = useState("");
 
   // العميل يتصفح ويضيف للسلة عادي بأي وقت — تقييد ساعات العمل يظهر فقط
   // بصفحة الدفع (/checkout)، مو أثناء التصفح.
@@ -94,41 +109,58 @@ export function MenuBrowser({
     };
   }, []);
 
-  const allProducts = products.filter(isVisible);
-  const visibleCombos = combos.filter(isVisible);
+  const q = query.trim().toLowerCase();
+  const allProducts = products.filter(isPresent);
+  const allCombos = combos.filter(isPresent);
+  const visibleCombos = allCombos.filter((c) => matchesQuery(c.name, q));
   const visibleProducts =
     activeTab === COMBOS_TAB_ID || activeTab === REWARDS_TAB_ID
       ? []
-      : allProducts.filter((p) => p.category_id === activeTab);
+      : allProducts.filter((p) => p.category_id === activeTab && matchesQuery(p.name, q));
+  const visibleRewards = rewards.filter((r) => matchesQuery(r.name, q));
 
   // ترتيب التبويبات المطلوب: برجر - اضافات - وجبة - مشروبات - استبدل —
   // تبويب الوجبات يُدرج مباشرة بعد صنف الإضافات، وتبويب الاستبدال بالنقاط دائماً في النهاية.
-  const categoryTabs: { id: string; label: string }[] = [];
+  const categoryTabs: { id: string; label: string; icon: LucideIcon }[] = [];
   let combosTabInserted = false;
   for (const category of categories) {
-    categoryTabs.push({ id: category.id, label: category.name });
+    categoryTabs.push({ id: category.id, label: category.name, icon: UtensilsCrossed });
     if (
       !combosTabInserted &&
       (category.name.includes("اضاف") || category.name.includes("إضاف")) &&
-      visibleCombos.length > 0
+      allCombos.length > 0
     ) {
-      categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة" });
+      categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة", icon: ShoppingBag });
       combosTabInserted = true;
     }
   }
-  if (!combosTabInserted && visibleCombos.length > 0) {
-    categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة" });
+  if (!combosTabInserted && allCombos.length > 0) {
+    categoryTabs.push({ id: COMBOS_TAB_ID, label: "وجبة", icon: ShoppingBag });
   }
-  categoryTabs.push({ id: REWARDS_TAB_ID, label: "استبدل" });
+  categoryTabs.push({ id: REWARDS_TAB_ID, label: "استبدل", icon: Gift });
 
   return (
-    <main className="mx-auto max-w-5xl pb-28">
-      <div className="sticky top-16 z-20 -mx-px bg-[var(--color-brand-background)]/95 px-4 pt-3 pb-2 backdrop-blur">
-        <div className="flex gap-2.5 overflow-x-auto py-1.5">
+    <main className="mx-auto max-w-5xl pb-32">
+      <div className="relative z-10 -mt-7 px-4">
+        <label className="flex items-center gap-2.5 rounded-full bg-[var(--color-brand-card)] px-4 py-3.5 shadow-lg shadow-black/10 ring-1 ring-black/5">
+          <Search className="h-4.5 w-4.5 shrink-0 text-[var(--color-brand-muted)]" strokeWidth={2} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="ابحث في المنيو..."
+            className="w-full bg-transparent text-sm text-[var(--color-brand-text)] outline-none placeholder:text-[var(--color-brand-muted)]"
+          />
+        </label>
+      </div>
+
+      <div className="sticky top-0 z-20 bg-[var(--color-brand-background)]/95 px-4 pt-5 pb-2 backdrop-blur">
+        <div className="flex gap-4 overflow-x-auto py-1.5">
           {categoryTabs.map((tab) => (
             <CategoryTab
               key={tab.id}
               label={tab.label}
+              icon={tab.icon}
               active={activeTab === tab.id}
               onClick={() => setActiveTab(tab.id)}
             />
@@ -142,13 +174,13 @@ export function MenuBrowser({
             <p className="text-xs text-[var(--color-brand-muted)]">
               الاستبدال الفعلي يُفعَّل بمرحلة نظام الولاء الكاملة — القائمة هنا للاطّلاع حالياً.
             </p>
-            {rewards.length === 0 ? (
+            {visibleRewards.length === 0 ? (
               <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
                 ما فيه مكافآت متاحة حالياً.
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-                {rewards.map((reward) => (
+                {visibleRewards.map((reward) => (
                   <RewardCard key={reward.id} reward={reward} pointsBalance={pointsBalance} />
                 ))}
               </div>

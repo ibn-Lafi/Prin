@@ -12,7 +12,7 @@ export function FloatingCartBar() {
   if (count === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-5 z-30 flex justify-center px-4">
+    <div className="fixed inset-x-0 bottom-24 z-30 flex justify-center px-4">
       <Link
         href="/cart"
         className="flex items-center gap-2.5 rounded-full bg-[var(--color-brand-primary)] px-5 py-3.5 text-sm text-white shadow-xl shadow-black/25"
