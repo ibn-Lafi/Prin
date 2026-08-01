@@ -2,13 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Tags, UtensilsCrossed, Sandwich, Users, Gift, Settings } from "lucide-react";
+import {
+  LayoutDashboard,
+  Tags,
+  UtensilsCrossed,
+  Sandwich,
+  ClipboardList,
+  Users,
+  Gift,
+  Settings,
+} from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/categories", label: "الفئات", icon: Tags },
   { href: "/products", label: "المنتجات", icon: UtensilsCrossed },
   { href: "/combos", label: "الوجبات", icon: Sandwich },
+  { href: "/orders", label: "الطلبات", icon: ClipboardList },
   { href: "/employees", label: "الموظفون", icon: Users },
   { href: "/rewards", label: "الولاء والمكافآت", icon: Gift },
   { href: "/settings", label: "الإعدادات العامة", icon: Settings },
