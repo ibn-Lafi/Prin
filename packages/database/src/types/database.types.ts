@@ -7,6 +7,37 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      cash_closings: {
+        Row: {
+          id: string;
+          closing_date: string;
+          expected_cash: number;
+          actual_cash: number;
+          difference: number;
+          closed_by_employee_id: string | null;
+          notes: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          closing_date: string;
+          expected_cash: number;
+          actual_cash: number;
+          closed_by_employee_id?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          closing_date?: string;
+          expected_cash?: number;
+          actual_cash?: number;
+          closed_by_employee_id?: string | null;
+          notes?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       audit_log: {
         Row: {
           id: string;
