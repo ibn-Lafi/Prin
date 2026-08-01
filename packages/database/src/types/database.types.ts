@@ -536,6 +536,8 @@ export type Database = {
           last_heartbeat_at: string | null;
           kitchen_printer_connected: boolean;
           customer_printer_connected: boolean;
+          kitchen_printer_interface: string | null;
+          customer_printer_interface: string | null;
           updated_at: string;
         };
         Insert: {
@@ -543,6 +545,8 @@ export type Database = {
           last_heartbeat_at?: string | null;
           kitchen_printer_connected?: boolean;
           customer_printer_connected?: boolean;
+          kitchen_printer_interface?: string | null;
+          customer_printer_interface?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -550,6 +554,8 @@ export type Database = {
           last_heartbeat_at?: string | null;
           kitchen_printer_connected?: boolean;
           customer_printer_connected?: boolean;
+          kitchen_printer_interface?: string | null;
+          customer_printer_interface?: string | null;
           updated_at?: string;
         };
         Relationships: [];

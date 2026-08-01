@@ -10,8 +10,10 @@ import {
   ClipboardList,
   BarChart3,
   Users,
+  UserSearch,
   Gift,
   Percent,
+  ScrollText,
   Settings,
 } from "lucide-react";
 
@@ -22,9 +24,11 @@ const NAV_ITEMS = [
   { href: "/combos", label: "الوجبات", icon: Sandwich },
   { href: "/orders", label: "الطلبات", icon: ClipboardList },
   { href: "/reports", label: "التقارير", icon: BarChart3 },
+  { href: "/customers", label: "العملاء", icon: UserSearch },
   { href: "/employees", label: "الموظفون", icon: Users },
   { href: "/rewards", label: "الولاء والمكافآت", icon: Gift },
   { href: "/offers", label: "العروض والخصومات", icon: Percent },
+  { href: "/audit-log", label: "سجل التدقيق", icon: ScrollText },
   { href: "/settings", label: "الإعدادات العامة", icon: Settings },
 ];
 

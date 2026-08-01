@@ -11,6 +11,12 @@ export function SettingsForm({ settings }: { settings: RestaurantSettings }) {
   const [openingTime, setOpeningTime] = useState(settings.opening_time.slice(0, 5));
   const [closingTime, setClosingTime] = useState(settings.closing_time.slice(0, 5));
   const [isAcceptingOrders, setIsAcceptingOrders] = useState(settings.is_accepting_orders);
+  const [kitchenPrinterInterface, setKitchenPrinterInterface] = useState(
+    settings.kitchen_printer_interface ?? "",
+  );
+  const [customerPrinterInterface, setCustomerPrinterInterface] = useState(
+    settings.customer_printer_interface ?? "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -26,6 +32,8 @@ export function SettingsForm({ settings }: { settings: RestaurantSettings }) {
         openingTime,
         closingTime,
         isAcceptingOrders,
+        kitchenPrinterInterface,
+        customerPrinterInterface,
       });
       if (result.error) {
         setError(result.error);
@@ -101,6 +109,33 @@ export function SettingsForm({ settings }: { settings: RestaurantSettings }) {
           className="h-5 w-5 accent-[var(--color-brand-primary)]"
         />
       </label>
+
+      <div className="flex flex-col gap-3 rounded-xl bg-[var(--color-brand-background)] p-3">
+        <p className="text-sm font-semibold">إعدادات الطباعة</p>
+        <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
+          عنوان طابعة المطبخ
+          <input
+            type="text"
+            value={kitchenPrinterInterface}
+            onChange={(e) => setKitchenPrinterInterface(e.target.value)}
+            placeholder="printer:/dev/usb/lp0 أو tcp://192.168.1.50:9100"
+            className="rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-card)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
+          عنوان طابعة العميل
+          <input
+            type="text"
+            value={customerPrinterInterface}
+            onChange={(e) => setCustomerPrinterInterface(e.target.value)}
+            placeholder="printer:/dev/usb/lp1 أو tcp://192.168.1.51:9100"
+            className="rounded-xl border border-[var(--color-brand-border)] bg-[var(--color-brand-card)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+          />
+        </label>
+        <p className="text-xs text-[var(--color-brand-muted)]">
+          يقرأها جهاز الطباعة تلقائياً خلال 15 ثانية من الحفظ، بدون إعادة تشغيل.
+        </p>
+      </div>
 
       {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
       {saved && !error && <p className="text-sm font-medium text-green-700">تم الحفظ</p>}

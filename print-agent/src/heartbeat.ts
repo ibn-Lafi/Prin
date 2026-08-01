@@ -1,14 +1,17 @@
 import { createSupabaseServiceRoleClient } from "@brin/database";
-import { kitchenPrinter, customerPrinter } from "./printers";
+import { getKitchenPrinter, getCustomerPrinter } from "./printers";
 
 const HEARTBEAT_INTERVAL_MS = 15_000;
 
 const supabase = createSupabaseServiceRoleClient();
 
 async function sendHeartbeat(): Promise<void> {
+  const kitchenPrinter = getKitchenPrinter();
+  const customerPrinter = getCustomerPrinter();
+
   const [kitchenConnected, customerConnected] = await Promise.all([
-    kitchenPrinter.isPrinterConnected().catch(() => false),
-    customerPrinter.isPrinterConnected().catch(() => false),
+    kitchenPrinter ? kitchenPrinter.isPrinterConnected().catch(() => false) : Promise.resolve(false),
+    customerPrinter ? customerPrinter.isPrinterConnected().catch(() => false) : Promise.resolve(false),
   ]);
 
   const { error } = await supabase

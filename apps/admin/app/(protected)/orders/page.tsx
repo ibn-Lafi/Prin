@@ -10,6 +10,8 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: "ملغى",
 };
 
+const PAGE_SIZE = 50;
+
 function todayInRiyadh(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
 }
@@ -27,26 +29,42 @@ type OrderListRow = {
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ channel?: string; status?: string; date?: string }>;
+  searchParams: Promise<{ channel?: string; status?: string; date?: string; page?: string }>;
 }) {
   const params = await searchParams;
   const channel = params.channel ?? "";
   const status = params.status ?? "";
   const date = params.date ?? todayInRiyadh();
+  const page = Math.max(1, Number(params.page) || 1);
+  const rangeStart = (page - 1) * PAGE_SIZE;
+  const rangeEnd = rangeStart + PAGE_SIZE - 1;
 
   const supabase = createSupabaseServiceRoleClient();
   let query = supabase
     .from("orders")
-    .select("id, daily_order_number, channel, status, total, created_at, customers ( full_name, phone )")
+    .select("id, daily_order_number, channel, status, total, created_at, customers ( full_name, phone )", {
+      count: "exact",
+    })
     .order("created_at", { ascending: false })
-    .limit(200);
+    .range(rangeStart, rangeEnd);
 
   if (channel) query = query.eq("channel", channel);
   if (status) query = query.eq("status", status);
   if (date) query = query.eq("order_date", date);
 
-  const { data: rawOrders } = await query;
+  const { data: rawOrders, count } = await query;
   const orders = rawOrders as unknown as OrderListRow[] | null;
+  const totalCount = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+
+  function pageHref(targetPage: number): string {
+    const urlParams = new URLSearchParams();
+    if (date) urlParams.set("date", date);
+    if (channel) urlParams.set("channel", channel);
+    if (status) urlParams.set("status", status);
+    urlParams.set("page", targetPage.toString());
+    return `/orders?${urlParams.toString()}`;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -161,6 +179,38 @@ export default async function OrdersPage({
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-[var(--color-brand-muted)]">
+            صفحة {page} من {totalPages} — {totalCount} طلب
+          </p>
+          <div className="flex gap-2">
+            <Link
+              href={pageHref(Math.max(1, page - 1))}
+              aria-disabled={page <= 1}
+              className={`rounded-xl px-4 py-2 text-sm font-medium ring-1 ring-[var(--color-brand-border)] ${
+                page <= 1
+                  ? "pointer-events-none bg-[var(--color-brand-background)] text-[var(--color-brand-muted)] opacity-50"
+                  : "bg-[var(--color-brand-background)]"
+              }`}
+            >
+              السابق
+            </Link>
+            <Link
+              href={pageHref(Math.min(totalPages, page + 1))}
+              aria-disabled={page >= totalPages}
+              className={`rounded-xl px-4 py-2 text-sm font-medium ring-1 ring-[var(--color-brand-border)] ${
+                page >= totalPages
+                  ? "pointer-events-none bg-[var(--color-brand-background)] text-[var(--color-brand-muted)] opacity-50"
+                  : "bg-[var(--color-brand-background)]"
+              }`}
+            >
+              التالي
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

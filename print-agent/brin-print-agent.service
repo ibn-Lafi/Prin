@@ -1,0 +1,19 @@
+[Unit]
+Description=BRIN Print Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# غيّر المسارات التالية لتطابق جهازك الفعلي:
+WorkingDirectory=/opt/brin-system/print-agent
+ExecStart=/usr/bin/pnpm start
+Restart=always
+RestartSec=5
+# المستخدم اللي يشغّل الخدمة لازم يقدر يوصل لمنفذ الطابعة USB (مثال /dev/usb/lp0).
+# إما تشغّله بمستخدم عضو بمجموعة lp، أو تضيف قاعدة udev تمنح الصلاحية لمستخدم مخصص.
+User=brin-print-agent
+Group=lp
+
+[Install]
+WantedBy=multi-user.target

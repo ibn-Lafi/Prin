@@ -40,6 +40,65 @@ export async function createEmployeeAction(input: {
   return {};
 }
 
+export async function updateEmployeeAction(
+  employeeId: string,
+  input: { fullName: string; role: "manager" | "staff"; newPin: string },
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+
+  const fullName = input.fullName.trim();
+  if (!fullName) return { error: "الاسم مطلوب" };
+  if (input.newPin && !/^\d{4}$/.test(input.newPin)) {
+    return { error: "رمز PIN يجب أن يكون 4 أرقام" };
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
+
+  if (input.role === "staff") {
+    const { data: target } = await supabase
+      .from("employees")
+      .select("role")
+      .eq("id", employeeId)
+      .maybeSingle();
+
+    if (target?.role === "manager") {
+      const { count } = await supabase
+        .from("employees")
+        .select("id", { count: "exact", head: true })
+        .eq("role", "manager")
+        .eq("is_active", true)
+        .neq("id", employeeId);
+
+      if (!count || count === 0) {
+        return { error: "لا يمكن تنزيل آخر حساب مدير نشط لصلاحية موظف" };
+      }
+    }
+  }
+
+  const updatePayload: { full_name: string; role: "manager" | "staff"; pin_hash?: string } = {
+    full_name: fullName,
+    role: input.role,
+  };
+  if (input.newPin) {
+    updatePayload.pin_hash = await hashEmployeePin(input.newPin);
+  }
+
+  const { error } = await supabase.from("employees").update(updatePayload).eq("id", employeeId);
+
+  if (error) return { error: "تعذّر تحديث الموظف" };
+
+  await supabase.from("audit_log").insert({
+    employee_id: session.employeeId,
+    action_type: "settings_change",
+    description: `تعديل بيانات موظف: ${fullName}${input.newPin ? " (تغيير PIN)" : ""}`,
+    metadata: { employee_id: employeeId },
+  });
+
+  revalidatePath("/employees");
+  return {};
+}
+
 export async function toggleEmployeeActiveAction(
   employeeId: string,
   isActive: boolean,

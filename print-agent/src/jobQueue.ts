@@ -1,6 +1,6 @@
 import { createSupabaseServiceRoleClient } from "@brin/database";
 import type { KitchenPrintPayload, CustomerPrintPayload } from "@brin/utils";
-import { kitchenPrinter, customerPrinter } from "./printers";
+import { getKitchenPrinter, getCustomerPrinter } from "./printers";
 import { renderKitchenTicket, renderCustomerReceipt } from "./receipts";
 
 const MAX_ATTEMPTS = 5;
@@ -22,13 +22,17 @@ async function processJob(job: PrintJobRow): Promise<void> {
 
   try {
     if (job.target === "kitchen") {
-      kitchenPrinter.clear();
-      renderKitchenTicket(kitchenPrinter, job.payload as KitchenPrintPayload);
-      await kitchenPrinter.execute();
+      const printer = getKitchenPrinter();
+      if (!printer) throw new Error("طابعة المطبخ غير مهيّأة — اضبط عنوانها من لوحة الإدارة");
+      printer.clear();
+      renderKitchenTicket(printer, job.payload as KitchenPrintPayload);
+      await printer.execute();
     } else {
-      customerPrinter.clear();
-      renderCustomerReceipt(customerPrinter, job.payload as CustomerPrintPayload);
-      await customerPrinter.execute();
+      const printer = getCustomerPrinter();
+      if (!printer) throw new Error("طابعة العميل غير مهيّأة — اضبط عنوانها من لوحة الإدارة");
+      printer.clear();
+      renderCustomerReceipt(printer, job.payload as CustomerPrintPayload);
+      await printer.execute();
     }
 
     await supabase
