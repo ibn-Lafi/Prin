@@ -11,6 +11,7 @@ export type RewardInput = {
   description: string;
   pointsCost: number;
   discountAmount: number;
+  imageUrl: string;
 };
 
 function validate(input: RewardInput): string | null {
@@ -37,6 +38,7 @@ export async function createRewardAction(input: RewardInput): Promise<ActionResu
     description: input.description.trim() || null,
     points_cost: input.pointsCost,
     discount_amount: input.discountAmount,
+    image_url: input.imageUrl.trim() || null,
   });
 
   if (error) return { error: "تعذّر إنشاء المكافأة" };
@@ -66,6 +68,7 @@ export async function updateRewardAction(rewardId: string, input: RewardInput): 
       description: input.description.trim() || null,
       points_cost: input.pointsCost,
       discount_amount: input.discountAmount,
+      image_url: input.imageUrl.trim() || null,
     })
     .eq("id", rewardId);
 

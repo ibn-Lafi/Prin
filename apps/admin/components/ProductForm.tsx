@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createProductAction, updateProductAction } from "@/app/(protected)/products/actions";
+import { ImageUploadField } from "@/components/ImageUploadField";
 import type { Product } from "@/lib/types";
 
 export function ProductForm({
@@ -119,16 +120,7 @@ export function ProductForm({
         </label>
       </div>
 
-      <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
-        رابط الصورة (اختياري)
-        <input
-          type="text"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://..."
-          className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
-        />
-      </label>
+      <ImageUploadField value={imageUrl} onChange={setImageUrl} folder="products" />
 
       {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
       {saved && !error && <p className="text-sm font-medium text-green-700">تم الحفظ</p>}

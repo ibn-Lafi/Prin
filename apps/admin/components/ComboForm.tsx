@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { createComboAction, updateComboAction, type ComboItemInput } from "@/app/(protected)/combos/actions";
+import { ImageUploadField } from "@/components/ImageUploadField";
 import type { ComboWithItems } from "@/lib/types";
 
 export function ComboForm({
@@ -99,16 +100,7 @@ export function ComboForm({
         />
       </label>
 
-      <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
-        رابط الصورة (اختياري)
-        <input
-          type="text"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://..."
-          className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
-        />
-      </label>
+      <ImageUploadField value={imageUrl} onChange={setImageUrl} folder="combos" />
 
       <div className="flex flex-col gap-2">
         <p className="text-sm text-[var(--color-brand-muted)]">الأصناف الداخلة بالوجبة</p>

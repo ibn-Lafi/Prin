@@ -12,6 +12,7 @@ export type Reward = {
   description: string | null;
   points_cost: number;
   discount_amount: number;
+  image_url: string | null;
   is_active: boolean;
 };
 

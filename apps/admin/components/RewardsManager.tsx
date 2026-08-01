@@ -9,6 +9,7 @@ import {
   toggleRewardActiveAction,
   type RewardInput,
 } from "@/app/(protected)/rewards/actions";
+import { ImageUploadField } from "@/components/ImageUploadField";
 import type { Reward } from "@/lib/types";
 
 function RewardForm({
@@ -28,6 +29,7 @@ function RewardForm({
   const [description, setDescription] = useState(initial.description);
   const [pointsCost, setPointsCost] = useState(initial.pointsCost.toString());
   const [discountAmount, setDiscountAmount] = useState(initial.discountAmount.toString());
+  const [imageUrl, setImageUrl] = useState(initial.imageUrl);
 
   return (
     <div className="flex max-w-sm flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
@@ -75,6 +77,7 @@ function RewardForm({
           className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
         />
       </label>
+      <ImageUploadField value={imageUrl} onChange={setImageUrl} folder="rewards" />
       <button
         type="button"
         disabled={isPending}
@@ -84,6 +87,7 @@ function RewardForm({
             description,
             pointsCost: Number(pointsCost),
             discountAmount: Number(discountAmount),
+            imageUrl,
           })
         }
         className="rounded-xl bg-[var(--color-brand-primary)] px-4 py-2.5 font-semibold text-white disabled:opacity-50"
@@ -152,6 +156,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
                 description: reward.description ?? "",
                 pointsCost: reward.points_cost,
                 discountAmount: reward.discount_amount,
+                imageUrl: reward.image_url ?? "",
               }}
               onSubmit={(input) => handleUpdate(reward.id, input)}
               onCancel={() => setEditingId(null)}
@@ -207,7 +212,7 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
         <RewardForm
           title="إضافة مكافأة"
           isPending={isPending}
-          initial={{ name: "", description: "", pointsCost: 100, discountAmount: 0 }}
+          initial={{ name: "", description: "", pointsCost: 100, discountAmount: 0, imageUrl: "" }}
           onSubmit={handleCreate}
           onCancel={() => setIsCreating(false)}
         />

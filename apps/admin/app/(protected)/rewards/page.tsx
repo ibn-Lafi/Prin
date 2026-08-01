@@ -5,7 +5,7 @@ export default async function RewardsPage() {
   const supabase = createSupabaseServiceRoleClient();
   const { data: rewards } = await supabase
     .from("rewards")
-    .select("id, name, description, points_cost, discount_amount, is_active")
+    .select("id, name, description, points_cost, discount_amount, image_url, is_active")
     .order("points_cost", { ascending: true });
 
   return (
