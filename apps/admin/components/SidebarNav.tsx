@@ -11,6 +11,7 @@ import {
   BarChart3,
   Users,
   Gift,
+  Percent,
   Settings,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/reports", label: "التقارير", icon: BarChart3 },
   { href: "/employees", label: "الموظفون", icon: Users },
   { href: "/rewards", label: "الولاء والمكافآت", icon: Gift },
+  { href: "/offers", label: "العروض والخصومات", icon: Percent },
   { href: "/settings", label: "الإعدادات العامة", icon: Settings },
 ];
 

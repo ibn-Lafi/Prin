@@ -188,6 +188,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      discount_codes: {
+        Row: {
+          id: string;
+          code: string;
+          discount_type: string;
+          value: number;
+          min_order_amount: number;
+          valid_from: string | null;
+          valid_until: string | null;
+          max_uses: number | null;
+          times_used: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          discount_type: string;
+          value: number;
+          min_order_amount?: number;
+          valid_from?: string | null;
+          valid_until?: string | null;
+          max_uses?: number | null;
+          times_used?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          discount_type?: string;
+          value?: number;
+          min_order_amount?: number;
+          valid_from?: string | null;
+          valid_until?: string | null;
+          max_uses?: number | null;
+          times_used?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       employees: {
         Row: {
           id: string;

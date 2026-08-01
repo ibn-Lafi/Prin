@@ -81,3 +81,16 @@ export type ComboItem = {
 };
 
 export type ComboWithItems = Combo & { combo_items: ComboItem[] };
+
+export type DiscountCode = {
+  id: string;
+  code: string;
+  discount_type: "percentage" | "fixed";
+  value: number;
+  min_order_amount: number;
+  valid_from: string | null;
+  valid_until: string | null;
+  max_uses: number | null;
+  times_used: number;
+  is_active: boolean;
+};
