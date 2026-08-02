@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Printer } from "lucide-react";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { IncomingOrdersWatcher } from "@/components/IncomingOrdersWatcher";
@@ -29,6 +31,13 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         </span>
         <div className="flex items-center gap-3">
           <OnlineOrdersHeaderList />
+          <Link
+            href="/printer-settings"
+            aria-label="إعدادات الطباعة"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-background)] ring-1 ring-[var(--color-brand-border)]"
+          >
+            <Printer className="h-4 w-4 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
+          </Link>
           <span className="text-sm">
             <span className="font-semibold">{employee.full_name}</span>
             <span className="mr-1 text-[var(--color-brand-muted)]">({roleLabel})</span>

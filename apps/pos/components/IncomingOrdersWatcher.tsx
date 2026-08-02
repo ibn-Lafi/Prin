@@ -5,6 +5,7 @@ import { createSupabaseBrowserClient } from "@brin/database";
 import type { IncomingOrder } from "@/lib/types";
 import { fetchIncomingOrderDetailsAction, acceptIncomingOrderAction } from "@/app/(protected)/actions";
 import { playAlertSound } from "@/lib/alertSound";
+import { getStationId } from "@/lib/device";
 import { IncomingOrderPopup } from "@/components/IncomingOrderPopup";
 import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
 
@@ -55,7 +56,7 @@ export function IncomingOrdersWatcher() {
   async function handleAccept() {
     if (!current || isAccepting) return;
     setIsAccepting(true);
-    const result = await acceptIncomingOrderAction(current.id);
+    const result = await acceptIncomingOrderAction(current.id, getStationId());
     setIsAccepting(false);
     if (!result.error) {
       setPrintingOrder(current);

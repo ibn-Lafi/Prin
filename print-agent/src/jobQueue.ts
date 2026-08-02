@@ -1,5 +1,6 @@
 import { createSupabaseServiceRoleClient } from "@brin/database";
 import type { KitchenPrintPayload, CustomerPrintPayload } from "@brin/utils";
+import { config } from "./config";
 import { getKitchenPrinter, getCustomerPrinter } from "./printers";
 import { renderKitchenTicket, renderCustomerReceipt } from "./receipts";
 
@@ -11,6 +12,7 @@ type PrintJobRow = {
   target: "kitchen" | "customer";
   payload: unknown;
   attempts: number;
+  station_id: string | null;
 };
 
 const supabase = createSupabaseServiceRoleClient();
@@ -66,8 +68,9 @@ async function processJob(job: PrintJobRow): Promise<void> {
 async function sweepPendingJobs(): Promise<void> {
   const { data, error } = await supabase
     .from("print_jobs")
-    .select("id, target, payload, attempts")
+    .select("id, target, payload, attempts, station_id")
     .eq("status", "pending")
+    .eq("station_id", config.stationId)
     .order("created_at", { ascending: true });
 
   if (error || !data) return;
@@ -81,11 +84,13 @@ export function startJobQueue(): void {
   void sweepPendingJobs();
   setInterval(() => void sweepPendingJobs(), SWEEP_INTERVAL_MS);
 
+  // فلترة الاشتراك بـ station_id تمنع كل جهاز طباعة من التقاط طلبات
+  // الأجهزة الثانية — بدونها جهازين كاشير يتسابقون على نفس الطابور العام.
   supabase
     .channel("print-agent-jobs")
     .on(
       "postgres_changes",
-      { event: "INSERT", schema: "public", table: "print_jobs" },
+      { event: "INSERT", schema: "public", table: "print_jobs", filter: `station_id=eq.${config.stationId}` },
       (payload) => {
         const job = payload.new as PrintJobRow;
         if (job.target && job.payload) void processJob(job);

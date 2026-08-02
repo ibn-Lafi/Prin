@@ -568,7 +568,7 @@ export type Database = {
       };
       print_agent_status: {
         Row: {
-          id: number;
+          id: string;
           last_heartbeat_at: string | null;
           kitchen_printer_connected: boolean;
           customer_printer_connected: boolean;
@@ -577,7 +577,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          id?: number;
+          id: string;
           last_heartbeat_at?: string | null;
           kitchen_printer_connected?: boolean;
           customer_printer_connected?: boolean;
@@ -586,7 +586,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          id?: number;
+          id?: string;
           last_heartbeat_at?: string | null;
           kitchen_printer_connected?: boolean;
           customer_printer_connected?: boolean;
@@ -606,6 +606,7 @@ export type Database = {
           attempts: number;
           error_message: string | null;
           printed_at: string | null;
+          station_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -618,6 +619,7 @@ export type Database = {
           attempts?: number;
           error_message?: string | null;
           printed_at?: string | null;
+          station_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -630,6 +632,7 @@ export type Database = {
           attempts?: number;
           error_message?: string | null;
           printed_at?: string | null;
+          station_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };

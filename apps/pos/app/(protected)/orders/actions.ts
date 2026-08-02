@@ -24,6 +24,7 @@ export type CreateOrderInput = {
   payments: CreateOrderPayment[];
   rewardId: string | null;
   discountCode: string | null;
+  stationId: string | null;
 };
 
 export type CreateOrderResult = {
@@ -62,7 +63,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     return { error: "تعذّر إنشاء الطلب" };
   }
 
-  await queueOrderPrintJobs(created.order_id);
+  await queueOrderPrintJobs(created.order_id, input.stationId);
 
   return { orderId: created.order_id, dailyOrderNumber: created.daily_order_number };
 }

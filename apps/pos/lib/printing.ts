@@ -31,7 +31,9 @@ type OrderForPrint = {
 // يبني ويُدرج مهمتي طباعة (مطبخ + عميل) بعد نجاح إنشاء/استلام أي طلب — يُعاد جلب
 // الطلب كاملاً من قاعدة البيانات دائماً (مو من حالة الواجهة) نفس مبدأ create_pos_order:
 // لا نثق بأي بيانات وصلت من المتصفح لشيء يُطبع فعلياً على فاتورة ضريبية.
-export async function queueOrderPrintJobs(orderId: string): Promise<void> {
+// stationId (معرّف جهاز الكاشير المحلي) يحدد أي عامل طباعة يلتقط المهمتين —
+// بدونه تبقى المهمتان بدون جهاز مستهدف وما يطبعها أي عامل طباعة.
+export async function queueOrderPrintJobs(orderId: string, stationId: string | null): Promise<void> {
   const supabase = createSupabaseServiceRoleClient();
 
   const [{ data: rawOrder, error: orderError }, { data: settings }] = await Promise.all([
@@ -108,7 +110,7 @@ export async function queueOrderPrintJobs(orderId: string): Promise<void> {
   };
 
   await supabase.from("print_jobs").insert([
-    { order_id: order.id, target: "kitchen", payload: kitchenPayload as unknown as Json },
-    { order_id: order.id, target: "customer", payload: customerPayload as unknown as Json },
+    { order_id: order.id, target: "kitchen", payload: kitchenPayload as unknown as Json, station_id: stationId },
+    { order_id: order.id, target: "customer", payload: customerPayload as unknown as Json, station_id: stationId },
   ]);
 }

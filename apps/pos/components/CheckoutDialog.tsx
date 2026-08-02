@@ -11,6 +11,7 @@ import {
   lookupDiscountCodeAction,
 } from "@/app/(protected)/orders/actions";
 import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
+import { getStationId } from "@/lib/device";
 import type { CustomerLookup, Reward, DiscountCodePreview } from "@/lib/types";
 
 export function CheckoutDialog({
@@ -149,6 +150,7 @@ export function CheckoutDialog({
         payments,
         rewardId: selectedReward?.id ?? null,
         discountCode: appliedCode?.code ?? null,
+        stationId: getStationId(),
       });
 
       if (result.error) {

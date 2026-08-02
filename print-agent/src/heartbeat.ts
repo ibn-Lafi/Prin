@@ -1,4 +1,5 @@
 import { createSupabaseServiceRoleClient } from "@brin/database";
+import { config } from "./config";
 import { getKitchenPrinter, getCustomerPrinter } from "./printers";
 
 const HEARTBEAT_INTERVAL_MS = 15_000;
@@ -21,7 +22,7 @@ async function sendHeartbeat(): Promise<void> {
       kitchen_printer_connected: kitchenConnected,
       customer_printer_connected: customerConnected,
     })
-    .eq("id", 1);
+    .eq("id", config.stationId);
 
   if (error) {
     console.error(`[heartbeat] تعذّر تحديث حالة جهاز الطباعة: ${error.message}`);

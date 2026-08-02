@@ -10,6 +10,7 @@ import {
   listActiveOnlineOrdersAction,
 } from "@/app/(protected)/actions";
 import type { ActiveOnlineOrder } from "@/lib/types";
+import { getStationId } from "@/lib/device";
 
 const STATUS_LABELS: Record<ActiveOnlineOrder["status"], string> = {
   received: "بانتظار القبول",
@@ -53,7 +54,7 @@ export function OnlineOrdersHeaderList() {
 
   function handleAccept(orderId: string) {
     startTransition(async () => {
-      await acceptIncomingOrderAction(orderId);
+      await acceptIncomingOrderAction(orderId, getStationId());
       await refresh();
     });
   }

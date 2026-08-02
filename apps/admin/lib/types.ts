@@ -35,8 +35,6 @@ export type RestaurantSettings = {
   opening_time: string;
   closing_time: string;
   is_accepting_orders: boolean;
-  kitchen_printer_interface: string | null;
-  customer_printer_interface: string | null;
 };
 
 export type Category = {

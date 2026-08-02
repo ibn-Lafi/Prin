@@ -13,8 +13,6 @@ export type SettingsInput = {
   openingTime: string;
   closingTime: string;
   isAcceptingOrders: boolean;
-  kitchenPrinterInterface: string;
-  customerPrinterInterface: string;
 };
 
 export async function updateSettingsAction(input: SettingsInput): Promise<ActionResult> {
@@ -28,31 +26,21 @@ export async function updateSettingsAction(input: SettingsInput): Promise<Action
 
   const supabase = createSupabaseServiceRoleClient();
 
-  // عناوين الطابعتين بجدول print_agent_status لا restaurant_settings عمداً —
-  // الأخير له سياسة قراءة عامة (anon) يعتمد عليها المنيو الإلكتروني، وعناوين
-  // شبكة داخلية للطابعات ما يصح تكون قابلة للقراءة العامة (راجع migration 0027).
-  const [{ error }, { error: printerError }] = await Promise.all([
-    supabase
-      .from("restaurant_settings")
-      .update({
-        restaurant_name: input.restaurantName.trim(),
-        vat_number: input.vatNumber.trim() || null,
-        tax_rate_percent: input.taxRatePercent,
-        opening_time: input.openingTime,
-        closing_time: input.closingTime,
-        is_accepting_orders: input.isAcceptingOrders,
-      })
-      .eq("id", 1),
-    supabase
-      .from("print_agent_status")
-      .update({
-        kitchen_printer_interface: input.kitchenPrinterInterface.trim() || null,
-        customer_printer_interface: input.customerPrinterInterface.trim() || null,
-      })
-      .eq("id", 1),
-  ]);
+  // إعدادات الطباعة انتقلت لنظام الكاشير (لكل جهاز كاشير على حدة، صفحة
+  // إعدادات الطباعة) — راجع apps/pos/app/(protected)/printer-settings.
+  const { error } = await supabase
+    .from("restaurant_settings")
+    .update({
+      restaurant_name: input.restaurantName.trim(),
+      vat_number: input.vatNumber.trim() || null,
+      tax_rate_percent: input.taxRatePercent,
+      opening_time: input.openingTime,
+      closing_time: input.closingTime,
+      is_accepting_orders: input.isAcceptingOrders,
+    })
+    .eq("id", 1);
 
-  if (error || printerError) return { error: "تعذّر حفظ الإعدادات" };
+  if (error) return { error: "تعذّر حفظ الإعدادات" };
 
   await supabase.from("audit_log").insert({
     employee_id: session.employeeId,

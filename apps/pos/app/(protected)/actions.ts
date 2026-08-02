@@ -94,7 +94,10 @@ export async function fetchIncomingOrderDetailsAction(
 }
 
 /** يحوّل الطلب من "received" إلى "accepted" — بضمان ذرّي ضد استلام مزدوج من جهازين. */
-export async function acceptIncomingOrderAction(orderId: string): Promise<{ error?: string }> {
+export async function acceptIncomingOrderAction(
+  orderId: string,
+  stationId: string | null,
+): Promise<{ error?: string }> {
   const session = await getSession();
   if (!session) {
     return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
@@ -120,7 +123,7 @@ export async function acceptIncomingOrderAction(orderId: string): Promise<{ erro
     return { error: "الطلب تم استلامه مسبقاً من جهاز آخر" };
   }
 
-  await queueOrderPrintJobs(orderId);
+  await queueOrderPrintJobs(orderId, stationId);
 
   return {};
 }
@@ -262,16 +265,18 @@ export async function getPrintJobStatusAction(orderId: string): Promise<PrintJob
   return (data ?? []) as PrintJobStatus[];
 }
 
-/** يُستطلَع دورياً بواجهة الكاشير لإظهار تنبيه فقد اتصال الطابعة/جهاز الطباعة. */
-export async function getPrintAgentStatusAction(): Promise<PrintAgentStatus | null> {
+/** يُستطلَع دورياً بواجهة الكاشير لإظهار تنبيه فقد اتصال الطابعة/جهاز الطباعة —
+ * مقيّد بجهاز الكاشير الحالي (stationId) بدل حالة عامة لكل المطعم، حتى لا يشوف
+ * كاشير جهاز A تنبيهاً بسبب طابعة جهاز B. */
+export async function getPrintAgentStatusAction(stationId: string | null): Promise<PrintAgentStatus | null> {
   const session = await getSession();
-  if (!session) return null;
+  if (!session || !stationId) return null;
 
   const supabase = createSupabaseServiceRoleClient();
   const { data } = await supabase
     .from("print_agent_status")
     .select("last_heartbeat_at, kitchen_printer_connected, customer_printer_connected")
-    .eq("id", 1)
+    .eq("id", stationId)
     .maybeSingle();
 
   if (!data) return null;
