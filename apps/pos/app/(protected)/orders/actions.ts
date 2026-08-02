@@ -1,5 +1,6 @@
 "use server";
 
+import { normalizeSaudiPhone } from "@brin/utils";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { queueOrderPrintJobs } from "@/lib/printing";
@@ -43,10 +44,21 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     return { error: "التذكرة فاضية" };
   }
 
+  // توحيد صيغة الجوال لـ E.164 قبل حفظه — نفس الصيغة اللي يستخدمها المنيو
+  // الإلكتروني (OTP) بالضبط، وإلا عميل مسجّل مسبقاً بالمنيو (أو يسجّل لاحقاً)
+  // يصير له صفّان منفصلان بجدول customers ونقاطه تتوزّع بينهما بدل حساب واحد.
+  let normalizedPhone: string | null = null;
+  if (input.customerPhone && input.customerPhone.trim()) {
+    normalizedPhone = normalizeSaudiPhone(input.customerPhone);
+    if (!normalizedPhone) {
+      return { error: "رقم الجوال غير صالح" };
+    }
+  }
+
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase.rpc("create_pos_order", {
     p_employee_id: session.employeeId,
-    p_customer_phone: input.customerPhone,
+    p_customer_phone: normalizedPhone,
     p_customer_name: input.customerName,
     p_items: input.items,
     p_payments: input.payments,
@@ -73,14 +85,14 @@ export async function lookupCustomerAction(phone: string): Promise<CustomerLooku
   const session = await getSession();
   if (!session) return null;
 
-  const trimmed = phone.trim();
-  if (!trimmed) return null;
+  const normalized = normalizeSaudiPhone(phone);
+  if (!normalized) return null;
 
   const supabase = createSupabaseServiceRoleClient();
   const { data } = await supabase
     .from("customers")
     .select("id, full_name, points_balance")
-    .eq("phone", trimmed)
+    .eq("phone", normalized)
     .maybeSingle();
 
   if (!data) return null;
