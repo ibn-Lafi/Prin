@@ -1,10 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { roundMoney } from "@brin/utils";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession, clearSession } from "@/lib/session";
 import { queueOrderPrintJobs } from "@/lib/printing";
-import type { ActiveOnlineOrder, IncomingOrder, PrintAgentStatus, PrintJobStatus } from "@/lib/types";
+import type {
+  ActiveOnlineOrder,
+  IncomingOrder,
+  PrintAgentStatus,
+  PrintJobStatus,
+  ShiftSummary,
+} from "@/lib/types";
 
 // شكل نتيجة الاستعلام المتداخل (Nested Select) — نصرّحه يدوياً ونكسره بـ "as"
 // عند القراءة، بنفس نمط apps/menu، لأن database.types.ts لا يحمل معلومات
@@ -96,7 +103,11 @@ export async function acceptIncomingOrderAction(orderId: string): Promise<{ erro
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase
     .from("orders")
-    .update({ status: "accepted" })
+    .update({
+      status: "accepted",
+      accepted_by_employee_id: session.employeeId,
+      accepted_at: new Date().toISOString(),
+    })
     .eq("id", orderId)
     .eq("status", "received")
     .select("id")
@@ -163,6 +174,78 @@ export async function completeOnlineOrderAction(orderId: string): Promise<{ erro
   }
 
   return {};
+}
+
+type ShiftPosOrderRow = {
+  payments: { method: string; amount: number }[];
+};
+
+/**
+ * يغلق جلسة عمل الكاشير الحالية (المفتوحة منذ آخر تسجيل دخول) ويحسب ملخص
+ * المبالغ خلالها: كاش وشبكة من الطلبات اللي أنشأها هذا الموظف بالكاشير
+ * (بوقت الإنشاء)، وقيمة الطلبات الإلكترونية اللي قبلها هو نفسه (بوقت القبول
+ * لا الإنشاء، لأن الطلب الإلكتروني قد يوصل قبل بداية الجلسة بوقت طويل).
+ * تُستدعى عند الضغط على "خروج" قبل تنفيذ logoutAction الفعلي.
+ */
+export async function closeShiftAndSummarizeAction(): Promise<ShiftSummary | null> {
+  const session = await getSession();
+  if (!session) return null;
+
+  const supabase = createSupabaseServiceRoleClient();
+
+  const { data: shift } = await supabase
+    .from("cashier_shifts")
+    .select("id, opened_at")
+    .eq("employee_id", session.employeeId)
+    .is("closed_at", null)
+    .order("opened_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!shift) return null;
+
+  const closedAt = new Date().toISOString();
+
+  const [{ data: rawPosOrders }, { data: onlineOrders }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("payments ( method, amount )")
+      .eq("employee_id", session.employeeId)
+      .eq("channel", "pos")
+      .neq("status", "cancelled")
+      .gte("created_at", shift.opened_at)
+      .lte("created_at", closedAt),
+    supabase
+      .from("orders")
+      .select("total")
+      .eq("accepted_by_employee_id", session.employeeId)
+      .eq("channel", "online")
+      .neq("status", "cancelled")
+      .gte("accepted_at", shift.opened_at)
+      .lte("accepted_at", closedAt),
+  ]);
+
+  const posOrders = (rawPosOrders ?? []) as unknown as ShiftPosOrderRow[];
+
+  let cash = 0;
+  let cardTerminal = 0;
+  for (const order of posOrders) {
+    for (const payment of order.payments ?? []) {
+      if (payment.method === "cash") cash += payment.amount;
+      else if (payment.method === "card_terminal") cardTerminal += payment.amount;
+    }
+  }
+
+  const online = (onlineOrders ?? []).reduce((sum, order) => sum + order.total, 0);
+
+  await supabase.from("cashier_shifts").update({ closed_at: closedAt }).eq("id", shift.id);
+
+  return {
+    cash: roundMoney(cash),
+    cardTerminal: roundMoney(cardTerminal),
+    online: roundMoney(online),
+    total: roundMoney(cash + cardTerminal + online),
+  };
 }
 
 /** يُستطلَع (polling) بعد إنشاء/استلام أي طلب لعرض حالة الطباعة بالواجهة. */

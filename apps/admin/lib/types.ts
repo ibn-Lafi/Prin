@@ -97,3 +97,17 @@ export type DiscountCode = {
   times_used: number;
   is_active: boolean;
 };
+
+export type CashierShift = {
+  id: string;
+  employee_id: string;
+  opened_at: string;
+  closed_at: string | null;
+};
+
+export type ShiftTotals = {
+  cash: number;
+  cardTerminal: number;
+  online: number;
+  total: number;
+};

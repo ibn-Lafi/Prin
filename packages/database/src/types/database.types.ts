@@ -459,6 +459,8 @@ export type Database = {
           cancelled_by_employee_id: string | null;
           cancellation_reason: string | null;
           cancelled_at: string | null;
+          accepted_by_employee_id: string | null;
+          accepted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -480,6 +482,8 @@ export type Database = {
           cancelled_by_employee_id?: string | null;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
+          accepted_by_employee_id?: string | null;
+          accepted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -501,8 +505,31 @@ export type Database = {
           cancelled_by_employee_id?: string | null;
           cancellation_reason?: string | null;
           cancelled_at?: string | null;
+          accepted_by_employee_id?: string | null;
+          accepted_at?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      cashier_shifts: {
+        Row: {
+          id: string;
+          employee_id: string;
+          opened_at: string;
+          closed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          employee_id: string;
+          opened_at?: string;
+          closed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          employee_id?: string;
+          opened_at?: string;
+          closed_at?: string | null;
         };
         Relationships: [];
       };

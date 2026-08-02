@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation";
-import { LogOut } from "lucide-react";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
-import { logoutAction } from "./actions";
 import { IncomingOrdersWatcher } from "@/components/IncomingOrdersWatcher";
 import { OnlineOrdersHeaderList } from "@/components/OnlineOrdersHeaderList";
 import { PrintAgentStatusBanner } from "@/components/PrintAgentStatusBanner";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -34,15 +33,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
             <span className="font-semibold">{employee.full_name}</span>
             <span className="mr-1 text-[var(--color-brand-muted)]">({roleLabel})</span>
           </span>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 rounded-full bg-[var(--color-brand-background)] px-3 py-2 text-sm font-medium text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
-            >
-              <LogOut className="h-4 w-4" strokeWidth={1.75} />
-              خروج
-            </button>
-          </form>
+          <LogoutButton />
         </div>
       </header>
       <PrintAgentStatusBanner />

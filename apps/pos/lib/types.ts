@@ -66,6 +66,13 @@ export type ActiveOnlineOrder = {
   total: number;
 };
 
+export type ShiftSummary = {
+  cash: number;
+  cardTerminal: number;
+  online: number;
+  total: number;
+};
+
 export type PrintAgentStatus = {
   lastHeartbeatAt: string | null;
   kitchenPrinterConnected: boolean;

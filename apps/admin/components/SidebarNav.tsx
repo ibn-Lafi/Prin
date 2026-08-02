@@ -15,6 +15,7 @@ import {
   Percent,
   ScrollText,
   Settings,
+  Clock,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: "/products", label: "المنتجات", icon: UtensilsCrossed },
   { href: "/combos", label: "الوجبات", icon: Sandwich },
   { href: "/orders", label: "الطلبات", icon: ClipboardList },
+  { href: "/shifts", label: "جلسات الكاشير", icon: Clock },
   { href: "/reports", label: "التقارير", icon: BarChart3 },
   { href: "/customers", label: "العملاء", icon: UserSearch },
   { href: "/employees", label: "الموظفون", icon: Users },

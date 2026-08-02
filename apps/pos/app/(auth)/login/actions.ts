@@ -26,6 +26,18 @@ export async function loginAction(pin: string): Promise<LoginResult> {
     const matches = await verifyEmployeePin(pin, employee.pin_hash);
     if (matches) {
       await createSession(employee.id, employee.role as EmployeeRole);
+
+      // يغلق أي جلسة عمل سابقة عالقة مفتوحة لنفس الموظف (مثلاً بسبب إغلاق
+      // المتصفح بدون تسجيل خروج) قبل ما نفتح جلسة جديدة — يضمن وجود جلسة
+      // مفتوحة واحدة فقط لكل موظف بأي وقت.
+      await supabase
+        .from("cashier_shifts")
+        .update({ closed_at: new Date().toISOString() })
+        .eq("employee_id", employee.id)
+        .is("closed_at", null);
+
+      await supabase.from("cashier_shifts").insert({ employee_id: employee.id });
+
       await supabase.from("audit_log").insert({
         employee_id: employee.id,
         action_type: "employee_login",
