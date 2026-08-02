@@ -2,11 +2,11 @@
 
 import { Suspense, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MessageSquareLock, Phone } from "lucide-react";
+import { MessageSquareLock, Phone, User } from "lucide-react";
 import { normalizeSaudiPhone } from "@brin/utils";
-import { sendOtpAction, verifyOtpAction } from "./actions";
+import { checkPhoneExistsAction, sendOtpAction, verifyOtpAction } from "./actions";
 
-type Step = "phone" | "otp";
+type Step = "phone" | "name" | "otp";
 
 export default function LoginPage() {
   return (
@@ -24,10 +24,11 @@ function LoginForm() {
   const [step, setStep] = useState<Step>("phone");
   const [phoneInput, setPhoneInput] = useState("");
   const [normalizedPhone, setNormalizedPhone] = useState("");
+  const [fullName, setFullName] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  function handleSendOtp() {
+  function handlePhoneContinue() {
     setError(null);
     const phone = normalizeSaudiPhone(phoneInput);
     if (!phone) {
@@ -36,12 +37,39 @@ function LoginForm() {
     }
 
     startTransition(async () => {
-      const result = await sendOtpAction(phone);
+      const checkResult = await checkPhoneExistsAction(phone);
+      if (checkResult.error) {
+        setError(checkResult.error);
+        return;
+      }
+      setNormalizedPhone(phone);
+
+      if (checkResult.exists) {
+        const result = await sendOtpAction(phone);
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        setStep("otp");
+      } else {
+        setStep("name");
+      }
+    });
+  }
+
+  function handleNameContinue() {
+    setError(null);
+    if (!fullName.trim()) {
+      setError("اكتب اسمك للمتابعة");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await sendOtpAction(normalizedPhone);
       if (result.error) {
         setError(result.error);
         return;
       }
-      setNormalizedPhone(phone);
       setStep("otp");
     });
   }
@@ -49,7 +77,7 @@ function LoginForm() {
   function handleVerifyOtp() {
     setError(null);
     startTransition(async () => {
-      const result = await verifyOtpAction(normalizedPhone, otp);
+      const result = await verifyOtpAction(normalizedPhone, otp, fullName);
       if (result.error) {
         setError(result.error);
         return;
@@ -64,6 +92,8 @@ function LoginForm() {
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-brand-primary-light)]">
           {step === "phone" ? (
             <Phone className="h-6 w-6 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
+          ) : step === "name" ? (
+            <User className="h-6 w-6 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
           ) : (
             <MessageSquareLock
               className="h-6 w-6 text-[var(--color-brand-primary)]"
@@ -89,7 +119,33 @@ function LoginForm() {
           </label>
           <button
             type="button"
-            onClick={handleSendOtp}
+            onClick={handlePhoneContinue}
+            disabled={isPending}
+            className="rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3 font-semibold text-white disabled:opacity-50"
+          >
+            {isPending ? "جارِ التحقق..." : "متابعة"}
+          </button>
+        </div>
+      )}
+
+      {step === "name" && (
+        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
+          <p className="text-center text-sm text-[var(--color-brand-muted)]">
+            أول مرة لك عندنا! اكتب اسمك عشان نرحّب فيك
+          </p>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm text-[var(--color-brand-muted)]">الاسم الكامل</span>
+            <input
+              type="text"
+              placeholder="اسمك"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={handleNameContinue}
             disabled={isPending}
             className="rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3 font-semibold text-white disabled:opacity-50"
           >

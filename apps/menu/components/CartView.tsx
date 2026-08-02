@@ -13,7 +13,7 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
 
   if (items.length === 0) {
     return (
-      <main className="mx-auto flex max-w-md flex-col items-center px-4 py-16 text-center">
+      <main className="mx-auto flex max-w-md flex-col items-center px-4 py-16 pb-28 text-center">
         <ShoppingBag
           className="mb-3 h-12 w-12 text-[var(--color-brand-border)]"
           strokeWidth={1.25}
@@ -30,7 +30,7 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 py-6">
+    <main className="mx-auto max-w-md px-4 py-6 pb-28">
       <h1 className="mb-4 text-xl font-bold">سلتي</h1>
 
       <div className="flex flex-col gap-3">

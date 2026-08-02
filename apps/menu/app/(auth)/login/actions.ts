@@ -16,7 +16,27 @@ export async function sendOtpAction(phone: string): Promise<AuthActionResult> {
   }
 }
 
-export async function verifyOtpAction(phone: string, otp: string): Promise<AuthActionResult> {
+/** يتحقق مسبقاً هل رقم الجوال مسجّل لعميل موجود، عشان واجهة الدخول تقرر
+ * تعرض حقل الاسم (تسجيل جديد) أو لا (تسجيل دخول لعميل موجود). */
+export async function checkPhoneExistsAction(
+  phone: string,
+): Promise<{ exists: boolean; error?: string }> {
+  const serviceRole = createSupabaseServiceRoleClient();
+  const { data, error } = await serviceRole
+    .from("customers")
+    .select("id")
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (error) return { exists: false, error: "حدث خطأ غير متوقع" };
+  return { exists: !!data };
+}
+
+export async function verifyOtpAction(
+  phone: string,
+  otp: string,
+  fullName?: string,
+): Promise<AuthActionResult> {
   try {
     await verifyOtp(phone, otp);
   } catch (error) {
@@ -55,7 +75,9 @@ export async function verifyOtpAction(phone: string, otp: string): Promise<AuthA
         .update({ auth_user_id: authUserId })
         .eq("id", existingCustomer.id);
     } else {
-      await serviceRole.from("customers").insert({ phone, auth_user_id: authUserId });
+      await serviceRole
+        .from("customers")
+        .insert({ phone, auth_user_id: authUserId, full_name: fullName?.trim() || null });
     }
   }
 
