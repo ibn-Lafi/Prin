@@ -11,6 +11,7 @@ import {
 } from "@/app/(protected)/actions";
 import type { ActiveOnlineOrder } from "@/lib/types";
 import { getStationId } from "@/lib/device";
+import { CollectPaymentDialog } from "@/components/CollectPaymentDialog";
 
 const STATUS_LABELS: Record<ActiveOnlineOrder["status"], string> = {
   received: "بانتظار القبول",
@@ -20,6 +21,7 @@ const STATUS_LABELS: Record<ActiveOnlineOrder["status"], string> = {
 export function OnlineOrdersHeaderList() {
   const [orders, setOrders] = useState<ActiveOnlineOrder[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [collectingOrder, setCollectingOrder] = useState<ActiveOnlineOrder | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -112,6 +114,15 @@ export function OnlineOrdersHeaderList() {
                       >
                         قبول
                       </button>
+                    ) : !order.isPaid ? (
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => setCollectingOrder(order)}
+                        className="rounded-full bg-[var(--color-brand-primary)] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                      >
+                        تحصيل الدفع
+                      </button>
                     ) : (
                       <button
                         type="button"
@@ -128,6 +139,19 @@ export function OnlineOrdersHeaderList() {
             )}
           </div>
         </>
+      )}
+
+      {collectingOrder && (
+        <CollectPaymentDialog
+          orderId={collectingOrder.id}
+          dailyOrderNumber={collectingOrder.dailyOrderNumber}
+          total={collectingOrder.total}
+          onClose={() => setCollectingOrder(null)}
+          onCollected={() => {
+            setCollectingOrder(null);
+            void refresh();
+          }}
+        />
       )}
     </div>
   );

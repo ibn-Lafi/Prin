@@ -13,7 +13,8 @@ export type CartModifier = {
 
 export type CartItem = {
   cartItemId: string;
-  productId: string;
+  kind: "product" | "combo";
+  refId: string;
   name: string;
   unitPrice: number;
   quantity: number;

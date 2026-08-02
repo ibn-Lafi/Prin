@@ -17,7 +17,8 @@ export function ComboCard({ combo, onSelect }: { combo: Combo; onSelect: () => v
       return;
     }
     addItem({
-      productId: combo.id,
+      kind: "combo",
+      refId: combo.id,
       name: combo.name,
       unitPrice: combo.price,
       quantity: 1,

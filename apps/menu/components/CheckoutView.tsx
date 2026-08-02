@@ -1,51 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Clock, CreditCard, Gift, MapPin, Phone, Store, Tag, X } from "lucide-react";
+import { Check, Clock, MapPin, Phone, Store, Tag, X } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useCart } from "@/hooks/useCart";
-import { lookupDiscountCodeAction } from "@/app/checkout/actions";
-import type { DiscountCodePreview, Reward } from "@/lib/types";
+import { lookupDiscountCodeAction, placeOrderAction, type CheckoutItem } from "@/app/checkout/actions";
+import type { DiscountCodePreview } from "@/lib/types";
 
 export function CheckoutView({
   customerPhone,
   taxRatePercent,
   isOpen,
-  pointsBalance,
-  rewards,
 }: {
   customerPhone: string;
   taxRatePercent: number;
   isOpen: boolean;
-  pointsBalance: number;
-  rewards: Reward[];
 }) {
-  const { items, itemTotal, subtotal } = useCart();
+  const router = useRouter();
+  const { items, itemTotal, subtotal, clear } = useCart();
 
-  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCodePreview | null>(null);
   const [isApplyingCode, setIsApplyingCode] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [orderError, setOrderError] = useState<string | null>(null);
+  const [isPlacing, startPlacing] = useTransition();
 
-  const affordableRewards = rewards.filter((r) => pointsBalance >= r.points_cost);
-  const selectedReward = affordableRewards.find((r) => r.id === selectedRewardId) ?? null;
-  const rewardDiscount = selectedReward ? Math.min(selectedReward.discount_amount, subtotal) : 0;
-  const afterReward = roundMoney(subtotal - rewardDiscount);
-
-  // نفس ترتيب create_pos_order بالضبط: المكافأة أولاً على المجموع الأصلي، ثم
-  // الكود على الناتج — حتى تطابق المعاينة هنا الحساب اللي سيُطبَّق فعلياً وقت
-  // تفعيل الدفع الإلكتروني.
+  // نفس ترتيب create_online_order بالضبط: الكود يُطبَّق على المجموع الفرعي —
+  // استبدال النقاط غير مدعوم بالمنيو الإلكتروني حالياً (متاح بالكاشير فقط).
   const codeDiscount = appliedCode
     ? Math.min(
         appliedCode.discountType === "percentage"
-          ? roundMoney((afterReward * appliedCode.value) / 100)
+          ? roundMoney((subtotal * appliedCode.value) / 100)
           : appliedCode.value,
-        afterReward,
+        subtotal,
       )
     : 0;
-  const discountedSubtotal = roundMoney(afterReward - codeDiscount);
+  const discountedSubtotal = roundMoney(subtotal - codeDiscount);
   const tax = calculateTax(discountedSubtotal, taxRatePercent);
   const total = roundMoney(discountedSubtotal + tax);
 
@@ -65,6 +58,26 @@ export function CheckoutView({
     setAppliedCode(null);
     setDiscountCodeInput("");
     setCodeError(null);
+  }
+
+  function handlePlaceOrder() {
+    setOrderError(null);
+    const checkoutItems: CheckoutItem[] = items.map((item) => ({
+      kind: item.kind,
+      refId: item.refId,
+      quantity: item.quantity,
+      modifierIds: item.modifiers.map((m) => m.modifierId),
+    }));
+
+    startPlacing(async () => {
+      const result = await placeOrderAction(checkoutItems, appliedCode?.code ?? null);
+      if (result.error) {
+        setOrderError(result.error);
+        return;
+      }
+      clear();
+      router.push("/orders");
+    });
   }
 
   if (items.length === 0) {
@@ -115,47 +128,6 @@ export function CheckoutView({
         ))}
       </section>
 
-      {affordableRewards.length > 0 && (
-        <section className="mb-4 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
-          <p className="mb-2 flex items-center gap-1.5 font-semibold">
-            <Gift className="h-4 w-4 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
-            استبدال نقاط (رصيدك: {pointsBalance})
-          </p>
-          <div className="flex flex-col gap-1.5">
-            <button
-              type="button"
-              onClick={() => setSelectedRewardId(null)}
-              className={`rounded-xl border px-3 py-2 text-right text-sm ${
-                selectedRewardId === null
-                  ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
-                  : "border-[var(--color-brand-border)]"
-              }`}
-            >
-              بدون استبدال
-            </button>
-            {affordableRewards.map((reward) => (
-              <button
-                key={reward.id}
-                type="button"
-                onClick={() => setSelectedRewardId(reward.id)}
-                className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
-                  selectedRewardId === reward.id
-                    ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
-                    : "border-[var(--color-brand-border)]"
-                }`}
-              >
-                <span>
-                  {reward.name} — {reward.points_cost} نقطة
-                </span>
-                <span className="text-[var(--color-brand-muted)]">
-                  -{formatCurrency(reward.discount_amount)}
-                </span>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
-
       <section className="mb-4 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <p className="mb-2 font-semibold">كود خصم</p>
         {appliedCode ? (
@@ -200,12 +172,6 @@ export function CheckoutView({
           <span>المجموع الفرعي</span>
           <span>{formatCurrency(subtotal)}</span>
         </div>
-        {rewardDiscount > 0 && (
-          <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
-            <span>خصم — {selectedReward?.name}</span>
-            <span>-{formatCurrency(rewardDiscount)}</span>
-          </div>
-        )}
         {codeDiscount > 0 && (
           <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
             <span>خصم — كود {appliedCode?.code}</span>
@@ -230,8 +196,7 @@ export function CheckoutView({
               strokeWidth={1.5}
             />
             <p className="mb-3 text-sm text-[var(--color-brand-muted)]">
-              الدفع الإلكتروني (مدى / Apple Pay / بطاقات) قيد التفعيل حالياً — الطلبات الإلكترونية
-              غير متاحة مؤقتاً.
+              الدفع عند استلام طلبك بالكاشير (كاش أو شبكة) — بدون دفع إلكتروني الآن.
             </p>
           </>
         ) : (
@@ -245,13 +210,17 @@ export function CheckoutView({
             </p>
           </>
         )}
+        {orderError && (
+          <p className="mb-3 text-sm font-medium text-[var(--color-brand-primary)]">{orderError}</p>
+        )}
         <button
           type="button"
-          disabled
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-brand-border)] px-4 py-3.5 font-semibold text-[var(--color-brand-muted)]"
+          disabled={!isOpen || isPlacing}
+          onClick={handlePlaceOrder}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:bg-[var(--color-brand-border)] disabled:text-[var(--color-brand-muted)]"
         >
-          <CreditCard className="h-4 w-4" strokeWidth={1.75} />
-          الدفع — قريباً
+          <Check className="h-4 w-4" strokeWidth={1.75} />
+          {isPlacing ? "جارِ إرسال الطلب..." : "تأكيد الطلب"}
         </button>
       </section>
     </main>

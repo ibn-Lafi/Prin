@@ -16,7 +16,15 @@ type OrderableItem = {
   modifier_groups: ModifierGroup[];
 };
 
-export function ProductModal({ item, onClose }: { item: OrderableItem; onClose: () => void }) {
+export function ProductModal({
+  item,
+  kind,
+  onClose,
+}: {
+  item: OrderableItem;
+  kind: "product" | "combo";
+  onClose: () => void;
+}) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
@@ -64,7 +72,8 @@ export function ProductModal({ item, onClose }: { item: OrderableItem; onClose: 
     if (missingRequiredGroups.length > 0) return;
 
     addItem({
-      productId: item.id,
+      kind,
+      refId: item.id,
       name: item.name,
       unitPrice: item.price,
       quantity,

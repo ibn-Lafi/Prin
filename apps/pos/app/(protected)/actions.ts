@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { roundMoney } from "@brin/utils";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession, clearSession } from "@/lib/session";
-import { queueOrderPrintJobs } from "@/lib/printing";
+import { queueOrderPrintJobs, queueOnlineOrderCustomerReceipt } from "@/lib/printing";
 import type {
   ActiveOnlineOrder,
   IncomingOrder,
@@ -137,17 +137,20 @@ export async function listActiveOnlineOrdersAction(): Promise<ActiveOnlineOrder[
   const supabase = createSupabaseServiceRoleClient();
   const { data } = await supabase
     .from("orders")
-    .select("id, daily_order_number, status, total")
+    .select("id, daily_order_number, status, total, payments ( id )")
     .eq("channel", "online")
     .in("status", ["received", "accepted"])
     .order("created_at", { ascending: true });
 
-  return (data ?? []).map((order) => ({
-    id: order.id,
-    dailyOrderNumber: order.daily_order_number,
-    status: order.status as "received" | "accepted",
-    total: order.total,
-  }));
+  return ((data ?? []) as unknown as { id: string; daily_order_number: number; status: string; total: number; payments: { id: string }[] }[]).map(
+    (order) => ({
+      id: order.id,
+      dailyOrderNumber: order.daily_order_number,
+      status: order.status as "received" | "accepted",
+      total: order.total,
+      isPaid: (order.payments ?? []).length > 0,
+    }),
+  );
 }
 
 /** يحوّل طلب إلكتروني من "accepted" إلى "completed" — يُستخدم لما يُسلَّم
@@ -160,6 +163,17 @@ export async function completeOnlineOrderAction(orderId: string): Promise<{ erro
   }
 
   const supabase = createSupabaseServiceRoleClient();
+  const { data: existingPayment } = await supabase
+    .from("payments")
+    .select("id")
+    .eq("order_id", orderId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!existingPayment) {
+    return { error: "لازم تحصّل الدفع قبل تسليم الطلب" };
+  }
+
   const { data, error } = await supabase
     .from("orders")
     .update({ status: "completed" })
@@ -179,16 +193,52 @@ export async function completeOnlineOrderAction(orderId: string): Promise<{ erro
   return {};
 }
 
+/** يحصّل دفع طلب إلكتروني (كاش/شبكة) وقت استلام العميل له بالكاشير — يستدعي
+ * RPC ذرّية (collect_online_order_payment) تمنع التحصيل المزدوج وتمنح نقاط
+ * الاكتساب، ثم يطبع إيصال العميل على جهاز هذا الكاشير تحديداً. */
+export async function collectOnlinePaymentAction(
+  orderId: string,
+  payments: { method: "cash" | "card_terminal"; amount: number }[],
+  stationId: string | null,
+): Promise<{ error?: string }> {
+  const session = await getSession();
+  if (!session) {
+    return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+  }
+
+  if (payments.length === 0) {
+    return { error: "أدخل مبلغ الدفع" };
+  }
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { error } = await supabase.rpc("collect_online_order_payment", {
+    p_order_id: orderId,
+    p_employee_id: session.employeeId,
+    p_payments: payments,
+  });
+
+  if (error) {
+    return { error: error.message || "تعذّر تحصيل الدفع" };
+  }
+
+  await queueOnlineOrderCustomerReceipt(orderId, stationId);
+
+  return {};
+}
+
 type ShiftPosOrderRow = {
   payments: { method: string; amount: number }[];
 };
 
 /**
  * يغلق جلسة عمل الكاشير الحالية (المفتوحة منذ آخر تسجيل دخول) ويحسب ملخص
- * المبالغ خلالها: كاش وشبكة من الطلبات اللي أنشأها هذا الموظف بالكاشير
- * (بوقت الإنشاء)، وقيمة الطلبات الإلكترونية اللي قبلها هو نفسه (بوقت القبول
- * لا الإنشاء، لأن الطلب الإلكتروني قد يوصل قبل بداية الجلسة بوقت طويل).
- * تُستدعى عند الضغط على "خروج" قبل تنفيذ logoutAction الفعلي.
+ * المبالغ خلالها: طلبات الكاشير المباشرة (بوقت الإنشاء) وطلبات المنيو
+ * الإلكتروني اللي حصّل هذا الموظف دفعها فعلياً (بوقت التحصيل لا الإنشاء —
+ * الطلب الإلكتروني قد يوصل قبل بداية الجلسة بوقت طويل ويُدفَع لاحقاً خلالها).
+ * الأعمدة (كاش/شبكة/إلكتروني) تُحسب من دفعات payments الفعلية بغض النظر عن
+ * القناة — لو طلب إلكتروني تُدفَع نقداً بالكاشير، يُحسب كاش حقيقي بالدرج
+ * (وليس ضمن "إلكتروني")؛ عمود "إلكتروني" يبقى فعلياً لدفع إلكتروني حقيقي
+ * (غير مفعّل بعد). تُستدعى عند الضغط على "خروج" قبل تنفيذ logoutAction الفعلي.
  */
 export async function closeShiftAndSummarizeAction(): Promise<ShiftSummary | null> {
   const session = await getSession();
@@ -209,7 +259,7 @@ export async function closeShiftAndSummarizeAction(): Promise<ShiftSummary | nul
 
   const closedAt = new Date().toISOString();
 
-  const [{ data: rawPosOrders }, { data: onlineOrders }] = await Promise.all([
+  const [{ data: rawPosOrders }, { data: rawOnlineOrders }] = await Promise.all([
     supabase
       .from("orders")
       .select("payments ( method, amount )")
@@ -220,7 +270,7 @@ export async function closeShiftAndSummarizeAction(): Promise<ShiftSummary | nul
       .lte("created_at", closedAt),
     supabase
       .from("orders")
-      .select("total")
+      .select("payments ( method, amount )")
       .eq("accepted_by_employee_id", session.employeeId)
       .eq("channel", "online")
       .neq("status", "cancelled")
@@ -229,17 +279,18 @@ export async function closeShiftAndSummarizeAction(): Promise<ShiftSummary | nul
   ]);
 
   const posOrders = (rawPosOrders ?? []) as unknown as ShiftPosOrderRow[];
+  const onlineOrders = (rawOnlineOrders ?? []) as unknown as ShiftPosOrderRow[];
 
   let cash = 0;
   let cardTerminal = 0;
-  for (const order of posOrders) {
+  let online = 0;
+  for (const order of [...posOrders, ...onlineOrders]) {
     for (const payment of order.payments ?? []) {
       if (payment.method === "cash") cash += payment.amount;
       else if (payment.method === "card_terminal") cardTerminal += payment.amount;
+      else if (payment.method === "online_moyasar") online += payment.amount;
     }
   }
-
-  const online = (onlineOrders ?? []).reduce((sum, order) => sum + order.total, 0);
 
   await supabase.from("cashier_shifts").update({ closed_at: closedAt }).eq("id", shift.id);
 

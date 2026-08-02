@@ -792,6 +792,28 @@ export type Database = {
           code_discount_amount: number;
         }[];
       };
+      create_online_order: {
+        Args: {
+          p_auth_user_id: string;
+          p_items: Json;
+          p_discount_code?: string | null;
+        };
+        Returns: {
+          order_id: string;
+          daily_order_number: number;
+          order_date: string;
+          total: number;
+          code_discount_amount: number;
+        }[];
+      };
+      collect_online_order_payment: {
+        Args: {
+          p_order_id: string;
+          p_employee_id: string;
+          p_payments: Json;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

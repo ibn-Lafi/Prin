@@ -23,7 +23,8 @@ function OrderCard({ order, showReorder }: { order: OrderWithItems; showReorder:
   function handleReorder() {
     for (const item of order.items) {
       addItem({
-        productId: item.id,
+        kind: item.kind,
+        refId: item.refId,
         name: item.name,
         unitPrice: item.unitPrice,
         quantity: item.quantity,

@@ -28,12 +28,13 @@ type OrderForPrint = {
   }[];
 };
 
-// يبني ويُدرج مهمتي طباعة (مطبخ + عميل) بعد نجاح إنشاء/استلام أي طلب — يُعاد جلب
-// الطلب كاملاً من قاعدة البيانات دائماً (مو من حالة الواجهة) نفس مبدأ create_pos_order:
-// لا نثق بأي بيانات وصلت من المتصفح لشيء يُطبع فعلياً على فاتورة ضريبية.
-// stationId (معرّف جهاز الكاشير المحلي) يحدد أي عامل طباعة يلتقط المهمتين —
-// بدونه تبقى المهمتان بدون جهاز مستهدف وما يطبعها أي عامل طباعة.
-export async function queueOrderPrintJobs(orderId: string, stationId: string | null): Promise<void> {
+// يعيد جلب الطلب كاملاً من قاعدة البيانات دائماً (مو من حالة الواجهة) نفس
+// مبدأ create_pos_order: لا نثق بأي بيانات وصلت من المتصفح لشيء يُطبع فعلياً
+// على فاتورة ضريبية. يُستخدم من طباعة الكاشير (الجلستين معاً) وطباعة إيصال
+// المنيو الإلكتروني عند تحصيل الدفع (إيصال العميل فقط).
+async function buildPrintPayloads(
+  orderId: string,
+): Promise<{ kitchenPayload: KitchenPrintPayload; customerPayload: CustomerPrintPayload } | null> {
   const supabase = createSupabaseServiceRoleClient();
 
   const [{ data: rawOrder, error: orderError }, { data: settings }] = await Promise.all([
@@ -54,7 +55,7 @@ export async function queueOrderPrintJobs(orderId: string, stationId: string | n
   ]);
 
   const order = rawOrder as unknown as OrderForPrint | null;
-  if (orderError || !order) return;
+  if (orderError || !order) return null;
 
   const items = order.order_items.map((item) => ({
     name: item.products?.name ?? item.combos?.name ?? "صنف",
@@ -109,8 +110,35 @@ export async function queueOrderPrintJobs(orderId: string, stationId: string | n
     zatcaQrBase64,
   };
 
+  return { kitchenPayload, customerPayload };
+}
+
+// يبني ويُدرج مهمتي طباعة (مطبخ + عميل) بعد نجاح إنشاء/استلام أي طلب —
+// stationId (معرّف جهاز الكاشير المحلي) يحدد أي عامل طباعة يلتقط المهمتين —
+// بدونه تبقى المهمتان بدون جهاز مستهدف وما يطبعها أي عامل طباعة.
+export async function queueOrderPrintJobs(orderId: string, stationId: string | null): Promise<void> {
+  const payloads = await buildPrintPayloads(orderId);
+  if (!payloads) return;
+
+  const supabase = createSupabaseServiceRoleClient();
   await supabase.from("print_jobs").insert([
-    { order_id: order.id, target: "kitchen", payload: kitchenPayload as unknown as Json, station_id: stationId },
-    { order_id: order.id, target: "customer", payload: customerPayload as unknown as Json, station_id: stationId },
+    { order_id: orderId, target: "kitchen", payload: payloads.kitchenPayload as unknown as Json, station_id: stationId },
+    { order_id: orderId, target: "customer", payload: payloads.customerPayload as unknown as Json, station_id: stationId },
   ]);
+}
+
+// يُستخدم فقط عند تحصيل دفع طلب إلكتروني (pay-at-cashier) بالكاشير — مهمة
+// طباعة المطبخ سبق وطُبعت فوراً وقت إنشاء الطلب بالمنيو الإلكتروني (بدون
+// جهاز محدد)، فهنا نطبع إيصال العميل فقط، على جهاز الكاشير اللي حصّل الدفع.
+export async function queueOnlineOrderCustomerReceipt(orderId: string, stationId: string | null): Promise<void> {
+  const payloads = await buildPrintPayloads(orderId);
+  if (!payloads) return;
+
+  const supabase = createSupabaseServiceRoleClient();
+  await supabase.from("print_jobs").insert({
+    order_id: orderId,
+    target: "customer",
+    payload: payloads.customerPayload as unknown as Json,
+    station_id: stationId,
+  });
 }

@@ -64,6 +64,7 @@ export type ActiveOnlineOrder = {
   dailyOrderNumber: number;
   status: "received" | "accepted";
   total: number;
+  isPaid: boolean;
 };
 
 export type ShiftSummary = {

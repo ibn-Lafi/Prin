@@ -67,7 +67,9 @@ export function MenuBrowser({
   pointsBalance: number | null;
 }) {
   const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
-  const [selectedItem, setSelectedItem] = useState<Product | Combo | null>(null);
+  const [selectedItem, setSelectedItem] = useState<
+    { kind: "product"; item: Product } | { kind: "combo"; item: Combo } | null
+  >(null);
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
   const [query, setQuery] = useState("");
@@ -189,20 +191,30 @@ export function MenuBrowser({
           <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
             {activeTab === COMBOS_TAB_ID &&
               visibleCombos.map((combo) => (
-                <ComboCard key={combo.id} combo={combo} onSelect={() => setSelectedItem(combo)} />
+                <ComboCard
+                  key={combo.id}
+                  combo={combo}
+                  onSelect={() => setSelectedItem({ kind: "combo", item: combo })}
+                />
               ))}
             {visibleProducts.map((product) => (
               <ProductCard
                 key={product.id}
                 product={product}
-                onSelect={() => setSelectedItem(product)}
+                onSelect={() => setSelectedItem({ kind: "product", item: product })}
               />
             ))}
           </div>
         )}
       </div>
 
-      {selectedItem && <ProductModal item={selectedItem} onClose={() => setSelectedItem(null)} />}
+      {selectedItem && (
+        <ProductModal
+          item={selectedItem.item}
+          kind={selectedItem.kind}
+          onClose={() => setSelectedItem(null)}
+        />
+      )}
     </main>
   );
 }

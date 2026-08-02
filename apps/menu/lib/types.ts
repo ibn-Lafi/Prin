@@ -73,6 +73,8 @@ export type OrderSummary = {
 
 export type OrderItemDetail = {
   id: string;
+  kind: "product" | "combo";
+  refId: string;
   name: string;
   imageUrl: string | null;
   quantity: number;

@@ -13,6 +13,8 @@ type OrderRow = {
   created_at: string;
   order_items: {
     id: string;
+    product_id: string | null;
+    combo_id: string | null;
     quantity: number;
     unit_price: number;
     products: { name: string; image_url: string | null } | null;
@@ -35,7 +37,7 @@ export default async function OrdersPage() {
     .from("orders")
     .select(
       `id, daily_order_number, order_date, channel, status, total, created_at,
-       order_items ( id, quantity, unit_price,
+       order_items ( id, product_id, combo_id, quantity, unit_price,
          products ( name, image_url ), combos ( name, image_url ),
          order_item_modifiers ( modifier_id, price_delta, modifiers ( name ) ) )`,
     )
@@ -51,6 +53,8 @@ export default async function OrdersPage() {
     created_at: order.created_at,
     items: order.order_items.map((item) => ({
       id: item.id,
+      kind: item.product_id ? ("product" as const) : ("combo" as const),
+      refId: item.product_id ?? item.combo_id ?? "",
       name: item.products?.name ?? item.combos?.name ?? "صنف",
       imageUrl: item.products?.image_url ?? item.combos?.image_url ?? null,
       quantity: item.quantity,

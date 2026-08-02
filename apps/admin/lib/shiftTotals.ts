@@ -11,12 +11,13 @@ type PosOrderRow = {
 type OnlineOrderRow = {
   accepted_by_employee_id: string | null;
   accepted_at: string | null;
-  total: number;
+  payments: { method: string; amount: number }[];
 };
 
 // يحسب ملخص المبالغ (كاش/شبكة/إلكتروني) لعدة جلسات دفعة وحدة باستعلامين فقط
 // (بدل استعلام لكل جلسة) — يجيب كل الطلبات اللي تقع بين أقدم فتح وأحدث إغلاق
 // بين الجلسات المطلوبة، ثم يوزّعها بالذاكرة حسب موظف/نافذة وقت كل جلسة.
+// الأعمدة تُحسب من دفعات payments الفعلية بغض النظر عن القناة (pos/online) —
 // نفس منطق closeShiftAndSummarizeAction بتطبيق الكاشير تماماً.
 export async function computeShiftTotalsMap(shifts: CashierShift[]): Promise<Map<string, ShiftTotals>> {
   const map = new Map<string, ShiftTotals>();
@@ -44,7 +45,7 @@ export async function computeShiftTotalsMap(shifts: CashierShift[]): Promise<Map
       .lte("created_at", maxClosed),
     supabase
       .from("orders")
-      .select("accepted_by_employee_id, accepted_at, total")
+      .select("accepted_by_employee_id, accepted_at, payments ( method, amount )")
       .eq("channel", "online")
       .neq("status", "cancelled")
       .in("accepted_by_employee_id", employeeIds)
@@ -73,7 +74,11 @@ export async function computeShiftTotalsMap(shifts: CashierShift[]): Promise<Map
     for (const order of onlineOrders) {
       if (order.accepted_by_employee_id !== shift.employee_id) continue;
       if (!order.accepted_at || order.accepted_at < shift.opened_at || order.accepted_at > closedAt) continue;
-      online += order.total;
+      for (const payment of order.payments ?? []) {
+        if (payment.method === "cash") cash += payment.amount;
+        else if (payment.method === "card_terminal") cardTerminal += payment.amount;
+        else if (payment.method === "online_moyasar") online += payment.amount;
+      }
     }
 
     map.set(shift.id, {
