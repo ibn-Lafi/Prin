@@ -135,6 +135,40 @@ export async function setProductDeletedAction(
   return {};
 }
 
+/** حذف نهائي للصنف من قاعدة البيانات — يفشل بقيد FK لو الصنف مستخدم بطلبات
+ * سابقة أو ضمن وجبة، وحينها الحل هو "حذف الصنف من المنيو" (deleted_at) بدلاً من هذا. */
+export async function deleteProductAction(productId: string): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: product } = await supabase
+    .from("products")
+    .select("name")
+    .eq("id", productId)
+    .maybeSingle();
+
+  const { error } = await supabase.from("products").delete().eq("id", productId);
+
+  if (error) {
+    if (error.code === FK_RESTRICT_CODE) {
+      return {
+        error: "لا يمكن حذف هذا الصنف نهائياً لأنه مستخدم بطلبات سابقة أو ضمن وجبة — استخدم \"حذف الصنف من المنيو\" بدلاً من ذلك",
+      };
+    }
+    return { error: "تعذّر الحذف" };
+  }
+
+  await supabase.from("audit_log").insert({
+    employee_id: session.employeeId,
+    action_type: "settings_change",
+    description: `حذف نهائي للصنف: ${product?.name ?? productId}`,
+  });
+
+  revalidatePath("/products");
+  return {};
+}
+
 export type ModifierGroupInput = {
   name: string;
   isRequired: boolean;

@@ -12,8 +12,8 @@ import { ProductModal } from "@/components/ProductModal";
 const COMBOS_TAB_ID = "__combos__";
 const REWARDS_TAB_ID = "__rewards__";
 
-function isPresent(row: { deleted_at: string | null }): boolean {
-  return row.deleted_at === null;
+function isVisible(row: { is_available: boolean; deleted_at: string | null }): boolean {
+  return row.is_available && row.deleted_at === null;
 }
 
 function matchesQuery(name: string, query: string): boolean {
@@ -109,8 +109,8 @@ export function MenuBrowser({
   }, []);
 
   const q = query.trim().toLowerCase();
-  const allProducts = products.filter(isPresent);
-  const allCombos = combos.filter(isPresent);
+  const allProducts = products.filter(isVisible);
+  const allCombos = combos.filter(isVisible);
   const visibleCombos = allCombos.filter((c) => matchesQuery(c.name, q));
   const visibleProducts =
     activeTab === COMBOS_TAB_ID || activeTab === REWARDS_TAB_ID
