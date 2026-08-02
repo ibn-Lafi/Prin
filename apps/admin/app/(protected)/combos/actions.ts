@@ -17,6 +17,7 @@ export type ComboInput = {
   price: number;
   imageUrl: string;
   items: ComboItemInput[];
+  pointsPerUnit: number;
 };
 
 function validateCombo(input: ComboInput): string | null {
@@ -25,6 +26,9 @@ function validateCombo(input: ComboInput): string | null {
   if (input.items.length === 0) return "أضف صنفاً واحداً على الأقل للوجبة";
   if (input.items.some((item) => !item.productId || item.quantity <= 0)) {
     return "تأكد من اختيار صنف وكمية صحيحة لكل سطر";
+  }
+  if (!Number.isFinite(input.pointsPerUnit) || input.pointsPerUnit < 0) {
+    return "نقاط الولاء يجب أن تكون رقماً صحيحاً";
   }
   return null;
 }
@@ -44,6 +48,7 @@ export async function createComboAction(input: ComboInput): Promise<CreateResult
       description: input.description.trim() || null,
       price: input.price,
       image_url: input.imageUrl.trim() || null,
+      points_per_unit: input.pointsPerUnit,
     })
     .select("id")
     .single();
@@ -85,6 +90,7 @@ export async function updateComboAction(comboId: string, input: ComboInput): Pro
       description: input.description.trim() || null,
       price: input.price,
       image_url: input.imageUrl.trim() || null,
+      points_per_unit: input.pointsPerUnit,
     })
     .eq("id", comboId);
 

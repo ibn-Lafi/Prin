@@ -20,6 +20,7 @@ export function ProductForm({
   const [calories, setCalories] = useState(product?.calories?.toString() ?? "");
   const [price, setPrice] = useState(product?.price?.toString() ?? "");
   const [imageUrl, setImageUrl] = useState(product?.image_url ?? "");
+  const [pointsPerUnit, setPointsPerUnit] = useState(product?.points_per_unit?.toString() ?? "0");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -35,6 +36,7 @@ export function ProductForm({
       calories: calories.trim() === "" ? null : Number(calories),
       price: Number(price),
       imageUrl,
+      pointsPerUnit: Number(pointsPerUnit),
     };
 
     startTransition(async () => {
@@ -121,6 +123,19 @@ export function ProductForm({
       </div>
 
       <ImageUploadField value={imageUrl} onChange={setImageUrl} folder="products" />
+
+      <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
+        نقاط الولاء عند الشراء (لكل قطعة)
+        <input
+          type="number"
+          inputMode="numeric"
+          min="0"
+          step="1"
+          value={pointsPerUnit}
+          onChange={(e) => setPointsPerUnit(e.target.value)}
+          className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+        />
+      </label>
 
       {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
       {saved && !error && <p className="text-sm font-medium text-green-700">تم الحفظ</p>}

@@ -16,7 +16,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     supabase
       .from("products")
       .select(
-        `id, category_id, name, description, calories, price, image_url, is_available, deleted_at,
+        `id, category_id, name, description, calories, price, image_url, is_available, deleted_at, points_per_unit,
          modifier_groups ( id, name, is_required, min_select, max_select, display_order,
            modifiers ( id, name, price_delta, is_available, display_order ) )`,
       )

@@ -16,7 +16,7 @@ export default async function ComboDetailPage({ params }: { params: Promise<{ id
     supabase
       .from("combos")
       .select(
-        `id, name, description, price, image_url, is_available, deleted_at,
+        `id, name, description, price, image_url, is_available, deleted_at, points_per_unit,
          combo_items ( id, product_id, quantity ),
          modifier_groups ( id, name, is_required, min_select, max_select, display_order,
            modifiers ( id, name, price_delta, is_available, display_order ) )`,

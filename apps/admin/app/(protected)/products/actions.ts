@@ -16,6 +16,7 @@ export type ProductInput = {
   calories: number | null;
   price: number;
   imageUrl: string;
+  pointsPerUnit: number;
 };
 
 function validateProduct(input: ProductInput): string | null {
@@ -24,6 +25,9 @@ function validateProduct(input: ProductInput): string | null {
   if (!Number.isFinite(input.price) || input.price < 0) return "السعر يجب أن يكون رقماً صحيحاً";
   if (input.calories !== null && (!Number.isFinite(input.calories) || input.calories < 0)) {
     return "السعرات الحرارية يجب أن تكون رقماً صحيحاً";
+  }
+  if (!Number.isFinite(input.pointsPerUnit) || input.pointsPerUnit < 0) {
+    return "نقاط الولاء يجب أن تكون رقماً صحيحاً";
   }
   return null;
 }
@@ -45,6 +49,7 @@ export async function createProductAction(input: ProductInput): Promise<CreateRe
       calories: input.calories,
       price: input.price,
       image_url: input.imageUrl.trim() || null,
+      points_per_unit: input.pointsPerUnit,
     })
     .select("id")
     .single();
@@ -78,6 +83,7 @@ export async function updateProductAction(productId: string, input: ProductInput
       calories: input.calories,
       price: input.price,
       image_url: input.imageUrl.trim() || null,
+      points_per_unit: input.pointsPerUnit,
     })
     .eq("id", productId);
 

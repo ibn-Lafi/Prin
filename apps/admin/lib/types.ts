@@ -72,6 +72,7 @@ export type Product = {
   image_url: string | null;
   is_available: boolean;
   deleted_at: string | null;
+  points_per_unit: number;
 };
 
 export type ProductWithModifiers = Product & { modifier_groups: ModifierGroup[] };
@@ -84,6 +85,7 @@ export type Combo = {
   image_url: string | null;
   is_available: boolean;
   deleted_at: string | null;
+  points_per_unit: number;
 };
 
 export type ComboItem = {

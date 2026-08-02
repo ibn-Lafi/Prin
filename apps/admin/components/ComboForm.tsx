@@ -19,6 +19,7 @@ export function ComboForm({
   const [description, setDescription] = useState(combo?.description ?? "");
   const [price, setPrice] = useState(combo?.price?.toString() ?? "");
   const [imageUrl, setImageUrl] = useState(combo?.image_url ?? "");
+  const [pointsPerUnit, setPointsPerUnit] = useState(combo?.points_per_unit?.toString() ?? "0");
   const [items, setItems] = useState<ComboItemInput[]>(
     combo?.combo_items.map((item) => ({ productId: item.product_id, quantity: item.quantity })) ?? [
       { productId: products[0]?.id ?? "", quantity: 1 },
@@ -44,7 +45,7 @@ export function ComboForm({
     setError(null);
     setSaved(false);
 
-    const input = { name, description, price: Number(price), imageUrl, items };
+    const input = { name, description, price: Number(price), imageUrl, items, pointsPerUnit: Number(pointsPerUnit) };
 
     startTransition(async () => {
       if (combo) {
@@ -101,6 +102,19 @@ export function ComboForm({
       </label>
 
       <ImageUploadField value={imageUrl} onChange={setImageUrl} folder="combos" />
+
+      <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
+        نقاط الولاء عند الشراء (لكل قطعة)
+        <input
+          type="number"
+          inputMode="numeric"
+          min="0"
+          step="1"
+          value={pointsPerUnit}
+          onChange={(e) => setPointsPerUnit(e.target.value)}
+          className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+        />
+      </label>
 
       <div className="flex flex-col gap-2">
         <p className="text-sm text-[var(--color-brand-muted)]">الأصناف الداخلة بالوجبة</p>
