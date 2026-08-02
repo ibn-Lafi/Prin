@@ -716,34 +716,40 @@ export type Database = {
       rewards: {
         Row: {
           id: string;
-          name: string;
+          name: string | null;
           description: string | null;
           points_cost: number;
           discount_amount: number;
           image_url: string | null;
           is_active: boolean;
+          product_id: string | null;
+          combo_id: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
-          name: string;
+          name?: string | null;
           description?: string | null;
           points_cost: number;
           discount_amount?: number;
           image_url?: string | null;
           is_active?: boolean;
+          product_id?: string | null;
+          combo_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
-          name?: string;
+          name?: string | null;
           description?: string | null;
           points_cost?: number;
           discount_amount?: number;
           image_url?: string | null;
           is_active?: boolean;
+          product_id?: string | null;
+          combo_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };

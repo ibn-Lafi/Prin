@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isRestaurantOpen } from "@brin/utils";
 import { getSupabaseServerClient } from "@/lib/supabaseClient";
 import { CheckoutView } from "@/components/CheckoutView";
-import type { Reward } from "@/lib/types";
+import { resolveRewards } from "@/lib/resolveRewards";
 
 export default async function CheckoutPage() {
   const supabase = await getSupabaseServerClient();
@@ -23,7 +23,9 @@ export default async function CheckoutPage() {
     supabase.from("customers").select("points_balance").eq("auth_user_id", user.id).maybeSingle(),
     supabase
       .from("rewards")
-      .select("id, name, description, points_cost, discount_amount, image_url")
+      .select(
+        "id, name, description, points_cost, discount_amount, image_url, products ( name, price, image_url ), combos ( name, price, image_url )",
+      )
       .eq("is_active", true)
       .order("points_cost", { ascending: true }),
   ]);
@@ -40,7 +42,7 @@ export default async function CheckoutPage() {
       taxRatePercent={settings?.tax_rate_percent ?? 15}
       isOpen={isOpen}
       pointsBalance={customer?.points_balance ?? 0}
-      rewards={(rewards ?? []) as Reward[]}
+      rewards={resolveRewards(rewards)}
     />
   );
 }

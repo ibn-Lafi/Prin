@@ -9,12 +9,23 @@ export type Employee = {
 
 export type Reward = {
   id: string;
-  name: string;
+  name: string | null;
   description: string | null;
   points_cost: number;
   discount_amount: number;
   image_url: string | null;
   is_active: boolean;
+  product_id: string | null;
+  combo_id: string | null;
+};
+
+/** خيار ربط مكافأة بصنف أو وجبة حقيقية من المنيو — يُستخدم بدل إدخال اسم/صورة/قيمة خصم يدوياً. */
+export type RewardLinkOption = {
+  kind: "product" | "combo";
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string | null;
 };
 
 export type RestaurantSettings = {

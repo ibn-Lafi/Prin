@@ -87,6 +87,18 @@ export async function lookupCustomerAction(phone: string): Promise<CustomerLooku
   return { id: data.id, fullName: data.full_name, pointsBalance: data.points_balance };
 }
 
+type RawRewardWithLink = {
+  id: string;
+  name: string | null;
+  description: string | null;
+  points_cost: number;
+  discount_amount: number;
+  products: { name: string; price: number } | null;
+  combos: { name: string; price: number } | null;
+};
+
+/** المكافآت المربوطة بصنف/وجبة (product_id/combo_id) تُعرض بالاسم والسعر
+ * الحيّين للصنف نفسه بدل القيم المخزّنة بجدول rewards — نفس منطق create_pos_order. */
 export async function listActiveRewardsAction(): Promise<Reward[]> {
   const session = await getSession();
   if (!session) return [];
@@ -94,17 +106,22 @@ export async function listActiveRewardsAction(): Promise<Reward[]> {
   const supabase = createSupabaseServiceRoleClient();
   const { data } = await supabase
     .from("rewards")
-    .select("id, name, description, points_cost, discount_amount")
+    .select(
+      "id, name, description, points_cost, discount_amount, products ( name, price ), combos ( name, price )",
+    )
     .eq("is_active", true)
     .order("points_cost", { ascending: true });
 
-  return (data ?? []).map((reward) => ({
-    id: reward.id,
-    name: reward.name,
-    description: reward.description,
-    pointsCost: reward.points_cost,
-    discountAmount: reward.discount_amount,
-  }));
+  return ((data ?? []) as unknown as RawRewardWithLink[]).map((reward) => {
+    const linked = reward.products ?? reward.combos;
+    return {
+      id: reward.id,
+      name: linked?.name ?? reward.name ?? "",
+      description: linked ? null : reward.description,
+      pointsCost: reward.points_cost,
+      discountAmount: linked?.price ?? reward.discount_amount,
+    };
+  });
 }
 
 /**

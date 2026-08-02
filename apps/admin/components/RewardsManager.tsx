@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, X, Pencil } from "lucide-react";
+import { Plus, X, Pencil, UtensilsCrossed } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
 import {
   createRewardAction,
@@ -10,26 +10,62 @@ import {
   type RewardInput,
 } from "@/app/(protected)/rewards/actions";
 import { ImageUploadField } from "@/components/ImageUploadField";
-import type { Reward } from "@/lib/types";
+import type { Reward, RewardLinkOption } from "@/lib/types";
+
+function linkKey(kind: "product" | "combo", id: string): string {
+  return `${kind}:${id}`;
+}
+
+function findLinkOption(linkOptions: RewardLinkOption[], productId: string | null, comboId: string | null) {
+  if (productId) return linkOptions.find((o) => o.kind === "product" && o.id === productId);
+  if (comboId) return linkOptions.find((o) => o.kind === "combo" && o.id === comboId);
+  return undefined;
+}
 
 function RewardForm({
   title,
   initial,
+  linkOptions,
   isPending,
   onSubmit,
   onCancel,
 }: {
   title: string;
   initial: RewardInput;
+  linkOptions: RewardLinkOption[];
   isPending: boolean;
   onSubmit: (input: RewardInput) => void;
   onCancel: () => void;
 }) {
+  const [linkValue, setLinkValue] = useState(
+    initial.productId
+      ? linkKey("product", initial.productId)
+      : initial.comboId
+        ? linkKey("combo", initial.comboId)
+        : "",
+  );
   const [name, setName] = useState(initial.name);
   const [description, setDescription] = useState(initial.description);
   const [pointsCost, setPointsCost] = useState(initial.pointsCost.toString());
   const [discountAmount, setDiscountAmount] = useState(initial.discountAmount.toString());
   const [imageUrl, setImageUrl] = useState(initial.imageUrl);
+
+  const isLinked = linkValue !== "";
+  const selected = linkOptions.find((o) => linkKey(o.kind, o.id) === linkValue);
+  const products = linkOptions.filter((o) => o.kind === "product");
+  const combos = linkOptions.filter((o) => o.kind === "combo");
+
+  function handleSubmit() {
+    onSubmit({
+      name: isLinked ? (selected?.name ?? "") : name,
+      description: isLinked ? "" : description,
+      pointsCost: Number(pointsCost),
+      discountAmount: isLinked ? 0 : Number(discountAmount),
+      imageUrl: isLinked ? "" : imageUrl,
+      productId: isLinked && selected?.kind === "product" ? selected.id : null,
+      comboId: isLinked && selected?.kind === "combo" ? selected.id : null,
+    });
+  }
 
   return (
     <div className="flex max-w-sm flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
@@ -39,20 +75,73 @@ function RewardForm({
           <X className="h-4 w-4" strokeWidth={2} />
         </button>
       </div>
-      <input
-        type="text"
-        placeholder="اسم المكافأة"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
-      />
-      <input
-        type="text"
-        placeholder="الوصف (اختياري)"
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
-      />
+
+      <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
+        نوع المكافأة
+        <select
+          value={linkValue}
+          onChange={(e) => setLinkValue(e.target.value)}
+          className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+        >
+          <option value="">خصم نقدي عام (يدوي)</option>
+          {products.length > 0 && (
+            <optgroup label="أصناف">
+              {products.map((o) => (
+                <option key={linkKey(o.kind, o.id)} value={linkKey(o.kind, o.id)}>
+                  {o.name} — {formatCurrency(o.price)}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {combos.length > 0 && (
+            <optgroup label="وجبات">
+              {combos.map((o) => (
+                <option key={linkKey(o.kind, o.id)} value={linkKey(o.kind, o.id)}>
+                  {o.name} — {formatCurrency(o.price)}
+                </option>
+              ))}
+            </optgroup>
+          )}
+        </select>
+      </label>
+
+      {isLinked ? (
+        <p className="rounded-xl bg-[var(--color-brand-background)] px-3 py-2.5 text-xs text-[var(--color-brand-muted)]">
+          الخصم عند الاستبدال = سعر الصنف الحالي ({selected ? formatCurrency(selected.price) : "—"}) — يتحدّث
+          تلقائياً لو تغيّر سعر الصنف بعدين، والاسم والصورة تُسحب منه مباشرة.
+        </p>
+      ) : (
+        <>
+          <input
+            type="text"
+            placeholder="اسم المكافأة"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
+          />
+          <input
+            type="text"
+            placeholder="الوصف (اختياري)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
+          />
+          <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
+            قيمة الخصم (ريال)
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={discountAmount}
+              onChange={(e) => setDiscountAmount(e.target.value)}
+              className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+            />
+          </label>
+          <ImageUploadField value={imageUrl} onChange={setImageUrl} folder="rewards" />
+        </>
+      )}
+
       <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
         تكلفة النقاط
         <input
@@ -65,31 +154,11 @@ function RewardForm({
           className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
         />
       </label>
-      <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
-        قيمة الخصم (ريال)
-        <input
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="0.01"
-          value={discountAmount}
-          onChange={(e) => setDiscountAmount(e.target.value)}
-          className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
-        />
-      </label>
-      <ImageUploadField value={imageUrl} onChange={setImageUrl} folder="rewards" />
+
       <button
         type="button"
         disabled={isPending}
-        onClick={() =>
-          onSubmit({
-            name,
-            description,
-            pointsCost: Number(pointsCost),
-            discountAmount: Number(discountAmount),
-            imageUrl,
-          })
-        }
+        onClick={handleSubmit}
         className="rounded-xl bg-[var(--color-brand-primary)] px-4 py-2.5 font-semibold text-white disabled:opacity-50"
       >
         {isPending ? "جارِ الحفظ..." : "حفظ"}
@@ -98,7 +167,13 @@ function RewardForm({
   );
 }
 
-export function RewardsManager({ rewards }: { rewards: Reward[] }) {
+export function RewardsManager({
+  rewards,
+  linkOptions,
+}: {
+  rewards: Reward[];
+  linkOptions: RewardLinkOption[];
+}) {
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -145,18 +220,27 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
       )}
 
       <div className="flex flex-col gap-3">
-        {rewards.map((reward) =>
-          editingId === reward.id ? (
+        {rewards.map((reward) => {
+          const linked = findLinkOption(linkOptions, reward.product_id, reward.combo_id);
+          const displayName = linked?.name ?? reward.name ?? "—";
+          const displayDiscount = linked?.price ?? reward.discount_amount;
+          const displayImage = linked?.imageUrl ?? reward.image_url;
+          const isBrokenLink = (reward.product_id || reward.combo_id) && !linked;
+
+          return editingId === reward.id ? (
             <RewardForm
               key={reward.id}
               title="تعديل المكافأة"
+              linkOptions={linkOptions}
               isPending={isPending}
               initial={{
-                name: reward.name,
+                name: reward.name ?? "",
                 description: reward.description ?? "",
                 pointsCost: reward.points_cost,
                 discountAmount: reward.discount_amount,
                 imageUrl: reward.image_url ?? "",
+                productId: reward.product_id,
+                comboId: reward.combo_id,
               }}
               onSubmit={(input) => handleUpdate(reward.id, input)}
               onCancel={() => setEditingId(null)}
@@ -166,14 +250,31 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
               key={reward.id}
               className="flex items-center justify-between gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]"
             >
-              <div>
-                <p className="font-semibold">{reward.name}</p>
-                {reward.description && (
-                  <p className="text-sm text-[var(--color-brand-muted)]">{reward.description}</p>
-                )}
-                <p className="mt-1 text-sm text-[var(--color-brand-muted)]">
-                  {reward.points_cost} نقطة — خصم {formatCurrency(reward.discount_amount)}
-                </p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--color-brand-primary-light)]">
+                  {displayImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={displayImage} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <UtensilsCrossed className="h-5 w-5 text-[var(--color-brand-primary)]/40" strokeWidth={1.5} />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold">
+                    {isBrokenLink ? "صنف/وجبة محذوفة" : displayName}
+                    {linked && (
+                      <span className="mr-2 rounded-full bg-[var(--color-brand-background)] px-2 py-0.5 text-xs font-normal text-[var(--color-brand-muted)]">
+                        {linked.kind === "product" ? "صنف" : "وجبة"}
+                      </span>
+                    )}
+                  </p>
+                  {reward.description && !linked && (
+                    <p className="text-sm text-[var(--color-brand-muted)]">{reward.description}</p>
+                  )}
+                  <p className="mt-1 text-sm text-[var(--color-brand-muted)]">
+                    {reward.points_cost} نقطة — خصم {formatCurrency(displayDiscount)}
+                  </p>
+                </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <span
@@ -204,15 +305,24 @@ export function RewardsManager({ rewards }: { rewards: Reward[] }) {
                 </button>
               </div>
             </div>
-          ),
-        )}
+          );
+        })}
       </div>
 
       {isCreating ? (
         <RewardForm
           title="إضافة مكافأة"
+          linkOptions={linkOptions}
           isPending={isPending}
-          initial={{ name: "", description: "", pointsCost: 100, discountAmount: 0, imageUrl: "" }}
+          initial={{
+            name: "",
+            description: "",
+            pointsCost: 100,
+            discountAmount: 0,
+            imageUrl: "",
+            productId: null,
+            comboId: null,
+          }}
           onSubmit={handleCreate}
           onCancel={() => setIsCreating(false)}
         />

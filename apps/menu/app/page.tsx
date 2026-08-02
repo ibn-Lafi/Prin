@@ -1,6 +1,7 @@
 import { unwrapQuery } from "@brin/database";
 import { getSupabaseServerClient } from "@/lib/supabaseClient";
-import type { Category, Combo, Product, Reward } from "@/lib/types";
+import type { Category, Combo, Product } from "@/lib/types";
+import { resolveRewards } from "@/lib/resolveRewards";
 import { MenuBrowser } from "@/components/MenuBrowser";
 
 export default async function MenuHomePage() {
@@ -23,7 +24,9 @@ export default async function MenuHomePage() {
         .order("name"),
       supabase
         .from("rewards")
-        .select("id, name, description, points_cost, discount_amount, image_url")
+        .select(
+          "id, name, description, points_cost, discount_amount, image_url, products ( name, price, image_url ), combos ( name, price, image_url )",
+        )
         .order("points_cost"),
       supabase.auth.getUser(),
     ]);
@@ -31,7 +34,7 @@ export default async function MenuHomePage() {
   const categories = unwrapQuery<Category[]>(categoriesResult);
   const products = unwrapQuery<Product[]>(productsResult as never);
   const combos = unwrapQuery<Combo[]>(combosResult as never);
-  const rewards = unwrapQuery<Reward[]>(rewardsResult);
+  const rewards = resolveRewards(unwrapQuery<unknown[]>(rewardsResult as never));
 
   let pointsBalance: number | null = null;
   const user = userResult.data.user;

@@ -12,15 +12,20 @@ export type RewardInput = {
   pointsCost: number;
   discountAmount: number;
   imageUrl: string;
+  productId: string | null;
+  comboId: string | null;
 };
 
 function validate(input: RewardInput): string | null {
-  if (!input.name.trim()) return "اسم المكافأة مطلوب";
   if (!Number.isFinite(input.pointsCost) || input.pointsCost <= 0) {
     return "تكلفة النقاط يجب أن تكون رقماً أكبر من صفر";
   }
-  if (!Number.isFinite(input.discountAmount) || input.discountAmount < 0) {
-    return "قيمة الخصم يجب أن تكون رقماً صحيحاً";
+  const isLinked = input.productId !== null || input.comboId !== null;
+  if (!isLinked) {
+    if (!input.name.trim()) return "اسم المكافأة مطلوب";
+    if (!Number.isFinite(input.discountAmount) || input.discountAmount < 0) {
+      return "قيمة الخصم يجب أن تكون رقماً صحيحاً";
+    }
   }
   return null;
 }
@@ -32,13 +37,16 @@ export async function createRewardAction(input: RewardInput): Promise<ActionResu
   const validationError = validate(input);
   if (validationError) return { error: validationError };
 
+  const isLinked = input.productId !== null || input.comboId !== null;
   const supabase = createSupabaseServiceRoleClient();
   const { error } = await supabase.from("rewards").insert({
-    name: input.name.trim(),
-    description: input.description.trim() || null,
+    name: isLinked ? null : input.name.trim(),
+    description: isLinked ? null : input.description.trim() || null,
     points_cost: input.pointsCost,
-    discount_amount: input.discountAmount,
-    image_url: input.imageUrl.trim() || null,
+    discount_amount: isLinked ? 0 : input.discountAmount,
+    image_url: isLinked ? null : input.imageUrl.trim() || null,
+    product_id: input.productId,
+    combo_id: input.comboId,
   });
 
   if (error) return { error: "تعذّر إنشاء المكافأة" };
@@ -60,15 +68,18 @@ export async function updateRewardAction(rewardId: string, input: RewardInput): 
   const validationError = validate(input);
   if (validationError) return { error: validationError };
 
+  const isLinked = input.productId !== null || input.comboId !== null;
   const supabase = createSupabaseServiceRoleClient();
   const { error } = await supabase
     .from("rewards")
     .update({
-      name: input.name.trim(),
-      description: input.description.trim() || null,
+      name: isLinked ? null : input.name.trim(),
+      description: isLinked ? null : input.description.trim() || null,
       points_cost: input.pointsCost,
-      discount_amount: input.discountAmount,
-      image_url: input.imageUrl.trim() || null,
+      discount_amount: isLinked ? 0 : input.discountAmount,
+      image_url: isLinked ? null : input.imageUrl.trim() || null,
+      product_id: input.productId,
+      combo_id: input.comboId,
     })
     .eq("id", rewardId);
 
