@@ -72,7 +72,6 @@ export async function fetchIncomingOrderDetailsAction(
     )
     .eq("id", orderId)
     .eq("channel", "online")
-    .eq("status", "received")
     .maybeSingle();
 
   const data = rawData as unknown as IncomingOrderRow | null;

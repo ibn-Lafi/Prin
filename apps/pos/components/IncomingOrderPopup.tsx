@@ -3,17 +3,16 @@
 import { Bell, Phone, User } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
 import type { IncomingOrder } from "@/lib/types";
+import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
 
 export function IncomingOrderPopup({
   order,
   remainingCount,
-  isAccepting,
-  onAccept,
+  onDismiss,
 }: {
   order: IncomingOrder;
   remainingCount: number;
-  isAccepting: boolean;
-  onAccept: () => void;
+  onDismiss: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
@@ -73,6 +72,9 @@ export function IncomingOrderPopup({
         </div>
 
         <div className="shrink-0 border-t border-[var(--color-brand-border)] p-4">
+          <div className="mb-3">
+            <PrintStatusIndicator orderId={order.id} />
+          </div>
           {remainingCount > 0 && (
             <p className="mb-2 text-center text-xs text-[var(--color-brand-muted)]">
               +{remainingCount} طلب آخر بالانتظار
@@ -80,11 +82,10 @@ export function IncomingOrderPopup({
           )}
           <button
             type="button"
-            onClick={onAccept}
-            disabled={isAccepting}
-            className="w-full rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:opacity-50"
+            onClick={onDismiss}
+            className="w-full rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white"
           >
-            {isAccepting ? "جارِ الاستلام..." : "استلام وطباعة"}
+            تم الاطّلاع
           </button>
         </div>
       </div>
