@@ -1,6 +1,7 @@
 import { ShoppingBag, Wallet, Utensils, Monitor } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
+import { AcceptingOrdersToggle } from "@/components/AcceptingOrdersToggle";
 
 function todayInRiyadh(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
@@ -10,11 +11,14 @@ export default async function DashboardPage() {
   const supabase = createSupabaseServiceRoleClient();
   const today = todayInRiyadh();
 
-  const { data: orders } = await supabase
-    .from("orders")
-    .select("total, channel")
-    .eq("order_date", today)
-    .in("status", ["received", "accepted", "completed"]);
+  const [{ data: orders }, { data: settings }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("total, channel")
+      .eq("order_date", today)
+      .in("status", ["received", "accepted", "completed"]),
+    supabase.from("restaurant_settings").select("is_accepting_orders").eq("id", 1).maybeSingle(),
+  ]);
 
   const orderCount = orders?.length ?? 0;
   const totalSales = (orders ?? []).reduce((sum, o) => sum + o.total, 0);
@@ -31,6 +35,8 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">الرئيسية</h1>
+
+      <AcceptingOrdersToggle isAcceptingOrders={settings?.is_accepting_orders ?? true} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((stat) => (

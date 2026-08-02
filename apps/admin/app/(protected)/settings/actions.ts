@@ -63,3 +63,30 @@ export async function updateSettingsAction(input: SettingsInput): Promise<Action
   revalidatePath("/settings");
   return {};
 }
+
+/** تبديل سريع لاستقبال طلبات المنيو الإلكتروني بضغطة واحدة (بدون فتح نموذج
+ * الإعدادات كامل) — نفس الحقل is_accepting_orders، متاح من الصفحة الرئيسية. */
+export async function toggleAcceptingOrdersAction(next: boolean): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { error } = await supabase
+    .from("restaurant_settings")
+    .update({ is_accepting_orders: next })
+    .eq("id", 1);
+
+  if (error) return { error: "تعذّر تحديث الحالة" };
+
+  await supabase.from("audit_log").insert({
+    employee_id: session.employeeId,
+    action_type: "settings_change",
+    description: next
+      ? "إعادة تفعيل استقبال طلبات المنيو الإلكتروني"
+      : "إغلاق استقبال طلبات المنيو الإلكتروني يدوياً",
+  });
+
+  revalidatePath("/");
+  revalidatePath("/settings");
+  return {};
+}
