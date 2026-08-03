@@ -324,6 +324,36 @@ export async function deleteComboModifierAction(
   return {};
 }
 
+/** حذف نهائي للوجبة من قاعدة البيانات — يفشل بقيد FK لو الوجبة مستخدمة بطلبات
+ * سابقة، وحينها الحل هو "حذف الوجبة من القائمة" (deleted_at) بدلاً من هذا. */
+export async function deleteComboAction(comboId: string): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+
+  const supabase = createSupabaseServiceRoleClient();
+  const { data: combo } = await supabase.from("combos").select("name").eq("id", comboId).maybeSingle();
+
+  const { error } = await supabase.from("combos").delete().eq("id", comboId);
+
+  if (error) {
+    if (error.code === FK_RESTRICT_CODE) {
+      return {
+        error: "لا يمكن حذف هذه الوجبة نهائياً لأنها مستخدمة بطلبات سابقة — استخدم \"حذف الوجبة من القائمة\" بدلاً من ذلك",
+      };
+    }
+    return { error: "تعذّر الحذف" };
+  }
+
+  await supabase.from("audit_log").insert({
+    employee_id: session.employeeId,
+    action_type: "settings_change",
+    description: `حذف نهائي للوجبة: ${combo?.name ?? comboId}`,
+  });
+
+  revalidatePath("/combos");
+  return {};
+}
+
 export async function setComboDeletedAction(comboId: string, deleted: boolean): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };

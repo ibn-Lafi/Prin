@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { toggleComboAvailabilityAction, setComboDeletedAction } from "@/app/(protected)/combos/actions";
+import { useRouter } from "next/navigation";
+import {
+  toggleComboAvailabilityAction,
+  setComboDeletedAction,
+  deleteComboAction,
+} from "@/app/(protected)/combos/actions";
 
 export function ComboStatusActions({
   comboId,
@@ -12,6 +17,7 @@ export function ComboStatusActions({
   isAvailable: boolean;
   isDeleted: boolean;
 }) {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -28,6 +34,19 @@ export function ComboStatusActions({
     startTransition(async () => {
       const result = await setComboDeletedAction(comboId, !isDeleted);
       if (result.error) setError(result.error);
+    });
+  }
+
+  function handleDeletePermanently() {
+    setError(null);
+    if (!window.confirm("حذف نهائي لا يمكن التراجع عنه. هل أنت متأكد؟")) return;
+    startTransition(async () => {
+      const result = await deleteComboAction(comboId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.push("/combos");
     });
   }
 
@@ -51,6 +70,19 @@ export function ComboStatusActions({
         {isDeleted ? "استرجاع الوجبة إلى القائمة" : "حذف الوجبة من القائمة"}
       </button>
       {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
+      <hr className="border-[var(--color-brand-border)]" />
+      <button
+        type="button"
+        disabled={isPending}
+        onClick={handleDeletePermanently}
+        className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+      >
+        حذف الوجبة نهائياً
+      </button>
+      <p className="text-xs text-[var(--color-brand-muted)]">
+        يحذف الوجبة من قاعدة البيانات نهائياً — يفشل إذا كانت الوجبة مستخدمة بطلبات سابقة، استخدم
+        &quot;حذف الوجبة من القائمة&quot; أعلاه بدلاً من هذا في هذه الحالة.
+      </p>
     </div>
   );
 }

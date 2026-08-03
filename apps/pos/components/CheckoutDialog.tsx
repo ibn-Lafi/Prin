@@ -45,14 +45,16 @@ export function CheckoutDialog({
     listActiveRewardsAction().then(setRewards);
   }, []);
 
-  const affordableRewards = customer
-    ? rewards.filter((r) => customer.pointsBalance >= r.pointsCost)
-    : [];
+  // نعرض كل المكافآت النشطة لأي عميل تم البحث عنه (نفس سلوك المنيو الإلكتروني
+  // بالضبط) — غير المقدور عليها بالرصيد الحالي تظهر لكن معطّلة بدل ما تختفي
+  // كلياً، عشان الكاشير يشوف الكتالوج كامل مو بس جزء منه.
+  const visibleRewards = customer ? rewards : [];
+  const canAfford = (reward: Reward) => (customer?.pointsBalance ?? 0) >= reward.pointsCost;
 
-  // نقيّد الاختيار الفعّال بقائمة المتاح بها فعلاً — لو تغيّر رصيد العميل (مثلاً بعد
-  // بحث ثانٍ) وأصبحت المكافأة المختارة سابقاً غير متاحة، يلغى الخصم تلقائياً بدل
-  // ما يبقى مطبّقاً بصمت وهو مو ظاهر كمُختار بالقائمة.
-  const selectedReward = affordableRewards.find((r) => r.id === selectedRewardId) ?? null;
+  // نقيّد الاختيار الفعّال بالمكافآت المقدور عليها فعلاً — لو تغيّر رصيد العميل
+  // (مثلاً بعد بحث ثانٍ) وأصبحت المكافأة المختارة سابقاً غير متاحة، يلغى الخصم
+  // تلقائياً بدل ما يبقى مطبّقاً بصمت وهو مو ظاهر كمُختار بالقائمة.
+  const selectedReward = visibleRewards.find((r) => r.id === selectedRewardId && canAfford(r)) ?? null;
   const rewardDiscount = selectedReward ? Math.min(selectedReward.discountAmount, subtotal) : 0;
   const afterReward = roundMoney(subtotal - rewardDiscount);
 
@@ -245,8 +247,8 @@ export function CheckoutDialog({
                   <Gift className="h-4 w-4 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
                   رصيد النقاط: {customer.pointsBalance}
                 </p>
-                {affordableRewards.length === 0 ? (
-                  <p className="text-xs text-[var(--color-brand-muted)]">لا توجد مكافآت متاحة برصيده الحالي</p>
+                {visibleRewards.length === 0 ? (
+                  <p className="text-xs text-[var(--color-brand-muted)]">لا توجد مكافآت متاحة حالياً</p>
                 ) : (
                   <div className="flex flex-col gap-1.5">
                     <button
@@ -260,23 +262,29 @@ export function CheckoutDialog({
                     >
                       بدون استبدال
                     </button>
-                    {affordableRewards.map((reward) => (
-                      <button
-                        key={reward.id}
-                        type="button"
-                        onClick={() => setSelectedRewardId(reward.id)}
-                        className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
-                          selectedRewardId === reward.id
-                            ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
-                            : "border-[var(--color-brand-border)]"
-                        }`}
-                      >
-                        <span>{reward.name} — {reward.pointsCost} نقطة</span>
-                        <span className="text-[var(--color-brand-muted)]">
-                          -{formatCurrency(reward.discountAmount)}
-                        </span>
-                      </button>
-                    ))}
+                    {visibleRewards.map((reward) => {
+                      const affordable = canAfford(reward);
+                      return (
+                        <button
+                          key={reward.id}
+                          type="button"
+                          disabled={!affordable}
+                          onClick={() => setSelectedRewardId(reward.id)}
+                          className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
+                            !affordable
+                              ? "cursor-not-allowed border-[var(--color-brand-border)] opacity-50"
+                              : selectedRewardId === reward.id
+                                ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
+                                : "border-[var(--color-brand-border)]"
+                          }`}
+                        >
+                          <span>{reward.name} — {reward.pointsCost} نقطة</span>
+                          <span className="text-[var(--color-brand-muted)]">
+                            {affordable ? `-${formatCurrency(reward.discountAmount)}` : "رصيد غير كافٍ"}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
