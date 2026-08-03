@@ -8,7 +8,9 @@ import { createSession } from "@/lib/session";
 export type LoginResult = { error?: string };
 export type EmployeeOption = { id: string; full_name: string };
 
-/** قائمة الموظفين النشطين (الاسم فقط) لعرضها كخطوة اختيار قبل إدخال الـPIN —
+/** قائمة موظفي الكاشير النشطين (الاسم فقط) لعرضها كخطوة اختيار قبل إدخال
+ * الـPIN — الموظفون بصلاحية "مدير" مستثنون عمداً، لأن دخولهم يصير من لوحة
+ * الإدارة بحسابهم المنفصل (اسم مستخدم/كلمة مرور)، لا من شاشة الكاشير هذي.
  * تُعرض قبل أي مصادقة (نفس مستوى حساسية شاشة الدخول نفسها)، والتحقق الفعلي
  * من الهوية يبقى بالـPIN وحده. */
 export async function listActiveEmployeesAction(): Promise<EmployeeOption[]> {
@@ -17,6 +19,7 @@ export async function listActiveEmployeesAction(): Promise<EmployeeOption[]> {
     .from("employees")
     .select("id, full_name")
     .eq("is_active", true)
+    .eq("role", "staff")
     .order("full_name");
 
   return data ?? [];
@@ -33,6 +36,7 @@ export async function loginAction(employeeId: string, pin: string): Promise<Logi
     .select("id, pin_hash, role")
     .eq("id", employeeId)
     .eq("is_active", true)
+    .eq("role", "staff")
     .maybeSingle();
 
   if (error) {
