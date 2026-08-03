@@ -2,7 +2,9 @@
 -- "بدون بصل"، "اطرقوا الباب بدل الجرس") — تظهر للكاشير عند وصول الطلب
 -- وتُطبع بفاتورة المطبخ. حقل واحد على مستوى الطلب كامل، وليس لكل صنف
 -- (order_items.notes موجود مسبقاً لكن غير مستخدم حالياً بأي مسار).
-alter table orders add column notes text;
+alter table orders add column if not exists notes text;
+
+drop function if exists create_online_order(uuid, jsonb, text);
 
 create or replace function create_online_order(
   p_auth_user_id uuid,
