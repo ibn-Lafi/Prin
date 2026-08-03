@@ -11,6 +11,7 @@ export type KitchenPrintPayload = {
   dailyOrderNumber: number;
   orderDate: string;
   channel: string;
+  notes: string | null;
   items: KitchenPrintItem[];
 };
 

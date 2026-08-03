@@ -27,6 +27,7 @@ export function CheckoutView({
   const [codeError, setCodeError] = useState<string | null>(null);
   const [orderError, setOrderError] = useState<string | null>(null);
   const [isPlacing, startPlacing] = useTransition();
+  const [notes, setNotes] = useState("");
 
   // نفس ترتيب create_online_order بالضبط: الكود يُطبَّق على المجموع الفرعي —
   // استبدال النقاط غير مدعوم بالمنيو الإلكتروني حالياً (متاح بالكاشير فقط).
@@ -70,7 +71,7 @@ export function CheckoutView({
     }));
 
     startPlacing(async () => {
-      const result = await placeOrderAction(checkoutItems, appliedCode?.code ?? null);
+      const result = await placeOrderAction(checkoutItems, appliedCode?.code ?? null, notes.trim() || null);
       if (result.error) {
         setOrderError(result.error);
         return;
@@ -165,6 +166,18 @@ export function CheckoutView({
           </div>
         )}
         {codeError && <p className="mt-1.5 text-xs font-medium text-[var(--color-brand-primary)]">{codeError}</p>}
+      </section>
+
+      <section className="mb-4 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
+        <p className="mb-2 font-semibold">ملاحظات</p>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="أي ملاحظة على طلبك (مثال: بدون بصل)"
+          rows={2}
+          maxLength={300}
+          className="w-full resize-none rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-sm outline-none focus:border-[var(--color-brand-primary)]"
+        />
       </section>
 
       <section className="mb-6 flex flex-col gap-1.5 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">

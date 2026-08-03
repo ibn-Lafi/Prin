@@ -51,7 +51,14 @@ export type IncomingOrder = {
   total: number;
   customerName: string | null;
   customerPhone: string | null;
-  items: { id: string; name: string; quantity: number; modifiers: string[] }[];
+  notes: string | null;
+  items: {
+    id: string;
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    modifiers: string[];
+  }[];
 };
 
 export type PrintJobStatus = {

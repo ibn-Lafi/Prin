@@ -63,6 +63,7 @@ type RawOrderForKitchenPrint = {
   daily_order_number: number;
   order_date: string;
   channel: string;
+  notes: string | null;
   order_items: {
     quantity: number;
     notes: string | null;
@@ -83,7 +84,7 @@ async function queueKitchenPrintJob(orderId: string): Promise<void> {
   const { data: rawOrder } = await supabase
     .from("orders")
     .select(
-      `daily_order_number, order_date, channel,
+      `daily_order_number, order_date, channel, notes,
        order_items ( quantity, notes,
          products ( name ), combos ( name ),
          order_item_modifiers ( modifiers ( name ) ) )`,
@@ -98,6 +99,7 @@ async function queueKitchenPrintJob(orderId: string): Promise<void> {
     dailyOrderNumber: order.daily_order_number,
     orderDate: order.order_date,
     channel: order.channel,
+    notes: order.notes,
     items: order.order_items.map((item) => ({
       name: item.products?.name ?? item.combos?.name ?? "صنف",
       quantity: item.quantity,
@@ -119,6 +121,7 @@ async function queueKitchenPrintJob(orderId: string): Promise<void> {
 export async function placeOrderAction(
   items: CheckoutItem[],
   discountCode: string | null,
+  notes: string | null,
 ): Promise<PlaceOrderResult> {
   const supabase = await getSupabaseServerClient();
   const {
@@ -133,6 +136,7 @@ export async function placeOrderAction(
     p_auth_user_id: user.id,
     p_items: items as unknown as Json,
     p_discount_code: discountCode,
+    p_notes: notes,
   });
 
   if (error) return { error: error.message || "تعذّر إنشاء الطلب" };

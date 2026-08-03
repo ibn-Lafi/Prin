@@ -464,6 +464,7 @@ export type Database = {
           cancelled_at: string | null;
           accepted_by_employee_id: string | null;
           accepted_at: string | null;
+          notes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -487,6 +488,7 @@ export type Database = {
           cancelled_at?: string | null;
           accepted_by_employee_id?: string | null;
           accepted_at?: string | null;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -510,6 +512,7 @@ export type Database = {
           cancelled_at?: string | null;
           accepted_by_employee_id?: string | null;
           accepted_at?: string | null;
+          notes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -797,6 +800,7 @@ export type Database = {
           p_auth_user_id: string;
           p_items: Json;
           p_discount_code?: string | null;
+          p_notes?: string | null;
         };
         Returns: {
           order_id: string;

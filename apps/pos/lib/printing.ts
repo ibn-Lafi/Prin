@@ -14,6 +14,7 @@ type OrderForPrint = {
   discount_amount: number;
   code_discount_amount: number;
   created_at: string;
+  notes: string | null;
   customers: { full_name: string | null; phone: string } | null;
   rewards: { name: string } | null;
   discount_codes: { code: string } | null;
@@ -41,7 +42,7 @@ async function buildPrintPayloads(
     supabase
       .from("orders")
       .select(
-        `id, order_date, daily_order_number, channel, subtotal, tax_amount, total, discount_amount, code_discount_amount, created_at,
+        `id, order_date, daily_order_number, channel, subtotal, tax_amount, total, discount_amount, code_discount_amount, created_at, notes,
          customers ( full_name, phone ),
          rewards ( name ),
          discount_codes ( code ),
@@ -71,6 +72,7 @@ async function buildPrintPayloads(
     dailyOrderNumber: order.daily_order_number,
     orderDate: order.order_date,
     channel: order.channel,
+    notes: order.notes,
     items: items.map((item) => ({
       name: item.name,
       quantity: item.quantity,

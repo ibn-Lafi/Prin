@@ -19,6 +19,14 @@ export function renderKitchenTicket(
   printer.println(payload.channel === "online" ? "طلب إلكتروني" : "طلب كاشير");
   printer.drawLine();
 
+  if (payload.notes) {
+    printer.alignRight();
+    printer.bold(true);
+    printer.println(`ملاحظات: ${payload.notes}`);
+    printer.bold(false);
+    printer.drawLine();
+  }
+
   printer.alignRight();
   for (const item of payload.items) {
     printer.bold(true);

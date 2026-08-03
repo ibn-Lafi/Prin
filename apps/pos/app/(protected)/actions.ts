@@ -20,10 +20,12 @@ type IncomingOrderRow = {
   id: string;
   daily_order_number: number;
   total: number;
+  notes: string | null;
   customers: { full_name: string | null; phone: string } | null;
   order_items: {
     id: string;
     quantity: number;
+    unit_price: number;
     products: { name: string } | null;
     combos: { name: string } | null;
     order_item_modifiers: { modifiers: { name: string } | null }[];
@@ -60,10 +62,10 @@ export async function fetchIncomingOrderDetailsAction(
     .from("orders")
     .select(
       `
-      id, daily_order_number, total,
+      id, daily_order_number, total, notes,
       customers ( full_name, phone ),
       order_items (
-        id, quantity,
+        id, quantity, unit_price,
         products ( name ),
         combos ( name ),
         order_item_modifiers ( modifiers ( name ) )
@@ -83,10 +85,12 @@ export async function fetchIncomingOrderDetailsAction(
     total: data.total,
     customerName: data.customers?.full_name ?? null,
     customerPhone: data.customers?.phone ?? null,
+    notes: data.notes,
     items: (data.order_items ?? []).map((item) => ({
       id: item.id,
       name: item.products?.name ?? item.combos?.name ?? "صنف",
       quantity: item.quantity,
+      unitPrice: item.unit_price,
       modifiers: (item.order_item_modifiers ?? []).map((m) => m.modifiers?.name ?? "").filter(Boolean),
     })),
   };

@@ -61,9 +61,19 @@ export function IncomingOrderPopup({
                     </p>
                   )}
                 </div>
+                <span className="shrink-0 text-sm font-medium text-[var(--color-brand-muted)]">
+                  {formatCurrency(item.unitPrice * item.quantity)}
+                </span>
               </div>
             ))}
           </div>
+
+          {order.notes && (
+            <div className="mt-4 rounded-2xl bg-[var(--color-brand-primary-light)] p-3 text-sm">
+              <p className="mb-1 font-semibold text-[var(--color-brand-primary)]">ملاحظات العميل</p>
+              <p>{order.notes}</p>
+            </div>
+          )}
 
           <div className="mt-4 flex justify-between border-t border-[var(--color-brand-border)] pt-3 text-lg font-bold">
             <span>الإجمالي</span>
