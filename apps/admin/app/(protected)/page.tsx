@@ -66,7 +66,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
           <Utensils className="h-5 w-5 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
           <div>
-            <p className="text-sm text-[var(--color-brand-muted)]">طلبات المنيو الإلكتروني</p>
+            <p className="text-sm text-[var(--color-brand-muted)]">طلبات القائمة الإلكترونية</p>
             <p className="text-lg font-bold">{onlineCount}</p>
           </div>
         </div>

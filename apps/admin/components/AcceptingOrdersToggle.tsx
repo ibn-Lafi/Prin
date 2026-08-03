@@ -32,12 +32,12 @@ export function AcceptingOrdersToggle({ isAcceptingOrders }: { isAcceptingOrders
     >
       <div>
         <p className="font-semibold">
-          {isOpen ? "المنيو الإلكتروني يستقبل طلبات الآن" : "المنيو الإلكتروني مغلق يدوياً"}
+          {isOpen ? "القائمة الإلكترونية تستقبل الطلبات الآن" : "القائمة الإلكترونية مغلقة يدوياً"}
         </p>
         <p className="text-sm text-[var(--color-brand-muted)]">
           {isOpen
             ? "يقفل تلقائياً خارج ساعات العمل المضبوطة، أو أوقفه الآن يدوياً بأي وقت."
-            : "مغلق يدوياً بغض النظر عن ساعات العمل — العملاء ما يقدرون يكملون طلب إلكتروني."}
+            : "مغلق يدوياً بغض النظر عن ساعات العمل — لا يمكن للعملاء إكمال طلب إلكتروني."}
         </p>
         {error && <p className="mt-1 text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
       </div>

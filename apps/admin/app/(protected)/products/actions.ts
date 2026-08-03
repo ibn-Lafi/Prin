@@ -132,7 +132,7 @@ export async function setProductDeletedAction(
   await supabase.from("audit_log").insert({
     employee_id: session.employeeId,
     action_type: "settings_change",
-    description: deleted ? "حذف صنف من المنيو" : "استرجاع صنف للمنيو",
+    description: deleted ? "حذف صنف من القائمة" : "استرجاع صنف إلى القائمة",
     metadata: { product_id: productId },
   });
 
@@ -142,7 +142,7 @@ export async function setProductDeletedAction(
 }
 
 /** حذف نهائي للصنف من قاعدة البيانات — يفشل بقيد FK لو الصنف مستخدم بطلبات
- * سابقة أو ضمن وجبة، وحينها الحل هو "حذف الصنف من المنيو" (deleted_at) بدلاً من هذا. */
+ * سابقة أو ضمن وجبة، وحينها الحل هو "حذف الصنف من القائمة" (deleted_at) بدلاً من هذا. */
 export async function deleteProductAction(productId: string): Promise<ActionResult> {
   const session = await getSession();
   if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
@@ -159,7 +159,7 @@ export async function deleteProductAction(productId: string): Promise<ActionResu
   if (error) {
     if (error.code === FK_RESTRICT_CODE) {
       return {
-        error: "لا يمكن حذف هذا الصنف نهائياً لأنه مستخدم بطلبات سابقة أو ضمن وجبة — استخدم \"حذف الصنف من المنيو\" بدلاً من ذلك",
+        error: "لا يمكن حذف هذا الصنف نهائياً لأنه مستخدم بطلبات سابقة أو ضمن وجبة — استخدم \"حذف الصنف من القائمة\" بدلاً من ذلك",
       };
     }
     return { error: "تعذّر الحذف" };
@@ -257,7 +257,7 @@ export async function deleteModifierGroupAction(
 
   if (error) {
     if (error.code === FK_RESTRICT_CODE) {
-      return { error: "لا يمكن حذف هذي المجموعة لأن أحد خياراتها مستخدم بطلبات سابقة" };
+      return { error: "لا يمكن حذف هذه المجموعة لأن أحد خياراتها مستخدم بطلبات سابقة" };
     }
     return { error: "تعذّر الحذف" };
   }

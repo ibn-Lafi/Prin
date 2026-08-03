@@ -175,7 +175,7 @@ export function OrderModal({
 
           {missingRequiredGroups.length > 0 && (
             <p className="mb-2 text-center text-sm text-[var(--color-brand-primary)]">
-              لازم تختار: {missingRequiredGroups.map((g) => g.name).join("، ")}
+              يجب اختيار: {missingRequiredGroups.map((g) => g.name).join("، ")}
             </p>
           )}
           <button

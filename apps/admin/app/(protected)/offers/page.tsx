@@ -17,7 +17,7 @@ export default async function OffersPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">العروض وأكواد الخصم</h1>
       <p className="text-sm text-[var(--color-brand-muted)]">
-        إدارة الأكواد فقط حالياً — تطبيقها الفعلي على الطلبات (بالكاشير والمنيو الإلكتروني) خطوة قادمة منفصلة.
+        إدارة الأكواد فقط حالياً — تطبيقها الفعلي على الطلبات (بالكاشير والقائمة الإلكترونية) خطوة قادمة منفصلة.
       </p>
       <OffersManager codes={codes ?? []} />
     </div>

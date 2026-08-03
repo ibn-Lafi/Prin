@@ -21,7 +21,7 @@ export function PrintAgentStatusBanner() {
       if (!stationId) {
         if (!cancelled) {
           setNeedsSetup(true);
-          setMessage("ما تم إعداد الطباعة لهذا الجهاز بعد");
+          setMessage("لم يتم إعداد الطباعة لهذا الجهاز بعد");
         }
         return;
       }

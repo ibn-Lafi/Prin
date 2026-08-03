@@ -27,7 +27,7 @@ export function OrderTicket({
       <div className="flex-1 overflow-y-auto p-4">
         {items.length === 0 ? (
           <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
-            التذكرة فاضية — اختر أصناف من القائمة.
+            التذكرة فارغة — اختر أصنافاً من القائمة.
           </p>
         ) : (
           <div className="flex flex-col gap-3">

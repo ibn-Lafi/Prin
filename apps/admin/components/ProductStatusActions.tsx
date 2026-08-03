@@ -39,7 +39,7 @@ export function ProductStatusActions({
 
   function handleDeletePermanently() {
     setError(null);
-    if (!window.confirm("حذف نهائي لا يمكن التراجع عنه. متأكد؟")) return;
+    if (!window.confirm("حذف نهائي لا يمكن التراجع عنه. هل أنت متأكد؟")) return;
     startTransition(async () => {
       const result = await deleteProductAction(productId);
       if (result.error) {
@@ -67,7 +67,7 @@ export function ProductStatusActions({
         onClick={handleToggleDeleted}
         className="rounded-xl bg-[var(--color-brand-primary-light)] px-4 py-2.5 text-sm font-medium text-[var(--color-brand-primary)] disabled:opacity-50"
       >
-        {isDeleted ? "استرجاع الصنف للمنيو" : "حذف الصنف من المنيو"}
+        {isDeleted ? "استرجاع الصنف إلى القائمة" : "حذف الصنف من القائمة"}
       </button>
       {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
       <hr className="border-[var(--color-brand-border)]" />
@@ -80,8 +80,8 @@ export function ProductStatusActions({
         حذف الصنف نهائياً
       </button>
       <p className="text-xs text-[var(--color-brand-muted)]">
-        يحذف الصنف من قاعدة البيانات نهائياً — يفشل لو الصنف مستخدم بطلبات سابقة أو ضمن وجبة، استخدم
-        &quot;حذف الصنف من المنيو&quot; أعلاه بدل هذا في هذي الحالة.
+        يحذف الصنف من قاعدة البيانات نهائياً — يفشل إذا كان الصنف مستخدماً بطلبات سابقة أو ضمن وجبة، استخدم
+        &quot;حذف الصنف من القائمة&quot; أعلاه بدلاً من هذا في هذه الحالة.
       </p>
     </div>
   );

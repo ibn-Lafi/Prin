@@ -90,7 +90,7 @@ export default async function ShiftDetailPage({ params }: { params: Promise<{ id
         <div>
           <p className="text-[var(--color-brand-muted)]">وقت الإغلاق</p>
           <p className="font-medium">
-            {shift.closed_at ? new Date(shift.closed_at).toLocaleString("ar-SA") : "— (لسه مفتوحة)"}
+            {shift.closed_at ? new Date(shift.closed_at).toLocaleString("ar-SA") : "— (لا تزال مفتوحة)"}
           </p>
         </div>
       </div>
@@ -105,7 +105,7 @@ export default async function ShiftDetailPage({ params }: { params: Promise<{ id
           <p className="text-lg font-bold">{formatCurrency(totals.cardTerminal)}</p>
         </div>
         <div className="rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
-          <p className="text-xs text-[var(--color-brand-muted)]">المنيو الإلكتروني</p>
+          <p className="text-xs text-[var(--color-brand-muted)]">القائمة الإلكترونية</p>
           <p className="text-lg font-bold">{formatCurrency(totals.online)}</p>
         </div>
         <div className="rounded-2xl bg-[var(--color-brand-primary-light)] p-4">
@@ -145,7 +145,7 @@ export default async function ShiftDetailPage({ params }: { params: Promise<{ id
               {posOrders.length === 0 && (
                 <tr>
                   <td colSpan={4} className="px-4 py-6 text-center text-[var(--color-brand-muted)]">
-                    ما فيه طلبات كاشير خلال هذي الجلسة
+                    لا توجد طلبات كاشير خلال هذه الجلسة
                   </td>
                 </tr>
               )}
@@ -183,7 +183,7 @@ export default async function ShiftDetailPage({ params }: { params: Promise<{ id
               {onlineOrders.length === 0 && (
                 <tr>
                   <td colSpan={3} className="px-4 py-6 text-center text-[var(--color-brand-muted)]">
-                    ما فيه طلبات إلكترونية مقبولة خلال هذي الجلسة
+                    لا توجد طلبات إلكترونية مقبولة خلال هذه الجلسة
                   </td>
                 </tr>
               )}

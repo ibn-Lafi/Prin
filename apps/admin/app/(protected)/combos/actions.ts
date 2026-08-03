@@ -210,7 +210,7 @@ export async function deleteComboModifierGroupAction(
 
   if (error) {
     if (error.code === FK_RESTRICT_CODE) {
-      return { error: "لا يمكن حذف هذي المجموعة لأن أحد خياراتها مستخدم بطلبات سابقة" };
+      return { error: "لا يمكن حذف هذه المجموعة لأن أحد خياراتها مستخدم بطلبات سابقة" };
     }
     return { error: "تعذّر الحذف" };
   }
@@ -339,7 +339,7 @@ export async function setComboDeletedAction(comboId: string, deleted: boolean): 
   await supabase.from("audit_log").insert({
     employee_id: session.employeeId,
     action_type: "settings_change",
-    description: deleted ? "حذف وجبة من المنيو" : "استرجاع وجبة للمنيو",
+    description: deleted ? "حذف وجبة من القائمة" : "استرجاع وجبة إلى القائمة",
     metadata: { combo_id: comboId },
   });
 

@@ -18,12 +18,12 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
           className="mb-3 h-12 w-12 text-[var(--color-brand-border)]"
           strokeWidth={1.25}
         />
-        <p className="text-[var(--color-brand-muted)]">سلتك فاضية.</p>
+        <p className="text-[var(--color-brand-muted)]">سلتك فارغة.</p>
         <Link
           href="/"
           className="mt-4 rounded-2xl bg-[var(--color-brand-primary)] px-6 py-2.5 font-semibold text-white"
         >
-          تصفّح المنيو
+          تصفّح القائمة
         </Link>
       </main>
     );

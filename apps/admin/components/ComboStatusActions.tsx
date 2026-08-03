@@ -48,7 +48,7 @@ export function ComboStatusActions({
         onClick={handleToggleDeleted}
         className="rounded-xl bg-[var(--color-brand-primary-light)] px-4 py-2.5 text-sm font-medium text-[var(--color-brand-primary)] disabled:opacity-50"
       >
-        {isDeleted ? "استرجاع الوجبة للمنيو" : "حذف الوجبة من المنيو"}
+        {isDeleted ? "استرجاع الوجبة إلى القائمة" : "حذف الوجبة من القائمة"}
       </button>
       {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
     </div>

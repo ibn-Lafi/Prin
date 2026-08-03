@@ -137,7 +137,7 @@ export function OrdersView({ orders }: { orders: OrderWithItems[] }) {
           </div>
         )
       ) : previousOrders.length === 0 ? (
-        <p className="py-16 text-center text-sm text-[var(--color-brand-muted)]">ما فيه طلبات سابقة.</p>
+        <p className="py-16 text-center text-sm text-[var(--color-brand-muted)]">لا توجد طلبات سابقة.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {previousOrders.map((order) => (

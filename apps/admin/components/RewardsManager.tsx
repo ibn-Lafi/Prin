@@ -108,7 +108,7 @@ function RewardForm({
       {isLinked ? (
         <p className="rounded-xl bg-[var(--color-brand-background)] px-3 py-2.5 text-xs text-[var(--color-brand-muted)]">
           الخصم عند الاستبدال = سعر الصنف الحالي ({selected ? formatCurrency(selected.price) : "—"}) — يتحدّث
-          تلقائياً لو تغيّر سعر الصنف بعدين، والاسم والصورة تُسحب منه مباشرة.
+          تلقائياً إذا تغيّر سعر الصنف لاحقاً، ويُسحب الاسم والصورة منه مباشرة.
         </p>
       ) : (
         <>

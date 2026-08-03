@@ -10,7 +10,7 @@ export default async function CategoriesPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold">فئات المنيو</h1>
+      <h1 className="text-2xl font-bold">فئات القائمة</h1>
       <CategoriesManager categories={categories ?? []} />
     </div>
   );

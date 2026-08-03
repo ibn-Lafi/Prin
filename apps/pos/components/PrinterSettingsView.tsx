@@ -68,8 +68,8 @@ export function PrinterSettingsView() {
       <div className="flex flex-col gap-2 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
         <p className="text-sm font-semibold">معرّف هذا الجهاز</p>
         <p className="text-xs text-[var(--color-brand-muted)]">
-          لازم يطابق بالضبط STATION_ID المضبوط بملف .env لعامل الطباعة المثبّت على هذا الجهاز فعلياً — يُخزَّن
-          بمتصفح هذا الجهاز بس، مستقل عن تسجيل دخول الموظف.
+          يجب أن يطابق تماماً STATION_ID المضبوط في ملف .env لعامل الطباعة المثبّت على هذا الجهاز فعلياً — يُخزَّن
+          في متصفح هذا الجهاز فقط، بمعزل عن تسجيل دخول الموظف.
         </p>
         {isEditingStationId ? (
           <div className="flex items-center gap-2">

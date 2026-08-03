@@ -149,7 +149,7 @@ export function MenuBrowser({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="ابحث في المنيو..."
+            placeholder="ابحث في القائمة..."
             className="w-full bg-transparent text-sm text-[var(--color-brand-text)] outline-none placeholder:text-[var(--color-brand-muted)]"
           />
         </label>
@@ -177,7 +177,7 @@ export function MenuBrowser({
             </p>
             {visibleRewards.length === 0 ? (
               <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
-                ما فيه مكافآت متاحة حالياً.
+                لا توجد مكافآت متاحة حالياً.
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">

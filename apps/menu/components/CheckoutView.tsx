@@ -83,9 +83,9 @@ export function CheckoutView({
   if (items.length === 0) {
     return (
       <main className="mx-auto max-w-md px-4 py-10 text-center">
-        <p className="text-[var(--color-brand-muted)]">سلتك فاضية.</p>
+        <p className="text-[var(--color-brand-muted)]">سلتك فارغة.</p>
         <Link href="/" className="mt-4 inline-block text-[var(--color-brand-primary)]">
-          تصفّح المنيو
+          تصفّح القائمة
         </Link>
       </main>
     );

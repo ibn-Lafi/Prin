@@ -115,7 +115,7 @@ export default async function OrdersPage({
           type="submit"
           className="rounded-xl bg-[var(--color-brand-primary)] px-4 py-2 text-sm font-semibold text-white"
         >
-          فلترة
+          تصفية
         </button>
         <Link
           href="/orders?date="

@@ -93,7 +93,7 @@ export function SettingsForm({ settings }: { settings: RestaurantSettings }) {
       </div>
 
       <label className="flex items-center justify-between rounded-xl bg-[var(--color-brand-background)] px-3 py-2.5">
-        <span className="text-sm font-medium">استقبال طلبات المنيو الإلكتروني</span>
+        <span className="text-sm font-medium">استقبال طلبات القائمة الإلكترونية</span>
         <input
           type="checkbox"
           checked={isAcceptingOrders}

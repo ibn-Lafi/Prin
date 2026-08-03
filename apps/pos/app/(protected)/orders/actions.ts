@@ -41,7 +41,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
   }
 
   if (input.items.length === 0) {
-    return { error: "التذكرة فاضية" };
+    return { error: "التذكرة فارغة" };
   }
 
   // توحيد صيغة الجوال لـ E.164 قبل حفظه — نفس الصيغة اللي يستخدمها المنيو

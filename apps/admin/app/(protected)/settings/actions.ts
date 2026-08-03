@@ -70,8 +70,8 @@ export async function toggleAcceptingOrdersAction(next: boolean): Promise<Action
     employee_id: session.employeeId,
     action_type: "settings_change",
     description: next
-      ? "إعادة تفعيل استقبال طلبات المنيو الإلكتروني"
-      : "إغلاق استقبال طلبات المنيو الإلكتروني يدوياً",
+      ? "إعادة تفعيل استقبال طلبات القائمة الإلكترونية"
+      : "إغلاق استقبال طلبات القائمة الإلكترونية يدوياً",
   });
 
   revalidatePath("/");

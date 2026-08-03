@@ -5,7 +5,7 @@ import { MenuHeader } from "../components/MenuHeader";
 import { BottomNav } from "../components/BottomNav";
 
 export const metadata: Metadata = {
-  title: "BRIN — المنيو الإلكتروني",
+  title: "BRIN — القائمة الإلكترونية",
 };
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

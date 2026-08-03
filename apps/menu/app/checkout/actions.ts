@@ -126,7 +126,7 @@ export async function placeOrderAction(
   } = await supabase.auth.getUser();
 
   if (!user) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
-  if (items.length === 0) return { error: "السلة فاضية" };
+  if (items.length === 0) return { error: "السلة فارغة" };
 
   const service = createSupabaseServiceRoleClient();
   const { data, error } = await service.rpc("create_online_order", {

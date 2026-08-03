@@ -54,7 +54,7 @@ export function LogoutButton() {
 
             {summary === null ? (
               <p className="mb-5 text-sm text-[var(--color-brand-muted)]">
-                ما فيه جلسة عمل نشطة لعرض ملخصها.
+                لا توجد جلسة عمل نشطة لعرض ملخصها.
               </p>
             ) : (
               <div className="mb-5 flex flex-col gap-2 text-sm">
@@ -67,7 +67,7 @@ export function LogoutButton() {
                   <span className="font-semibold">{formatCurrency(summary.cardTerminal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[var(--color-brand-muted)]">المنيو الإلكتروني</span>
+                  <span className="text-[var(--color-brand-muted)]">القائمة الإلكترونية</span>
                   <span className="font-semibold">{formatCurrency(summary.online)}</span>
                 </div>
                 <div className="flex justify-between border-t border-[var(--color-brand-border)] pt-2 text-base font-bold">

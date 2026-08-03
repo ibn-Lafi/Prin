@@ -42,7 +42,7 @@ export function CollectPaymentDialog({
   function handleSubmit() {
     setError(null);
     if (remaining !== 0) {
-      setError("مجموع الدفعات لازم يساوي الإجمالي بالضبط");
+      setError("يجب أن يساوي مجموع الدفعات الإجمالي بالضبط");
       return;
     }
 

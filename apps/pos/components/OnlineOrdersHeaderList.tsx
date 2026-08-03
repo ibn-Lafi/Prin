@@ -76,7 +76,7 @@ export function OnlineOrdersHeaderList() {
         className="relative flex items-center gap-1.5 rounded-full bg-[var(--color-brand-background)] px-3 py-2 text-sm font-medium text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
       >
         <Bell className="h-4 w-4" strokeWidth={1.75} />
-        طلبات المنيو الإلكتروني
+        طلبات القائمة الإلكترونية
         {orders.length > 0 && (
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-brand-primary)] px-1 text-xs font-bold text-white">
             {orders.length}
@@ -90,7 +90,7 @@ export function OnlineOrdersHeaderList() {
           <div className="absolute left-0 top-full z-40 mt-2 w-80 rounded-2xl bg-[var(--color-brand-card)] p-3 shadow-xl ring-1 ring-[var(--color-brand-border)]">
             {orders.length === 0 ? (
               <p className="p-3 text-center text-sm text-[var(--color-brand-muted)]">
-                ما فيه طلبات إلكترونية نشطة
+                لا توجد طلبات إلكترونية نشطة
               </p>
             ) : (
               <div className="flex flex-col gap-2">

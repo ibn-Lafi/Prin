@@ -170,7 +170,7 @@ export async function completeOnlineOrderAction(orderId: string): Promise<{ erro
     .maybeSingle();
 
   if (!existingPayment) {
-    return { error: "لازم تحصّل الدفع قبل تسليم الطلب" };
+    return { error: "يجب تحصيل الدفع قبل تسليم الطلب" };
   }
 
   const { data, error } = await supabase

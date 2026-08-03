@@ -83,7 +83,7 @@ export default function LoginPage() {
         </div>
 
         {employees !== null && employees.length === 0 && (
-          <p className="text-sm text-[var(--color-brand-muted)]">ما فيه حسابات كاشير مفعّلة</p>
+          <p className="text-sm text-[var(--color-brand-muted)]">لا توجد حسابات كاشير مفعّلة</p>
         )}
       </main>
     );
