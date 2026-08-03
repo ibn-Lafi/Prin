@@ -12,6 +12,7 @@ import {
 import type { ActiveOnlineOrder } from "@/lib/types";
 import { getStationId } from "@/lib/device";
 import { CollectPaymentDialog } from "@/components/CollectPaymentDialog";
+import { OnlineOrderDetailModal } from "@/components/OnlineOrderDetailModal";
 
 const STATUS_LABELS: Record<ActiveOnlineOrder["status"], string> = {
   received: "بانتظار القبول",
@@ -22,6 +23,7 @@ export function OnlineOrdersHeaderList() {
   const [orders, setOrders] = useState<ActiveOnlineOrder[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [collectingOrder, setCollectingOrder] = useState<ActiveOnlineOrder | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<ActiveOnlineOrder | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -97,7 +99,13 @@ export function OnlineOrdersHeaderList() {
                 {orders.map((order) => (
                   <div
                     key={order.id}
-                    className="flex items-center justify-between rounded-xl bg-[var(--color-brand-background)] p-2.5"
+                    onClick={() => setViewingOrder(order)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") setViewingOrder(order);
+                    }}
+                    className="flex cursor-pointer items-center justify-between rounded-xl bg-[var(--color-brand-background)] p-2.5"
                   >
                     <div>
                       <p className="text-sm font-semibold">#{order.dailyOrderNumber}</p>
@@ -109,7 +117,10 @@ export function OnlineOrdersHeaderList() {
                       <button
                         type="button"
                         disabled={isPending}
-                        onClick={() => handleAccept(order.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAccept(order.id);
+                        }}
                         className="rounded-full bg-[var(--color-brand-primary)] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                       >
                         قبول
@@ -118,7 +129,10 @@ export function OnlineOrdersHeaderList() {
                       <button
                         type="button"
                         disabled={isPending}
-                        onClick={() => setCollectingOrder(order)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCollectingOrder(order);
+                        }}
                         className="rounded-full bg-[var(--color-brand-primary)] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                       >
                         تحصيل الدفع
@@ -127,7 +141,10 @@ export function OnlineOrdersHeaderList() {
                       <button
                         type="button"
                         disabled={isPending}
-                        onClick={() => handleComplete(order.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleComplete(order.id);
+                        }}
                         className="rounded-full bg-green-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                       >
                         تسليم
@@ -151,6 +168,14 @@ export function OnlineOrdersHeaderList() {
             setCollectingOrder(null);
             void refresh();
           }}
+        />
+      )}
+
+      {viewingOrder && (
+        <OnlineOrderDetailModal
+          orderId={viewingOrder.id}
+          dailyOrderNumber={viewingOrder.dailyOrderNumber}
+          onClose={() => setViewingOrder(null)}
         />
       )}
     </div>
