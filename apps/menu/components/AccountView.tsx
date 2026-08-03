@@ -1,20 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Package, Pencil, Phone, Sparkles } from "lucide-react";
-import { formatCurrency } from "@brin/utils";
+import { Check, Pencil, Phone, Sparkles } from "lucide-react";
 import { updateNameAction } from "@/app/account/actions";
 
 export function AccountView({
   fullName: initialFullName,
   phone,
   pointsBalance,
-  totalSpent,
 }: {
   fullName: string;
   phone: string;
   pointsBalance: number;
-  totalSpent: number;
 }) {
   const [fullName, setFullName] = useState(initialFullName);
   const [isEditing, setIsEditing] = useState(false);
@@ -99,17 +96,10 @@ export function AccountView({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-4 text-center shadow-sm">
-          <Sparkles className="mb-1 h-5 w-5 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
-          <p className="text-2xl font-bold text-[var(--color-brand-primary)]">{pointsBalance}</p>
-          <p className="text-xs text-[var(--color-brand-muted)]">نقاط الولاء</p>
-        </div>
-        <div className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-4 text-center shadow-sm">
-          <Package className="mb-1 h-5 w-5 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
-          <p className="text-2xl font-bold">{formatCurrency(totalSpent)}</p>
-          <p className="text-xs text-[var(--color-brand-muted)]">إجمالي الإنفاق</p>
-        </div>
+      <section className="flex flex-col items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-4 text-center shadow-sm">
+        <Sparkles className="mb-1 h-5 w-5 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
+        <p className="text-2xl font-bold text-[var(--color-brand-primary)]">{pointsBalance}</p>
+        <p className="text-xs text-[var(--color-brand-muted)]">نقاط الولاء</p>
       </section>
     </main>
   );
