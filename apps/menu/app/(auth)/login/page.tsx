@@ -60,7 +60,7 @@ function LoginForm() {
   function handleNameContinue() {
     setError(null);
     if (!fullName.trim()) {
-      setError("اكتب اسمك للمتابعة");
+      setError("يرجى إدخال اسمك للمتابعة");
       return;
     }
 
@@ -131,7 +131,7 @@ function LoginForm() {
       {step === "name" && (
         <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
           <p className="text-center text-sm text-[var(--color-brand-muted)]">
-            أول مرة لك عندنا! اكتب اسمك عشان نرحّب فيك
+            مرحباً بك لأول مرة، يرجى إدخال اسمك لإتمام التسجيل
           </p>
           <label className="flex flex-col gap-1.5">
             <span className="text-sm text-[var(--color-brand-muted)]">الاسم الكامل</span>
