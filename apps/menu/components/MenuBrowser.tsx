@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Gift, Search, ShoppingBag, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { Check, Gift, Search, ShoppingBag, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
+import { useCart } from "@/hooks/useCart";
 import type { Category, Combo, Product, Reward } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
@@ -73,6 +75,7 @@ export function MenuBrowser({
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
   const [query, setQuery] = useState("");
+  const { selectedRewardId, selectReward } = useCart();
 
   // العميل يتصفح ويضيف للسلة عادي بأي وقت — تقييد ساعات العمل يظهر فقط
   // بصفحة الدفع (/checkout)، مو أثناء التصفح.
@@ -173,8 +176,21 @@ export function MenuBrowser({
         {activeTab === REWARDS_TAB_ID ? (
           <div className="flex flex-col gap-4">
             <p className="text-xs text-[var(--color-brand-muted)]">
-              أضف أصنافك للسلة، ثم اختر المكافأة التي تريد استبدالها بصفحة تأكيد الطلب.
+              اختر مكافأة لاستبدالها، ثم أكمل طلبك من السلة — الخصم يُطبَّق تلقائياً بصفحة تأكيد الطلب.
             </p>
+
+            {selectedRewardId && (
+              <Link
+                href="/cart"
+                className="flex items-center justify-between rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3 text-sm font-semibold text-white"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Check className="h-4 w-4" strokeWidth={2.5} />
+                  تم اختيار المكافأة — أكمل طلبك من السلة
+                </span>
+              </Link>
+            )}
+
             {visibleRewards.length === 0 ? (
               <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
                 لا توجد مكافآت متاحة حالياً.
@@ -182,7 +198,13 @@ export function MenuBrowser({
             ) : (
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
                 {visibleRewards.map((reward) => (
-                  <RewardCard key={reward.id} reward={reward} pointsBalance={pointsBalance} />
+                  <RewardCard
+                    key={reward.id}
+                    reward={reward}
+                    pointsBalance={pointsBalance}
+                    selected={selectedRewardId === reward.id}
+                    onSelect={() => selectReward(selectedRewardId === reward.id ? null : reward.id)}
+                  />
                 ))}
               </div>
             )}

@@ -23,9 +23,8 @@ export function CheckoutView({
   rewards: Reward[];
 }) {
   const router = useRouter();
-  const { items, itemTotal, subtotal, clear } = useCart();
+  const { items, itemTotal, subtotal, clear, selectedRewardId, selectReward } = useCart();
 
-  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCodePreview | null>(null);
   const [isApplyingCode, setIsApplyingCode] = useState(false);
@@ -155,7 +154,7 @@ export function CheckoutView({
           <div className="flex flex-col gap-1.5">
             <button
               type="button"
-              onClick={() => setSelectedRewardId(null)}
+              onClick={() => selectReward(null)}
               className={`rounded-xl border px-3 py-2 text-right text-sm ${
                 selectedRewardId === null
                   ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
@@ -171,7 +170,7 @@ export function CheckoutView({
                   key={reward.id}
                   type="button"
                   disabled={!affordable}
-                  onClick={() => setSelectedRewardId(reward.id)}
+                  onClick={() => selectReward(reward.id)}
                   className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
                     !affordable
                       ? "cursor-not-allowed border-[var(--color-brand-border)] opacity-50"
