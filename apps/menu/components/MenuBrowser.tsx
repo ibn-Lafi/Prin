@@ -76,12 +76,24 @@ export function MenuBrowser({
   const [combos, setCombos] = useState(initialCombos);
   const [query, setQuery] = useState("");
   const router = useRouter();
-  const { selectReward } = useCart();
+  const { selectedRewardId, selectReward, addItem } = useCart();
 
-  // نفس سلوك الضغط على صنف عادي بالضبط: يُختار ثم ينتقل مباشرة للسلة —
-  // بدون حالة "مُختارة" معلّقة بالشبكة نفسها، لأن المستخدم يغادر الصفحة فوراً.
-  function handleRewardTap(rewardId: string) {
-    selectReward(rewardId);
+  // مكافأة مربوطة بصنف/وجبة حقيقية (مثل "وجبة كلاسيك مجانية") يُقدر يستبدلها
+  // العميل لوحدها بدون شراء أي شيء إضافي — الصنف/الوجبة نفسها تُضاف للسلة
+  // تلقائياً هنا (خصمها لاحقاً بالدفع = سعرها بالضبط، فتصير مجانية فعلياً).
+  // مكافأة عامة (خصم نقدي بدون ربط) تبقى تحتاج العميل يضيف صنفاً بنفسه.
+  function handleRewardTap(reward: Reward) {
+    if (reward.linkedItem && selectedRewardId !== reward.id) {
+      addItem({
+        kind: reward.linkedItem.kind,
+        refId: reward.linkedItem.refId,
+        name: reward.name,
+        unitPrice: reward.discount_amount,
+        quantity: 1,
+        modifiers: [],
+      });
+    }
+    selectReward(reward.id);
     router.push("/cart");
   }
 
@@ -198,7 +210,7 @@ export function MenuBrowser({
                     key={reward.id}
                     reward={reward}
                     pointsBalance={pointsBalance}
-                    onSelect={() => handleRewardTap(reward.id)}
+                    onSelect={() => handleRewardTap(reward)}
                   />
                 ))}
               </div>

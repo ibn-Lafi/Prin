@@ -10,7 +10,7 @@ export default async function CartPage() {
     supabase
       .from("rewards")
       .select(
-        "id, name, description, points_cost, discount_amount, image_url, products ( name, price, image_url ), combos ( name, price, image_url )",
+        "id, name, description, points_cost, discount_amount, image_url, product_id, combo_id, products ( name, price, image_url ), combos ( name, price, image_url )",
       )
       .order("points_cost"),
   ]);

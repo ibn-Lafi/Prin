@@ -53,6 +53,9 @@ export type Reward = {
   points_cost: number;
   discount_amount: number;
   image_url: string | null;
+  // المكافآت المربوطة بصنف/وجبة حقيقية (بدل خصم نقدي عام) يمكن استبدالها لوحدها —
+  // الصنف/الوجبة نفسها تُضاف للسلة تلقائياً وقت الاستبدال، راجع MenuBrowser.tsx.
+  linkedItem: { kind: "product" | "combo"; refId: string } | null;
 };
 
 export type DiscountCodePreview = {
