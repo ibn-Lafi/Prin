@@ -329,7 +329,7 @@ export async function getPrintAgentStatusAction(stationId: string | null): Promi
   const supabase = createSupabaseServiceRoleClient();
   const { data } = await supabase
     .from("print_agent_status")
-    .select("last_heartbeat_at, kitchen_printer_connected, customer_printer_connected")
+    .select("last_heartbeat_at, printer_connected")
     .eq("id", stationId)
     .maybeSingle();
 
@@ -337,7 +337,6 @@ export async function getPrintAgentStatusAction(stationId: string | null): Promi
 
   return {
     lastHeartbeatAt: data.last_heartbeat_at,
-    kitchenPrinterConnected: data.kitchen_printer_connected,
-    customerPrinterConnected: data.customer_printer_connected,
+    printerConnected: data.printer_connected,
   };
 }

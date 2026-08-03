@@ -1,7 +1,7 @@
 import { createSupabaseServiceRoleClient } from "@brin/database";
 import type { KitchenPrintPayload, CustomerPrintPayload } from "@brin/utils";
 import { config } from "./config";
-import { getKitchenPrinter, getCustomerPrinter } from "./printers";
+import { getPrinter } from "./printers";
 import { renderKitchenTicket, renderCustomerReceipt } from "./receipts";
 
 const MAX_ATTEMPTS = 5;
@@ -17,6 +17,22 @@ type PrintJobRow = {
 
 const supabase = createSupabaseServiceRoleClient();
 const processingIds = new Set<string>();
+
+// طابعة فعلية واحدة فقط بالجهاز — طلب المطبخ وطلب العميل لنفس الفاتورة
+// صفّان منفصلان بـ print_jobs وقد يوصلان بنفس اللحظة تقريباً (queueOrderPrintJobs
+// تُدرجهما معاً)، فبدون هذا التسلسل ممكن ينفّذ الاثنان clear()/execute() على
+// نفس كائن الطابعة بنفس الوقت ويتداخل محتواهما ببعض. runOnPrinter يضمن ما
+// تبدأ فاتورة بالطباعة الفعلية إلا بعد ما تخلص اللي قبلها كاملة (بما فيها القص).
+let printerQueue: Promise<void> = Promise.resolve();
+
+function runOnPrinter(task: () => Promise<void>): Promise<void> {
+  const result = printerQueue.then(task, task);
+  printerQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
 
 /** مهام المطبخ لطلبات المنيو الإلكتروني (pay-at-cashier) تُنشأ بدون جهاز
  * محدد (station_id فارغ) — أول عامل طباعة يشوفها يحاول يحجزها ذرّياً
@@ -44,19 +60,18 @@ async function processJob(job: PrintJobRow): Promise<void> {
       if (!claimed) return;
     }
 
-    if (job.target === "kitchen") {
-      const printer = getKitchenPrinter();
-      if (!printer) throw new Error("طابعة المطبخ غير مهيّأة — اضبط عنوانها من لوحة الإدارة");
+    await runOnPrinter(async () => {
+      const printer = getPrinter();
+      if (!printer) throw new Error("الطابعة غير مهيّأة — اضبط عنوانها من صفحة إعدادات الطباعة بالكاشير");
+
       printer.clear();
-      renderKitchenTicket(printer, job.payload as KitchenPrintPayload);
+      if (job.target === "kitchen") {
+        renderKitchenTicket(printer, job.payload as KitchenPrintPayload);
+      } else {
+        renderCustomerReceipt(printer, job.payload as CustomerPrintPayload);
+      }
       await printer.execute();
-    } else {
-      const printer = getCustomerPrinter();
-      if (!printer) throw new Error("طابعة العميل غير مهيّأة — اضبط عنوانها من لوحة الإدارة");
-      printer.clear();
-      renderCustomerReceipt(printer, job.payload as CustomerPrintPayload);
-      await printer.execute();
-    }
+    });
 
     await supabase
       .from("print_jobs")

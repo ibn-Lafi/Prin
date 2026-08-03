@@ -576,28 +576,22 @@ export type Database = {
         Row: {
           id: string;
           last_heartbeat_at: string | null;
-          kitchen_printer_connected: boolean;
-          customer_printer_connected: boolean;
-          kitchen_printer_interface: string | null;
-          customer_printer_interface: string | null;
+          printer_connected: boolean;
+          printer_interface: string | null;
           updated_at: string;
         };
         Insert: {
           id: string;
           last_heartbeat_at?: string | null;
-          kitchen_printer_connected?: boolean;
-          customer_printer_connected?: boolean;
-          kitchen_printer_interface?: string | null;
-          customer_printer_interface?: string | null;
+          printer_connected?: boolean;
+          printer_interface?: string | null;
           updated_at?: string;
         };
         Update: {
           id?: string;
           last_heartbeat_at?: string | null;
-          kitchen_printer_connected?: boolean;
-          customer_printer_connected?: boolean;
-          kitchen_printer_interface?: string | null;
-          customer_printer_interface?: string | null;
+          printer_connected?: boolean;
+          printer_interface?: string | null;
           updated_at?: string;
         };
         Relationships: [];

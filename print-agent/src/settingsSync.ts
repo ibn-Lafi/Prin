@@ -1,6 +1,6 @@
 import { createSupabaseServiceRoleClient } from "@brin/database";
 import { config } from "./config";
-import { configurePrinters } from "./printers";
+import { configurePrinter } from "./printers";
 
 const SYNC_INTERVAL_MS = 15_000;
 
@@ -18,13 +18,13 @@ async function ensureStationRow(): Promise<void> {
 async function syncPrinterSettings(): Promise<void> {
   const { data, error } = await supabase
     .from("print_agent_status")
-    .select("kitchen_printer_interface, customer_printer_interface")
+    .select("printer_interface")
     .eq("id", config.stationId)
     .maybeSingle();
 
   if (error || !data) return;
 
-  configurePrinters(data.kitchen_printer_interface, data.customer_printer_interface);
+  configurePrinter(data.printer_interface);
 }
 
 export function startSettingsSync(): void {

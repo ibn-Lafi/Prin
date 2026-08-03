@@ -6,12 +6,12 @@ import { getSession } from "@/lib/session";
 export type ActionResult = { error?: string };
 
 export type StationPrinterSettings = {
-  kitchenPrinterInterface: string;
-  customerPrinterInterface: string;
+  printerInterface: string;
 };
 
 /** إعدادات الطباعة الآن لكل جهاز كاشير على حدة (station_id مخزّن محلياً
- * بمتصفح كل جهاز) — بدل إعداد واحد مشترك من لوحة الإدارة. */
+ * بمتصفح كل جهاز) — بدل إعداد واحد مشترك من لوحة الإدارة. طابعة فعلية
+ * واحدة فقط لكل جهاز، تطبع فاتورتي المطبخ والعميل تباعاً. */
 export async function getStationPrinterSettingsAction(
   stationId: string,
 ): Promise<StationPrinterSettings | null> {
@@ -22,15 +22,14 @@ export async function getStationPrinterSettingsAction(
   const supabase = createSupabaseServiceRoleClient();
   const { data } = await supabase
     .from("print_agent_status")
-    .select("kitchen_printer_interface, customer_printer_interface")
+    .select("printer_interface")
     .eq("id", stationId)
     .maybeSingle();
 
   if (!data) return null;
 
   return {
-    kitchenPrinterInterface: data.kitchen_printer_interface ?? "",
-    customerPrinterInterface: data.customer_printer_interface ?? "",
+    printerInterface: data.printer_interface ?? "",
   };
 }
 
@@ -48,8 +47,7 @@ export async function saveStationPrinterSettingsAction(
   const { error } = await supabase.from("print_agent_status").upsert(
     {
       id: trimmedStationId,
-      kitchen_printer_interface: input.kitchenPrinterInterface.trim() || null,
-      customer_printer_interface: input.customerPrinterInterface.trim() || null,
+      printer_interface: input.printerInterface.trim() || null,
     },
     { onConflict: "id" },
   );

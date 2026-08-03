@@ -13,8 +13,7 @@ export function PrinterSettingsView() {
   const [editingRequested, setEditingRequested] = useState(false);
   const isEditingStationId = editingRequested || !stationId;
   const [stationIdDraft, setStationIdDraft] = useState("");
-  const [kitchenInterface, setKitchenInterface] = useState("");
-  const [customerInterface, setCustomerInterface] = useState("");
+  const [printerInterface, setPrinterInterface] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -26,8 +25,7 @@ export function PrinterSettingsView() {
     async function loadSettings() {
       const settings = await getStationPrinterSettingsAction(stationId!);
       if (cancelled) return;
-      setKitchenInterface(settings?.kitchenPrinterInterface ?? "");
-      setCustomerInterface(settings?.customerPrinterInterface ?? "");
+      setPrinterInterface(settings?.printerInterface ?? "");
     }
     void loadSettings();
     return () => {
@@ -52,8 +50,7 @@ export function PrinterSettingsView() {
     setSaved(false);
     startTransition(async () => {
       const result = await saveStationPrinterSettingsAction(stationId, {
-        kitchenPrinterInterface: kitchenInterface,
-        customerPrinterInterface: customerInterface,
+        printerInterface,
       });
       if (result.error) {
         setError(result.error);
@@ -110,27 +107,18 @@ export function PrinterSettingsView() {
         <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
           <p className="text-sm font-semibold">إعدادات الطباعة</p>
           <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
-            عنوان طابعة المطبخ
+            عنوان الطابعة
             <input
               type="text"
-              value={kitchenInterface}
-              onChange={(e) => setKitchenInterface(e.target.value)}
+              value={printerInterface}
+              onChange={(e) => setPrinterInterface(e.target.value)}
               placeholder="printer:/dev/usb/lp0 أو tcp://192.168.1.50:9100"
               className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
             />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
-            عنوان طابعة العميل
-            <input
-              type="text"
-              value={customerInterface}
-              onChange={(e) => setCustomerInterface(e.target.value)}
-              placeholder="printer:/dev/usb/lp1 أو tcp://192.168.1.51:9100"
-              className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
-            />
-          </label>
           <p className="text-xs text-[var(--color-brand-muted)]">
-            يقرأها عامل الطباعة تلقائياً خلال 15 ثانية من الحفظ، بدون إعادة تشغيل — بشرط تطابق STATION_ID.
+            طابعة واحدة فقط تطبع فاتورة المطبخ ثم فاتورة العميل تباعاً، كل واحدة تُقص لوحدها — يقرأها عامل الطباعة
+            تلقائياً خلال 15 ثانية من الحفظ، بدون إعادة تشغيل، بشرط تطابق STATION_ID.
           </p>
 
           {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}

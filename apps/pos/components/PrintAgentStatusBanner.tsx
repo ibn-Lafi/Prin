@@ -38,12 +38,8 @@ export function PrintAgentStatusBanner() {
       const isStale = Date.now() - new Date(status.lastHeartbeatAt).getTime() > STALE_HEARTBEAT_MS;
       if (isStale) {
         setMessage("جهاز الطباعة غير متصل — لن تُطبع الطلبات تلقائياً");
-      } else if (!status.kitchenPrinterConnected && !status.customerPrinterConnected) {
-        setMessage("الطابعتان غير متصلتين — تحقق من الأجهزة");
-      } else if (!status.kitchenPrinterConnected) {
-        setMessage("طابعة المطبخ غير متصلة — تحقق من الجهاز");
-      } else if (!status.customerPrinterConnected) {
-        setMessage("طابعة العميل غير متصلة — تحقق من الجهاز");
+      } else if (!status.printerConnected) {
+        setMessage("الطابعة غير متصلة — تحقق من الجهاز");
       } else {
         setMessage(null);
       }

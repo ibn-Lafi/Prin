@@ -15,49 +15,29 @@ function buildPrinter(printerInterface: string): ThermalPrinter {
   });
 }
 
-let kitchenInterface: string | null = config.kitchenPrinterInterfaceFallback;
-let customerInterface: string | null = config.customerPrinterInterfaceFallback;
-let kitchenPrinter: ThermalPrinter | null = kitchenInterface ? buildPrinter(kitchenInterface) : null;
-let customerPrinter: ThermalPrinter | null = customerInterface ? buildPrinter(customerInterface) : null;
+let printerInterface: string | null = config.printerInterfaceFallback;
+let printer: ThermalPrinter | null = printerInterface ? buildPrinter(printerInterface) : null;
 
-export function getKitchenPrinter(): ThermalPrinter | null {
-  return kitchenPrinter;
-}
-
-export function getCustomerPrinter(): ThermalPrinter | null {
-  return customerPrinter;
+export function getPrinter(): ThermalPrinter | null {
+  return printer;
 }
 
 /**
- * تُستدعى دورياً بعد قراءة إعدادات الطباعة من restaurant_settings — تعيد بناء
+ * تُستدعى دورياً بعد قراءة إعدادات الطباعة من print_agent_status — تعيد بناء
  * كائن الطابعة فقط لو تغيّرت واجهتها فعلاً، تفادياً لإعادة اتصال بلا داعٍ كل
  * دورة استطلاع. القيمة null أو الفارغة من قاعدة البيانات ترجع للاحتياطي
  * (متغير البيئة المحلي) إن وُجد.
  */
-export function configurePrinters(
-  dbKitchenInterface: string | null,
-  dbCustomerInterface: string | null,
-): void {
-  const resolvedKitchen = dbKitchenInterface || config.kitchenPrinterInterfaceFallback;
-  const resolvedCustomer = dbCustomerInterface || config.customerPrinterInterfaceFallback;
+export function configurePrinter(dbInterface: string | null): void {
+  const resolved = dbInterface || config.printerInterfaceFallback;
 
-  if (resolvedKitchen && resolvedKitchen !== kitchenInterface) {
-    kitchenInterface = resolvedKitchen;
-    kitchenPrinter = buildPrinter(resolvedKitchen);
-    console.log(`[printers] تحديث واجهة طابعة المطبخ: ${resolvedKitchen}`);
-  } else if (!resolvedKitchen && kitchenInterface) {
-    kitchenInterface = null;
-    kitchenPrinter = null;
-    console.log("[printers] طابعة المطبخ غير مهيّأة (لا يوجد عنوان)");
-  }
-
-  if (resolvedCustomer && resolvedCustomer !== customerInterface) {
-    customerInterface = resolvedCustomer;
-    customerPrinter = buildPrinter(resolvedCustomer);
-    console.log(`[printers] تحديث واجهة طابعة العميل: ${resolvedCustomer}`);
-  } else if (!resolvedCustomer && customerInterface) {
-    customerInterface = null;
-    customerPrinter = null;
-    console.log("[printers] طابعة العميل غير مهيّأة (لا يوجد عنوان)");
+  if (resolved && resolved !== printerInterface) {
+    printerInterface = resolved;
+    printer = buildPrinter(resolved);
+    console.log(`[printers] تحديث واجهة الطابعة: ${resolved}`);
+  } else if (!resolved && printerInterface) {
+    printerInterface = null;
+    printer = null;
+    console.log("[printers] الطابعة غير مهيّأة (لا يوجد عنوان)");
   }
 }

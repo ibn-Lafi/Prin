@@ -83,8 +83,7 @@ export type ShiftSummary = {
 
 export type PrintAgentStatus = {
   lastHeartbeatAt: string | null;
-  kitchenPrinterConnected: boolean;
-  customerPrinterConnected: boolean;
+  printerConnected: boolean;
 };
 
 export type CustomerLookup = {
