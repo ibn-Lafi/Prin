@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Check, Gift, Search, ShoppingBag, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Gift, Search, ShoppingBag, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
 import { useCart } from "@/hooks/useCart";
 import type { Category, Combo, Product, Reward } from "@/lib/types";
@@ -75,7 +75,15 @@ export function MenuBrowser({
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
   const [query, setQuery] = useState("");
-  const { selectedRewardId, selectReward } = useCart();
+  const router = useRouter();
+  const { selectReward } = useCart();
+
+  // نفس سلوك الضغط على صنف عادي بالضبط: يُختار ثم ينتقل مباشرة للسلة —
+  // بدون حالة "مُختارة" معلّقة بالشبكة نفسها، لأن المستخدم يغادر الصفحة فوراً.
+  function handleRewardTap(rewardId: string) {
+    selectReward(rewardId);
+    router.push("/cart");
+  }
 
   // العميل يتصفح ويضيف للسلة عادي بأي وقت — تقييد ساعات العمل يظهر فقط
   // بصفحة الدفع (/checkout)، مو أثناء التصفح.
@@ -176,20 +184,8 @@ export function MenuBrowser({
         {activeTab === REWARDS_TAB_ID ? (
           <div className="flex flex-col gap-4">
             <p className="text-xs text-[var(--color-brand-muted)]">
-              اختر مكافأة لاستبدالها، ثم أكمل طلبك من السلة — الخصم يُطبَّق تلقائياً بصفحة تأكيد الطلب.
+              اختر مكافأة لاستبدالها — تُطبَّق تلقائياً على طلبك بصفحة السلة.
             </p>
-
-            {selectedRewardId && (
-              <Link
-                href="/cart"
-                className="flex items-center justify-between rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3 text-sm font-semibold text-white"
-              >
-                <span className="flex items-center gap-1.5">
-                  <Check className="h-4 w-4" strokeWidth={2.5} />
-                  تم اختيار المكافأة — أكمل طلبك من السلة
-                </span>
-              </Link>
-            )}
 
             {visibleRewards.length === 0 ? (
               <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
@@ -202,8 +198,7 @@ export function MenuBrowser({
                     key={reward.id}
                     reward={reward}
                     pointsBalance={pointsBalance}
-                    selected={selectedRewardId === reward.id}
-                    onSelect={() => selectReward(selectedRewardId === reward.id ? null : reward.id)}
+                    onSelect={() => handleRewardTap(reward.id)}
                   />
                 ))}
               </div>

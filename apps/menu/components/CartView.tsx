@@ -1,15 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Gift, Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useCart } from "@/hooks/useCart";
+import type { Reward } from "@/lib/types";
 
-export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
-  const { items, itemTotal, updateQuantity, removeItem, subtotal } = useCart();
+export function CartView({
+  taxRatePercent,
+  pointsBalance,
+  rewards,
+}: {
+  taxRatePercent: number;
+  pointsBalance: number | null;
+  rewards: Reward[];
+}) {
+  const { items, itemTotal, updateQuantity, removeItem, subtotal, selectedRewardId, selectReward } = useCart();
 
-  const tax = calculateTax(subtotal, taxRatePercent);
-  const total = roundMoney(subtotal + tax);
+  const selectedReward = rewards.find(
+    (r) => r.id === selectedRewardId && pointsBalance !== null && pointsBalance >= r.points_cost,
+  );
+  const rewardDiscount = selectedReward ? Math.min(selectedReward.discount_amount, subtotal) : 0;
+  const afterReward = roundMoney(subtotal - rewardDiscount);
+  const tax = calculateTax(afterReward, taxRatePercent);
+  const total = roundMoney(afterReward + tax);
 
   if (items.length === 0) {
     return (
@@ -85,11 +99,34 @@ export function CartView({ taxRatePercent }: { taxRatePercent: number }) {
         ))}
       </div>
 
+      {selectedReward && (
+        <div className="mt-3 flex items-center justify-between rounded-2xl bg-[var(--color-brand-primary-light)] px-3.5 py-3 text-sm">
+          <span className="flex items-center gap-2 font-medium text-[var(--color-brand-primary)]">
+            <Gift className="h-4 w-4" strokeWidth={1.75} />
+            {selectedReward.name}
+          </span>
+          <button
+            type="button"
+            onClick={() => selectReward(null)}
+            className="p-1 text-[var(--color-brand-primary)]"
+            aria-label="إزالة المكافأة"
+          >
+            <X className="h-4 w-4" strokeWidth={2} />
+          </button>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col gap-1.5 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
           <span>المجموع الفرعي</span>
           <span>{formatCurrency(subtotal)}</span>
         </div>
+        {rewardDiscount > 0 && (
+          <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
+            <span>خصم — {selectedReward?.name}</span>
+            <span>-{formatCurrency(rewardDiscount)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
           <span>الضريبة ({taxRatePercent}%)</span>
           <span>{formatCurrency(tax)}</span>
