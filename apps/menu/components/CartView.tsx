@@ -33,6 +33,23 @@ export function CartView({
           strokeWidth={1.25}
         />
         <p className="text-[var(--color-brand-muted)]">سلتك فارغة.</p>
+
+        {selectedReward && (
+          <div className="mt-4 flex w-full flex-col gap-2 rounded-2xl bg-[var(--color-brand-primary-light)] p-4 text-right">
+            <span className="flex items-center gap-2 text-sm font-semibold text-[var(--color-brand-primary)]">
+              <Gift className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+              اخترت &quot;{selectedReward.name}&quot; — أضف صنفاً على الأقل من القائمة لتقدر تستبدلها.
+            </span>
+            <button
+              type="button"
+              onClick={() => selectReward(null)}
+              className="self-start text-xs font-medium text-[var(--color-brand-primary)] underline"
+            >
+              إزالة المكافأة
+            </button>
+          </div>
+        )}
+
         <Link
           href="/"
           className="mt-4 rounded-2xl bg-[var(--color-brand-primary)] px-6 py-2.5 font-semibold text-white"
