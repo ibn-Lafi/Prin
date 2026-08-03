@@ -3,24 +3,29 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Clock, MapPin, Phone, Store, Tag, X } from "lucide-react";
+import { Check, Clock, Gift, MapPin, Phone, Store, Tag, X } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useCart } from "@/hooks/useCart";
 import { lookupDiscountCodeAction, placeOrderAction, type CheckoutItem } from "@/app/checkout/actions";
-import type { DiscountCodePreview } from "@/lib/types";
+import type { DiscountCodePreview, Reward } from "@/lib/types";
 
 export function CheckoutView({
   customerPhone,
   taxRatePercent,
   isOpen,
+  pointsBalance,
+  rewards,
 }: {
   customerPhone: string;
   taxRatePercent: number;
   isOpen: boolean;
+  pointsBalance: number;
+  rewards: Reward[];
 }) {
   const router = useRouter();
   const { items, itemTotal, subtotal, clear } = useCart();
 
+  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCodePreview | null>(null);
   const [isApplyingCode, setIsApplyingCode] = useState(false);
@@ -29,17 +34,24 @@ export function CheckoutView({
   const [isPlacing, startPlacing] = useTransition();
   const [notes, setNotes] = useState("");
 
-  // نفس ترتيب create_online_order بالضبط: الكود يُطبَّق على المجموع الفرعي —
-  // استبدال النقاط غير مدعوم بالمنيو الإلكتروني حالياً (متاح بالكاشير فقط).
+  // نفس ترتيب create_online_order بالضبط: المكافأة أولاً على المجموع الأصلي،
+  // ثم الكود على الناتج. نقيّد الاختيار الفعّال بالمكافآت المقدور عليها فعلاً —
+  // لو تغيّر الرصيد (مستبعد هنا لكن للتناسق) أو كانت المكافأة المختارة سابقاً
+  // غير متاحة، يلغى الخصم تلقائياً بدل ما يبقى مطبّقاً بصمت.
+  const canAfford = (reward: Reward) => pointsBalance >= reward.points_cost;
+  const selectedReward = rewards.find((r) => r.id === selectedRewardId && canAfford(r)) ?? null;
+  const rewardDiscount = selectedReward ? Math.min(selectedReward.discount_amount, subtotal) : 0;
+  const afterReward = roundMoney(subtotal - rewardDiscount);
+
   const codeDiscount = appliedCode
     ? Math.min(
         appliedCode.discountType === "percentage"
-          ? roundMoney((subtotal * appliedCode.value) / 100)
+          ? roundMoney((afterReward * appliedCode.value) / 100)
           : appliedCode.value,
-        subtotal,
+        afterReward,
       )
     : 0;
-  const discountedSubtotal = roundMoney(subtotal - codeDiscount);
+  const discountedSubtotal = roundMoney(afterReward - codeDiscount);
   const tax = calculateTax(discountedSubtotal, taxRatePercent);
   const total = roundMoney(discountedSubtotal + tax);
 
@@ -71,7 +83,12 @@ export function CheckoutView({
     }));
 
     startPlacing(async () => {
-      const result = await placeOrderAction(checkoutItems, appliedCode?.code ?? null, notes.trim() || null);
+      const result = await placeOrderAction(
+        checkoutItems,
+        appliedCode?.code ?? null,
+        notes.trim() || null,
+        selectedReward?.id ?? null,
+      );
       if (result.error) {
         setOrderError(result.error);
         return;
@@ -129,6 +146,51 @@ export function CheckoutView({
         ))}
       </section>
 
+      {rewards.length > 0 && (
+        <section className="mb-4 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
+          <p className="mb-2 flex items-center gap-1.5 font-semibold">
+            <Gift className="h-4 w-4 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
+            استبدال النقاط — رصيدك: {pointsBalance} نقطة
+          </p>
+          <div className="flex flex-col gap-1.5">
+            <button
+              type="button"
+              onClick={() => setSelectedRewardId(null)}
+              className={`rounded-xl border px-3 py-2 text-right text-sm ${
+                selectedRewardId === null
+                  ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
+                  : "border-[var(--color-brand-border)]"
+              }`}
+            >
+              بدون استبدال
+            </button>
+            {rewards.map((reward) => {
+              const affordable = canAfford(reward);
+              return (
+                <button
+                  key={reward.id}
+                  type="button"
+                  disabled={!affordable}
+                  onClick={() => setSelectedRewardId(reward.id)}
+                  className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
+                    !affordable
+                      ? "cursor-not-allowed border-[var(--color-brand-border)] opacity-50"
+                      : selectedRewardId === reward.id
+                        ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
+                        : "border-[var(--color-brand-border)]"
+                  }`}
+                >
+                  <span>{reward.name} — {reward.points_cost} نقطة</span>
+                  <span className="text-[var(--color-brand-muted)]">
+                    {affordable ? `-${formatCurrency(reward.discount_amount)}` : "رصيد غير كافٍ"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <section className="mb-4 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <p className="mb-2 font-semibold">كود خصم</p>
         {appliedCode ? (
@@ -185,6 +247,12 @@ export function CheckoutView({
           <span>المجموع الفرعي</span>
           <span>{formatCurrency(subtotal)}</span>
         </div>
+        {rewardDiscount > 0 && (
+          <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
+            <span>خصم — {selectedReward?.name}</span>
+            <span>-{formatCurrency(rewardDiscount)}</span>
+          </div>
+        )}
         {codeDiscount > 0 && (
           <div className="flex justify-between text-sm text-[var(--color-brand-primary)]">
             <span>خصم — كود {appliedCode?.code}</span>

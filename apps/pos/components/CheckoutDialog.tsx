@@ -4,15 +4,11 @@ import { useEffect, useState, useTransition } from "react";
 import { X, Search, Gift, Tag } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useOrderTicket } from "@/hooks/useOrderTicket";
-import {
-  createOrderAction,
-  lookupCustomerAction,
-  listActiveRewardsAction,
-  lookupDiscountCodeAction,
-} from "@/app/(protected)/orders/actions";
+import { useCheckoutCustomer, ensureRewardsLoaded, resetCheckoutCustomer } from "@/hooks/useCheckoutCustomer";
+import { createOrderAction, lookupDiscountCodeAction } from "@/app/(protected)/orders/actions";
 import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
 import { getStationId } from "@/lib/device";
-import type { CustomerLookup, Reward, DiscountCodePreview } from "@/lib/types";
+import type { DiscountCodePreview } from "@/lib/types";
 
 export function CheckoutDialog({
   taxRatePercent,
@@ -22,13 +18,21 @@ export function CheckoutDialog({
   onClose: () => void;
 }) {
   const { items, subtotal, clear } = useOrderTicket();
+  const {
+    phone: customerPhone,
+    name: customerName,
+    customer,
+    isLookingUp,
+    rewards,
+    selectedRewardId,
+    selectedReward,
+    canAfford,
+    setPhone,
+    setName,
+    lookup,
+    selectReward,
+  } = useCheckoutCustomer();
 
-  const [customerPhone, setCustomerPhone] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customer, setCustomer] = useState<CustomerLookup | null>(null);
-  const [isLookingUp, setIsLookingUp] = useState(false);
-  const [rewards, setRewards] = useState<Reward[]>([]);
-  const [selectedRewardId, setSelectedRewardId] = useState<string | null>(null);
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCodePreview | null>(null);
   const [isApplyingCode, setIsApplyingCode] = useState(false);
@@ -42,19 +46,13 @@ export function CheckoutDialog({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    listActiveRewardsAction().then(setRewards);
+    void ensureRewardsLoaded();
   }, []);
 
   // نعرض كل المكافآت النشطة لأي عميل تم البحث عنه (نفس سلوك المنيو الإلكتروني
   // بالضبط) — غير المقدور عليها بالرصيد الحالي تظهر لكن معطّلة بدل ما تختفي
   // كلياً، عشان الكاشير يشوف الكتالوج كامل مو بس جزء منه.
   const visibleRewards = customer ? rewards : [];
-  const canAfford = (reward: Reward) => (customer?.pointsBalance ?? 0) >= reward.pointsCost;
-
-  // نقيّد الاختيار الفعّال بالمكافآت المقدور عليها فعلاً — لو تغيّر رصيد العميل
-  // (مثلاً بعد بحث ثانٍ) وأصبحت المكافأة المختارة سابقاً غير متاحة، يلغى الخصم
-  // تلقائياً بدل ما يبقى مطبّقاً بصمت وهو مو ظاهر كمُختار بالقائمة.
-  const selectedReward = visibleRewards.find((r) => r.id === selectedRewardId && canAfford(r)) ?? null;
   const rewardDiscount = selectedReward ? Math.min(selectedReward.discountAmount, subtotal) : 0;
   const afterReward = roundMoney(subtotal - rewardDiscount);
 
@@ -77,24 +75,6 @@ export function CheckoutDialog({
   const card = Number(cardAmount) || 0;
   const paid = roundMoney(cash + card);
   const remaining = roundMoney(total - paid);
-
-  function handlePhoneChange(value: string) {
-    setCustomerPhone(value);
-    setCustomer(null);
-    setSelectedRewardId(null);
-  }
-
-  async function handleLookup() {
-    const phone = customerPhone.trim();
-    if (!phone) return;
-    setIsLookingUp(true);
-    const result = await lookupCustomerAction(phone);
-    setIsLookingUp(false);
-    setCustomer(result);
-    if (result?.fullName && !customerName.trim()) {
-      setCustomerName(result.fullName);
-    }
-  }
 
   async function handleApplyCode() {
     setCodeError(null);
@@ -161,6 +141,7 @@ export function CheckoutDialog({
       }
 
       clear();
+      resetCheckoutCustomer();
       setConfirmation({ orderId: result.orderId!, dailyOrderNumber: result.dailyOrderNumber! });
     });
   }
@@ -215,12 +196,12 @@ export function CheckoutDialog({
                   inputMode="numeric"
                   placeholder="رقم الجوال"
                   value={customerPhone}
-                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  onChange={(e) => setPhone(e.target.value)}
                   className="flex-1 rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
                 />
                 <button
                   type="button"
-                  onClick={handleLookup}
+                  onClick={lookup}
                   disabled={!customerPhone.trim() || isLookingUp}
                   className="flex items-center justify-center rounded-xl bg-[var(--color-brand-background)] px-3 ring-1 ring-[var(--color-brand-border)] disabled:opacity-50"
                   aria-label="بحث عن العميل"
@@ -232,7 +213,7 @@ export function CheckoutDialog({
                 type="text"
                 placeholder="الاسم (اختياري)"
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
                 className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 outline-none focus:border-[var(--color-brand-primary)]"
               />
             </div>
@@ -253,7 +234,7 @@ export function CheckoutDialog({
                   <div className="flex flex-col gap-1.5">
                     <button
                       type="button"
-                      onClick={() => setSelectedRewardId(null)}
+                      onClick={() => selectReward(null)}
                       className={`rounded-xl border px-3 py-2 text-right text-sm ${
                         selectedRewardId === null
                           ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
@@ -269,7 +250,7 @@ export function CheckoutDialog({
                           key={reward.id}
                           type="button"
                           disabled={!affordable}
-                          onClick={() => setSelectedRewardId(reward.id)}
+                          onClick={() => selectReward(reward.id)}
                           className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
                             !affordable
                               ? "cursor-not-allowed border-[var(--color-brand-border)] opacity-50"

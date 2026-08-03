@@ -122,6 +122,7 @@ export async function placeOrderAction(
   items: CheckoutItem[],
   discountCode: string | null,
   notes: string | null,
+  rewardId: string | null,
 ): Promise<PlaceOrderResult> {
   const supabase = await getSupabaseServerClient();
   const {
@@ -137,6 +138,7 @@ export async function placeOrderAction(
     p_items: items as unknown as Json,
     p_discount_code: discountCode,
     p_notes: notes,
+    p_reward_id: rewardId,
   });
 
   if (error) return { error: error.message || "تعذّر إنشاء الطلب" };

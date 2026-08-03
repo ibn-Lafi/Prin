@@ -173,7 +173,7 @@ export function MenuBrowser({
         {activeTab === REWARDS_TAB_ID ? (
           <div className="flex flex-col gap-4">
             <p className="text-xs text-[var(--color-brand-muted)]">
-              الاستبدال الفعلي يُفعَّل بمرحلة نظام الولاء الكاملة — القائمة هنا للاطّلاع حالياً.
+              أضف أصنافك للسلة، ثم اختر المكافأة التي تريد استبدالها بصفحة تأكيد الطلب.
             </p>
             {visibleRewards.length === 0 ? (
               <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">

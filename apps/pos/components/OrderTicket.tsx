@@ -1,8 +1,9 @@
 "use client";
 
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Gift, Minus, Plus, ShoppingBag, Trash2, User, X } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useOrderTicket } from "@/hooks/useOrderTicket";
+import { useCheckoutCustomer } from "@/hooks/useCheckoutCustomer";
 
 export function OrderTicket({
   taxRatePercent,
@@ -12,6 +13,7 @@ export function OrderTicket({
   onCheckout: () => void;
 }) {
   const { items, itemTotal, updateQuantity, removeItem, subtotal } = useOrderTicket();
+  const { name, customer, selectedReward, setPhone, selectReward } = useCheckoutCustomer();
   const tax = calculateTax(subtotal, taxRatePercent);
   const total = roundMoney(subtotal + tax);
 
@@ -23,6 +25,34 @@ export function OrderTicket({
           الطلب الحالي
         </h2>
       </div>
+
+      {customer && (
+        <div className="flex items-center justify-between gap-2 border-b border-[var(--color-brand-border)] bg-[var(--color-brand-background)] px-4 py-2.5 text-sm">
+          <div className="flex flex-col gap-0.5">
+            <span className="flex items-center gap-1.5 font-medium">
+              <User className="h-3.5 w-3.5 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
+              {name || "بدون اسم"} — {customer.pointsBalance} نقطة
+            </span>
+            {selectedReward && (
+              <span className="flex items-center gap-1.5 text-xs text-[var(--color-brand-primary)]">
+                <Gift className="h-3.5 w-3.5" strokeWidth={1.75} />
+                {selectedReward.name} — -{formatCurrency(selectedReward.discountAmount)}
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              selectReward(null);
+              setPhone("");
+            }}
+            className="shrink-0 p-1 text-[var(--color-brand-muted)]"
+            aria-label="إزالة العميل"
+          >
+            <X className="h-4 w-4" strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-4">
         {items.length === 0 ? (

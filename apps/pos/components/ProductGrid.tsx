@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { UtensilsCrossed } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Gift, UtensilsCrossed } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
-import type { Category, Combo, Product } from "@/lib/types";
+import type { Category, Combo, Product, Reward } from "@/lib/types";
 import { addItem } from "@/hooks/useOrderTicket";
+import { useCheckoutCustomer, ensureRewardsLoaded } from "@/hooks/useCheckoutCustomer";
 import { OrderModal } from "@/components/OrderModal";
+import { RewardRedeemModal } from "@/components/RewardRedeemModal";
 
 const COMBOS_TAB_ID = "__combos__";
+const REWARDS_TAB_ID = "__rewards__";
 
 function isVisible(row: { is_available: boolean; deleted_at: string | null }): boolean {
   return row.is_available && row.deleted_at === null;
@@ -26,9 +29,24 @@ export function ProductGrid({
   const [selectedItem, setSelectedItem] = useState<
     { item: Product; kind: "product" } | { item: Combo; kind: "combo" } | null
   >(null);
+  const [redeemingReward, setRedeemingReward] = useState<Reward | null>(null);
+
+  const { rewards, selectedRewardId, customer, canAfford, selectReward } = useCheckoutCustomer();
+
+  useEffect(() => {
+    void ensureRewardsLoaded();
+  }, []);
 
   const visibleCombos = combos.filter(isVisible);
   const visibleProducts = products.filter((p) => isVisible(p) && p.category_id === activeTab);
+
+  function handleRewardTap(reward: Reward) {
+    if (selectedRewardId === reward.id) {
+      selectReward(null);
+      return;
+    }
+    setRedeemingReward(reward);
+  }
 
   function handleProductTap(product: Product) {
     if (product.modifier_groups.length === 0) {
@@ -90,12 +108,66 @@ export function ProductGrid({
             وجبة
           </button>
         )}
+        {rewards.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setActiveTab(REWARDS_TAB_ID)}
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === REWARDS_TAB_ID
+                ? "bg-[var(--color-brand-primary)] text-white"
+                : "bg-[var(--color-brand-card)] text-[var(--color-brand-muted)] ring-1 ring-[var(--color-brand-border)]"
+            }`}
+          >
+            <Gift className="h-4 w-4" strokeWidth={1.75} />
+            استبدل
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <div className="grid grid-cols-3 gap-3 xl:grid-cols-4">
-          {activeTab === COMBOS_TAB_ID
-            ? visibleCombos.map((combo) => (
+        {activeTab === REWARDS_TAB_ID ? (
+          rewards.length === 0 ? (
+            <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
+              لا توجد مكافآت متاحة حالياً
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 gap-3 xl:grid-cols-4">
+              {rewards.map((reward) => {
+                const selected = selectedRewardId === reward.id;
+                const affordable = canAfford(reward);
+                return (
+                  <button
+                    key={reward.id}
+                    type="button"
+                    onClick={() => handleRewardTap(reward)}
+                    className={`flex flex-col overflow-hidden rounded-2xl bg-[var(--color-brand-card)] text-right ring-1 transition-transform active:scale-[0.98] ${
+                      selected ? "ring-2 ring-[var(--color-brand-primary)]" : "ring-[var(--color-brand-border)]"
+                    }`}
+                  >
+                    <div className="flex aspect-[4/3] items-center justify-center bg-[var(--color-brand-primary-light)]">
+                      <Gift className="h-8 w-8 text-[var(--color-brand-primary)]/40" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex flex-col gap-1 p-3">
+                      <span className="line-clamp-1 font-semibold">{reward.name}</span>
+                      <span className="font-bold text-[var(--color-brand-primary)]">
+                        {reward.pointsCost} نقطة
+                      </span>
+                      {selected && <span className="text-xs font-medium text-green-700">مطبّقة على الطلب</span>}
+                      {!selected && !affordable && (
+                        <span className="text-xs text-[var(--color-brand-muted)]">
+                          {customer ? "رصيد غير كافٍ" : "يتطلب بحث عن العميل"}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          <div className="grid grid-cols-3 gap-3 xl:grid-cols-4">
+            {activeTab === COMBOS_TAB_ID
+              ? visibleCombos.map((combo) => (
                 <button
                   key={combo.id}
                   type="button"
@@ -155,11 +227,15 @@ export function ProductGrid({
                   </div>
                 </button>
               ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {selectedItem && (
         <OrderModal item={selectedItem.item} kind={selectedItem.kind} onClose={() => setSelectedItem(null)} />
+      )}
+      {redeemingReward && (
+        <RewardRedeemModal reward={redeemingReward} onClose={() => setRedeemingReward(null)} />
       )}
     </div>
   );

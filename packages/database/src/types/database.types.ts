@@ -795,12 +795,14 @@ export type Database = {
           p_items: Json;
           p_discount_code?: string | null;
           p_notes?: string | null;
+          p_reward_id?: string | null;
         };
         Returns: {
           order_id: string;
           daily_order_number: number;
           order_date: string;
           total: number;
+          discount_amount: number;
           code_discount_amount: number;
         }[];
       };
