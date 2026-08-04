@@ -67,6 +67,7 @@ function OrderCard({ order, showReorder }: { order: OrderWithItems; showReorder:
             </div>
             <span className="flex-1 text-sm">{item.name}</span>
             <span className="text-xs text-[var(--color-brand-muted)]">×{item.quantity}</span>
+            <span className="text-xs font-medium">{formatCurrency(item.unitPrice * item.quantity)}</span>
           </div>
         ))}
       </div>

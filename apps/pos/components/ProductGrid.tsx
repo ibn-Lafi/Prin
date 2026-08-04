@@ -149,6 +149,9 @@ export function ProductGrid({
                     </div>
                     <div className="flex flex-col gap-1 p-3">
                       <span className="line-clamp-1 font-semibold">{reward.name}</span>
+                      <span className="text-xs text-[var(--color-brand-muted)]">
+                        قيمتها {formatCurrency(reward.discountAmount)}
+                      </span>
                       <span className="font-bold text-[var(--color-brand-primary)]">
                         {reward.pointsCost} نقطة
                       </span>

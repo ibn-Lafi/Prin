@@ -1,4 +1,5 @@
 import { Gift } from "lucide-react";
+import { formatCurrency } from "@brin/utils";
 import type { Reward } from "@/lib/types";
 
 export function RewardCard({
@@ -34,6 +35,9 @@ export function RewardCard({
       <div className="flex w-full flex-col gap-1.5 p-3">
         <span className="line-clamp-1 text-sm font-semibold text-[var(--color-brand-text)]">
           {reward.name}
+        </span>
+        <span className="text-xs text-[var(--color-brand-muted)]">
+          قيمتها {formatCurrency(reward.discount_amount)}
         </span>
         <div className="flex items-center justify-between">
           <span className="text-sm font-bold text-[var(--color-brand-primary)]">
