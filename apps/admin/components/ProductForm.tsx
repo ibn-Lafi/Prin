@@ -21,6 +21,7 @@ export function ProductForm({
   const [price, setPrice] = useState(product?.price?.toString() ?? "");
   const [imageUrl, setImageUrl] = useState(product?.image_url ?? "");
   const [pointsPerUnit, setPointsPerUnit] = useState(product?.points_per_unit?.toString() ?? "0");
+  const [isCartSuggestion, setIsCartSuggestion] = useState(product?.is_cart_suggestion ?? false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -37,6 +38,7 @@ export function ProductForm({
       price: Number(price),
       imageUrl,
       pointsPerUnit: Number(pointsPerUnit),
+      isCartSuggestion,
     };
 
     startTransition(async () => {
@@ -135,6 +137,21 @@ export function ProductForm({
           onChange={(e) => setPointsPerUnit(e.target.value)}
           className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
         />
+      </label>
+
+      <label className="flex items-center gap-2.5 text-sm text-[var(--color-brand-text)]">
+        <input
+          type="checkbox"
+          checked={isCartSuggestion}
+          onChange={(e) => setIsCartSuggestion(e.target.checked)}
+          className="h-4 w-4 rounded border-[var(--color-brand-border)] accent-[var(--color-brand-primary)]"
+        />
+        <span>
+          اقتراح إضافة سريعة بالسلة
+          <span className="block text-xs text-[var(--color-brand-muted)]">
+            يظهر هذا الصنف للعميل بصفحة السلة كاقتراح (مثل: أضف مشروب/صوص)
+          </span>
+        </span>
       </label>
 
       {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}

@@ -1,10 +1,12 @@
+import { unwrapQuery } from "@brin/database";
 import { getSupabaseServerClient } from "@/lib/supabaseClient";
 import { resolveRewards } from "@/lib/resolveRewards";
+import type { Product } from "@/lib/types";
 import { CartView } from "@/components/CartView";
 
 export default async function CartPage() {
   const supabase = await getSupabaseServerClient();
-  const [{ data: settings }, { data: userData }, rewardsResult] = await Promise.all([
+  const [{ data: settings }, { data: userData }, rewardsResult, suggestionsResult] = await Promise.all([
     supabase.from("restaurant_settings").select("tax_rate_percent").eq("id", 1).single(),
     supabase.auth.getUser(),
     supabase
@@ -13,7 +15,18 @@ export default async function CartPage() {
         "id, name, description, points_cost, discount_amount, image_url, product_id, combo_id, products ( name, price, image_url ), combos ( name, price, image_url )",
       )
       .order("points_cost"),
+    supabase
+      .from("products")
+      .select(
+        "id, category_id, name, description, calories, price, image_url, is_available, deleted_at, modifier_groups(id, name, is_required, min_select, max_select, display_order, modifiers(id, name, price_delta, is_available, display_order))",
+      )
+      .eq("is_cart_suggestion", true)
+      .eq("is_available", true)
+      .is("deleted_at", null)
+      .order("name"),
   ]);
+
+  const suggestions = unwrapQuery<Product[]>(suggestionsResult as never);
 
   // زائر بدون تسجيل دخول يقدر يتصفّح السلة عادي — رصيد النقاط يبقى null وقتها
   // (المكافآت تظهر بالسلة لكن كلها "غير كافٍ" لحد ما يسجّل دخول).
@@ -35,6 +48,7 @@ export default async function CartPage() {
       taxRatePercent={settings?.tax_rate_percent ?? 15}
       pointsBalance={pointsBalance}
       rewards={resolveRewards(rewardsResult.data)}
+      suggestions={suggestions}
     />
   );
 }

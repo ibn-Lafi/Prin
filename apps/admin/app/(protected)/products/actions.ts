@@ -17,6 +17,7 @@ export type ProductInput = {
   price: number;
   imageUrl: string;
   pointsPerUnit: number;
+  isCartSuggestion: boolean;
 };
 
 function validateProduct(input: ProductInput): string | null {
@@ -50,6 +51,7 @@ export async function createProductAction(input: ProductInput): Promise<CreateRe
       price: input.price,
       image_url: input.imageUrl.trim() || null,
       points_per_unit: input.pointsPerUnit,
+      is_cart_suggestion: input.isCartSuggestion,
     })
     .select("id")
     .single();
@@ -84,6 +86,7 @@ export async function updateProductAction(productId: string, input: ProductInput
       price: input.price,
       image_url: input.imageUrl.trim() || null,
       points_per_unit: input.pointsPerUnit,
+      is_cart_suggestion: input.isCartSuggestion,
     })
     .eq("id", productId);
 

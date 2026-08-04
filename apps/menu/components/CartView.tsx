@@ -4,16 +4,19 @@ import Link from "next/link";
 import { Gift, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useCart } from "@/hooks/useCart";
-import type { Reward } from "@/lib/types";
+import type { Product, Reward } from "@/lib/types";
+import { CartSuggestions } from "@/components/CartSuggestions";
 
 export function CartView({
   taxRatePercent,
   pointsBalance,
   rewards,
+  suggestions,
 }: {
   taxRatePercent: number;
   pointsBalance: number | null;
   rewards: Reward[];
+  suggestions: Product[];
 }) {
   const { items, itemTotal, updateQuantity, removeItem, subtotal, selectedRewardId, selectReward } = useCart();
 
@@ -115,6 +118,8 @@ export function CartView({
           </div>
         ))}
       </div>
+
+      <CartSuggestions suggestions={suggestions} />
 
       <div className="mt-6 flex flex-col gap-1.5 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <div className="flex justify-between text-sm text-[var(--color-brand-muted)]">
