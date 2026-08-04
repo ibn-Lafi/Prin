@@ -15,6 +15,8 @@ export type BranchInput = {
   closingTime: string;
   isAcceptingOrders: boolean;
   displayOrder: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 function validateBranch(input: BranchInput): string | null {
@@ -40,6 +42,8 @@ export async function createBranchAction(input: BranchInput): Promise<CreateResu
       closing_time: input.closingTime,
       is_accepting_orders: input.isAcceptingOrders,
       display_order: input.displayOrder,
+      latitude: input.latitude,
+      longitude: input.longitude,
     })
     .select("id")
     .single();
@@ -75,6 +79,8 @@ export async function updateBranchAction(branchId: string, input: BranchInput): 
       closing_time: input.closingTime,
       is_accepting_orders: input.isAcceptingOrders,
       display_order: input.displayOrder,
+      latitude: input.latitude,
+      longitude: input.longitude,
     })
     .eq("id", branchId);
 

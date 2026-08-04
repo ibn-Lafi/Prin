@@ -17,7 +17,9 @@ export default async function CheckoutPage() {
     supabase.from("restaurant_settings").select("tax_rate_percent").eq("id", 1).single(),
     supabase
       .from("branches")
-      .select("id, name, address, phone, opening_time, closing_time, is_accepting_orders")
+      .select(
+        "id, name, address, phone, opening_time, closing_time, is_accepting_orders, latitude, longitude",
+      )
       .eq("is_active", true)
       .order("display_order"),
     supabase.from("customers").select("points_balance").eq("auth_user_id", user.id).maybeSingle(),

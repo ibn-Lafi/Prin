@@ -18,6 +18,8 @@ export type Database = {
           is_accepting_orders: boolean;
           is_active: boolean;
           display_order: number;
+          latitude: number | null;
+          longitude: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -31,6 +33,8 @@ export type Database = {
           is_accepting_orders?: boolean;
           is_active?: boolean;
           display_order?: number;
+          latitude?: number | null;
+          longitude?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -44,6 +48,8 @@ export type Database = {
           is_accepting_orders?: boolean;
           is_active?: boolean;
           display_order?: number;
+          latitude?: number | null;
+          longitude?: number | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -9,6 +9,7 @@ import { useCart } from "@/hooks/useCart";
 import { useBranch } from "@/hooks/useBranch";
 import { lookupDiscountCodeAction, placeOrderAction, type CheckoutItem } from "@/app/checkout/actions";
 import type { Branch, DiscountCodePreview, Reward } from "@/lib/types";
+import { BranchSelectorCard } from "@/components/BranchSelectorCard";
 
 export function CheckoutView({
   customerPhone,
@@ -34,7 +35,6 @@ export function CheckoutView({
   const [orderError, setOrderError] = useState<string | null>(null);
   const [isPlacing, startPlacing] = useTransition();
   const [notes, setNotes] = useState("");
-  const [isChoosingBranch, setIsChoosingBranch] = useState(false);
 
   const selectedBranch = branches.find((b) => b.id === selectedBranchId) ?? null;
 
@@ -132,63 +132,19 @@ export function CheckoutView({
     <main className="mx-auto max-w-md px-4 py-6">
       <h1 className="mb-4 text-xl font-bold">تأكيد الطلب</h1>
 
-      <section className="mb-4 flex flex-col gap-2 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
-        <p className="mb-1 font-semibold">معلومات الاستلام</p>
+      <section className="mb-4 flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
+        <p className="font-semibold">معلومات الاستلام</p>
         <p className="flex items-center gap-2 text-sm text-[var(--color-brand-muted)]">
           <Phone className="h-4 w-4" strokeWidth={1.75} />
           {customerPhone}
         </p>
-
-        {selectedBranch && !isChoosingBranch ? (
-          <div className="flex items-center justify-between gap-2">
-            <p className="flex items-center gap-2 text-sm text-[var(--color-brand-muted)]">
-              <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-              استلام من {selectedBranch.name}
-              {selectedBranch.address ? ` — ${selectedBranch.address}` : ""}
-            </p>
-            {branches.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setIsChoosingBranch(true)}
-                className="shrink-0 text-xs font-medium text-[var(--color-brand-primary)] underline"
-              >
-                تغيير
-              </button>
-            )}
-          </div>
+        {branches.length === 0 ? (
+          <p className="flex items-center gap-2 text-sm text-[var(--color-brand-muted)]">
+            <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+            لا توجد فروع متاحة حالياً
+          </p>
         ) : (
-          <div className="flex flex-col gap-1.5">
-            <p className="flex items-center gap-2 text-sm font-medium">
-              <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-              اختر فرع الاستلام
-            </p>
-            {branches.length === 0 ? (
-              <p className="text-sm text-[var(--color-brand-muted)]">لا توجد فروع متاحة حالياً</p>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                {branches.map((branch) => (
-                  <button
-                    key={branch.id}
-                    type="button"
-                    onClick={() => {
-                      selectBranch(branch.id);
-                      setIsChoosingBranch(false);
-                    }}
-                    className={`rounded-xl border px-3 py-2 text-right text-sm ${
-                      selectedBranchId === branch.id
-                        ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
-                        : "border-[var(--color-brand-border)]"
-                    }`}
-                  >
-                    <span className="font-medium">{branch.name}</span>
-                    {branch.address && (
-                      <span className="block text-xs text-[var(--color-brand-muted)]">{branch.address}</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <BranchSelectorCard branches={branches} />
         )}
       </section>
 

@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
-import type { Category, Combo, Product } from "@/lib/types";
+import type { Branch, Category, Combo, Product } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
 import { ProductModal } from "@/components/ProductModal";
 import { SectionSwitcher } from "@/components/SectionSwitcher";
 import { FlatTab, TabRow } from "@/components/MenuTabs";
+import { BranchSelectorCard } from "@/components/BranchSelectorCard";
 
 const COMBOS_TAB_ID = "__combos__";
 
@@ -24,10 +25,12 @@ export function MenuBrowser({
   categories,
   products: initialProducts,
   combos: initialCombos,
+  branches,
 }: {
   categories: Category[];
   products: Product[];
   combos: Combo[];
+  branches: Branch[];
 }) {
   const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
   const [selectedItem, setSelectedItem] = useState<
@@ -114,6 +117,10 @@ export function MenuBrowser({
             className="w-full bg-transparent text-sm text-[var(--color-brand-text)] outline-none placeholder:text-[var(--color-brand-muted)]"
           />
         </label>
+      </div>
+
+      <div className="mt-3 px-4">
+        <BranchSelectorCard branches={branches} />
       </div>
 
       <div className="sticky top-0 z-20 mt-5 bg-[var(--color-brand-background)]/95 pb-1 backdrop-blur">

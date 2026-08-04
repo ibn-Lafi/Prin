@@ -6,6 +6,8 @@ export type Branch = {
   opening_time: string;
   closing_time: string;
   is_accepting_orders: boolean;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export type Category = {

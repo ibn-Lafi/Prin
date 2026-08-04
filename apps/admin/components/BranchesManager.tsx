@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, X, Pencil } from "lucide-react";
+import { Plus, X, Pencil, LocateFixed } from "lucide-react";
 import {
   createBranchAction,
   updateBranchAction,
@@ -31,6 +31,22 @@ function BranchForm({
   const [closingTime, setClosingTime] = useState(initial.closingTime);
   const [isAcceptingOrders, setIsAcceptingOrders] = useState(initial.isAcceptingOrders);
   const [displayOrder, setDisplayOrder] = useState(initial.displayOrder.toString());
+  const [latitude, setLatitude] = useState(initial.latitude?.toString() ?? "");
+  const [longitude, setLongitude] = useState(initial.longitude?.toString() ?? "");
+  const [locating, setLocating] = useState(false);
+
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude.toString());
+        setLongitude(position.coords.longitude.toString());
+        setLocating(false);
+      },
+      () => setLocating(false),
+    );
+  }
 
   return (
     <div className="flex max-w-sm flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 ring-1 ring-[var(--color-brand-border)]">
@@ -92,6 +108,40 @@ function BranchForm({
           className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
         />
       </label>
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-[var(--color-brand-muted)]">
+            موقع الفرع (اختياري — لحساب المسافة بالمنيو الإلكتروني)
+          </span>
+          <button
+            type="button"
+            onClick={handleUseCurrentLocation}
+            disabled={locating}
+            className="flex shrink-0 items-center gap-1 text-xs font-medium text-[var(--color-brand-primary)] disabled:opacity-50"
+          >
+            <LocateFixed className="h-3.5 w-3.5" strokeWidth={1.75} />
+            {locating ? "جارِ التحديد..." : "استخدم موقعي الحالي"}
+          </button>
+        </div>
+        <div className="flex gap-3">
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="خط العرض"
+            value={latitude}
+            onChange={(e) => setLatitude(e.target.value)}
+            className="flex-1 rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+          />
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="خط الطول"
+            value={longitude}
+            onChange={(e) => setLongitude(e.target.value)}
+            className="flex-1 rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
+          />
+        </div>
+      </div>
       <label className="flex items-center gap-2.5 text-sm text-[var(--color-brand-text)]">
         <input
           type="checkbox"
@@ -113,6 +163,8 @@ function BranchForm({
             closingTime,
             isAcceptingOrders,
             displayOrder: Number(displayOrder) || 0,
+            latitude: latitude.trim() === "" ? null : Number(latitude),
+            longitude: longitude.trim() === "" ? null : Number(longitude),
           })
         }
         className="rounded-xl bg-[var(--color-brand-primary)] px-4 py-2.5 font-semibold text-white disabled:opacity-50"
@@ -191,6 +243,8 @@ export function BranchesManager({ branches }: { branches: Branch[] }) {
                 closingTime: branch.closing_time.slice(0, 5),
                 isAcceptingOrders: branch.is_accepting_orders,
                 displayOrder: branch.display_order,
+                latitude: branch.latitude,
+                longitude: branch.longitude,
               }}
               isPending={isPending}
               onSubmit={(input) => handleUpdate(branch.id, input)}
@@ -268,6 +322,8 @@ export function BranchesManager({ branches }: { branches: Branch[] }) {
             closingTime: "23:59",
             isAcceptingOrders: true,
             displayOrder: branches.length,
+            latitude: null,
+            longitude: null,
           }}
           isPending={isPending}
           onSubmit={handleCreate}

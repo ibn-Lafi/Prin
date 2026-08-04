@@ -8,6 +8,8 @@ export type Branch = {
   is_accepting_orders: boolean;
   is_active: boolean;
   display_order: number;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export type Employee = {
