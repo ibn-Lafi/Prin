@@ -132,16 +132,18 @@ export async function acceptIncomingOrderAction(
 }
 
 /** قائمة الطلبات الإلكترونية النشطة (بانتظار القبول أو قيد التحضير) — تغذّي
- * شريط الطلبات العلوي بالكاشير. */
-export async function listActiveOnlineOrdersAction(): Promise<ActiveOnlineOrder[]> {
+ * شريط الطلبات العلوي بالكاشير، مقيّدة بفرع هذا الجهاز فقط (branchId) حتى
+ * لا يشوف كاشير فرع "أ" طلبات فرع "ب". */
+export async function listActiveOnlineOrdersAction(branchId: string | null): Promise<ActiveOnlineOrder[]> {
   const session = await getSession();
-  if (!session) return [];
+  if (!session || !branchId) return [];
 
   const supabase = createSupabaseServiceRoleClient();
   const { data } = await supabase
     .from("orders")
     .select("id, daily_order_number, status, total, payments ( id )")
     .eq("channel", "online")
+    .eq("branch_id", branchId)
     .in("status", ["received", "accepted"])
     .order("created_at", { ascending: true });
 

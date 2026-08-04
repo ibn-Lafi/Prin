@@ -16,10 +16,12 @@ import {
   ScrollText,
   Settings,
   Clock,
+  Store,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "الرئيسية", icon: LayoutDashboard },
+  { href: "/branches", label: "الفروع", icon: Store },
   { href: "/categories", label: "الفئات", icon: Tags },
   { href: "/products", label: "المنتجات", icon: UtensilsCrossed },
   { href: "/combos", label: "الوجبات", icon: Sandwich },

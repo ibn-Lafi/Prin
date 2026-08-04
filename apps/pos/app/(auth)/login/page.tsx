@@ -1,12 +1,67 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { ChevronRight, Delete, Lock, User } from "lucide-react";
-import { listActiveEmployeesAction, loginAction, type EmployeeOption } from "./actions";
+import { ChevronRight, Delete, Lock, Store, User } from "lucide-react";
+import { setBranchId, useBranchId } from "@/lib/device";
+import {
+  listActiveBranchesAction,
+  listActiveEmployeesAction,
+  loginAction,
+  type BranchOption,
+  type EmployeeOption,
+} from "./actions";
 
 const KEYPAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "⌫"];
 
+// فرع هذا الجهاز يُضبط مرة وحدة (شاشة اختيار قبل أول تسجيل دخول) ويبقى
+// ثابتاً بعدها — كل طلب/مهمة طباعة تُنشأ من هذا الجهاز تُنسب له تلقائياً،
+// بمعزل عن أي موظف يسجّل دخول عليه لاحقاً. نفس مبدأ معرّف الجهاز بالطباعة.
+function BranchGate() {
+  const [branches, setBranches] = useState<BranchOption[] | null>(null);
+
+  useEffect(() => {
+    listActiveBranchesAction().then(setBranches);
+  }, []);
+
+  return (
+    <main className="mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center gap-8 px-4">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-brand-primary-light)]">
+          <Store className="h-6 w-6 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
+        </div>
+        <h1 className="text-xl font-bold">فرع هذا الجهاز</h1>
+        <p className="text-sm text-[var(--color-brand-muted)]">
+          يُضبط مرة وحدة لهذا الجهاز — كل الطلبات والتقارير هنا تُنسب لهذا الفرع تلقائياً
+        </p>
+      </div>
+
+      <div className="flex w-full flex-col gap-3">
+        {(branches ?? []).map((branch) => (
+          <button
+            key={branch.id}
+            type="button"
+            onClick={() => setBranchId(branch.id)}
+            className="flex items-center gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 text-right shadow-md shadow-black/5 transition-all duration-100 active:translate-y-0.5 active:shadow-sm"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--color-brand-primary-light)] text-[var(--color-brand-primary)]">
+              <Store className="h-5 w-5" strokeWidth={1.75} />
+            </span>
+            <span className="font-semibold text-[var(--color-brand-text)]">{branch.name}</span>
+          </button>
+        ))}
+      </div>
+
+      {branches !== null && branches.length === 0 && (
+        <p className="text-sm text-[var(--color-brand-muted)]">
+          لا توجد فروع مفعّلة بعد — أضف فرعاً من لوحة التحكم أولاً
+        </p>
+      )}
+    </main>
+  );
+}
+
 export default function LoginPage() {
+  const branchId = useBranchId();
   const [employees, setEmployees] = useState<EmployeeOption[] | null>(null);
   const [selected, setSelected] = useState<EmployeeOption | null>(null);
   const [pin, setPin] = useState("");
@@ -16,6 +71,10 @@ export default function LoginPage() {
   useEffect(() => {
     listActiveEmployeesAction().then(setEmployees);
   }, []);
+
+  if (!branchId) {
+    return <BranchGate />;
+  }
 
   function handleSelect(employee: EmployeeOption) {
     setError(null);

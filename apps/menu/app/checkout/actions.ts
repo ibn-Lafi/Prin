@@ -60,6 +60,7 @@ export type CheckoutItem = {
 export type PlaceOrderResult = { error?: string; orderId?: string; dailyOrderNumber?: number };
 
 type RawOrderForKitchenPrint = {
+  branch_id: string;
   daily_order_number: number;
   order_date: string;
   channel: string;
@@ -73,18 +74,18 @@ type RawOrderForKitchenPrint = {
   }[];
 };
 
-/** يبني ويُدرج مهمة طباعة المطبخ فقط (بدون جهاز محدد — أول عامل طباعة شغّال
- * يحجزها ذرّياً، راجع print-agent/src/jobQueue.ts) فور إنشاء الطلب مباشرة —
- * المطبخ يبدأ التحضير قبل ما العميل يوصل ويدفع. إيصال العميل يُطبع لاحقاً
- * بالكاشير وقت تحصيل الدفع (station_id محدد حينها). نعيد جلب الطلب كامل من
- * قاعدة البيانات دائماً (مو من بيانات السلة المرسلة)، نفس مبدأ
- * apps/pos/lib/printing.ts. */
+/** يبني ويُدرج مهمة طباعة المطبخ فقط (بدون جهاز محدد — أول عامل طباعة بنفس
+ * فرع الطلب يحجزها ذرّياً، راجع print-agent/src/jobQueue.ts) فور إنشاء
+ * الطلب مباشرة — المطبخ يبدأ التحضير قبل ما العميل يوصل ويدفع. إيصال
+ * العميل يُطبع لاحقاً بالكاشير وقت تحصيل الدفع (station_id محدد حينها).
+ * نعيد جلب الطلب كامل من قاعدة البيانات دائماً (مو من بيانات السلة
+ * المرسلة)، نفس مبدأ apps/pos/lib/printing.ts. */
 async function queueKitchenPrintJob(orderId: string): Promise<void> {
   const supabase = createSupabaseServiceRoleClient();
   const { data: rawOrder } = await supabase
     .from("orders")
     .select(
-      `daily_order_number, order_date, channel, notes,
+      `branch_id, daily_order_number, order_date, channel, notes,
        order_items ( quantity, notes,
          products ( name ), combos ( name ),
          order_item_modifiers ( modifiers ( name ) ) )`,
@@ -110,6 +111,7 @@ async function queueKitchenPrintJob(orderId: string): Promise<void> {
 
   await supabase.from("print_jobs").insert({
     order_id: orderId,
+    branch_id: order.branch_id,
     target: "kitchen",
     payload: payload as unknown as Json,
     station_id: null,
@@ -120,6 +122,7 @@ async function queueKitchenPrintJob(orderId: string): Promise<void> {
  * بالكاشير وقت الاستلام. راجع migration 0035 لتفاصيل الآلية كاملة. */
 export async function placeOrderAction(
   items: CheckoutItem[],
+  branchId: string,
   discountCode: string | null,
   notes: string | null,
   rewardId: string | null,
@@ -131,10 +134,12 @@ export async function placeOrderAction(
 
   if (!user) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
   if (items.length === 0) return { error: "السلة فارغة" };
+  if (!branchId) return { error: "اختر فرع الاستلام" };
 
   const service = createSupabaseServiceRoleClient();
   const { data, error } = await service.rpc("create_online_order", {
     p_auth_user_id: user.id,
+    p_branch_id: branchId,
     p_items: items as unknown as Json,
     p_discount_code: discountCode,
     p_notes: notes,

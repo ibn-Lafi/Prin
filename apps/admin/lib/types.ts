@@ -1,3 +1,15 @@
+export type Branch = {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  opening_time: string;
+  closing_time: string;
+  is_accepting_orders: boolean;
+  is_active: boolean;
+  display_order: number;
+};
+
 export type Employee = {
   id: string;
   full_name: string;
@@ -32,9 +44,6 @@ export type RestaurantSettings = {
   restaurant_name: string;
   vat_number: string | null;
   tax_rate_percent: number;
-  opening_time: string;
-  closing_time: string;
-  is_accepting_orders: boolean;
 };
 
 export type Category = {

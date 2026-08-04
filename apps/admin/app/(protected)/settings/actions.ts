@@ -10,9 +10,6 @@ export type SettingsInput = {
   restaurantName: string;
   vatNumber: string;
   taxRatePercent: number;
-  openingTime: string;
-  closingTime: string;
-  isAcceptingOrders: boolean;
 };
 
 export async function updateSettingsAction(input: SettingsInput): Promise<ActionResult> {
@@ -28,15 +25,13 @@ export async function updateSettingsAction(input: SettingsInput): Promise<Action
 
   // إعدادات الطباعة انتقلت لنظام الكاشير (لكل جهاز كاشير على حدة، صفحة
   // إعدادات الطباعة) — راجع apps/pos/app/(protected)/printer-settings.
+  // ساعات العمل واستقبال الطلبات الإلكترونية انتقلت لكل فرع (راجع /branches).
   const { error } = await supabase
     .from("restaurant_settings")
     .update({
       restaurant_name: input.restaurantName.trim(),
       vat_number: input.vatNumber.trim() || null,
       tax_rate_percent: input.taxRatePercent,
-      opening_time: input.openingTime,
-      closing_time: input.closingTime,
-      is_accepting_orders: input.isAcceptingOrders,
     })
     .eq("id", 1);
 
@@ -48,33 +43,6 @@ export async function updateSettingsAction(input: SettingsInput): Promise<Action
     description: "تعديل الإعدادات العامة للمطعم",
   });
 
-  revalidatePath("/settings");
-  return {};
-}
-
-/** تبديل سريع لاستقبال طلبات المنيو الإلكتروني بضغطة واحدة (بدون فتح نموذج
- * الإعدادات كامل) — نفس الحقل is_accepting_orders، متاح من الصفحة الرئيسية. */
-export async function toggleAcceptingOrdersAction(next: boolean): Promise<ActionResult> {
-  const session = await getSession();
-  if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
-
-  const supabase = createSupabaseServiceRoleClient();
-  const { error } = await supabase
-    .from("restaurant_settings")
-    .update({ is_accepting_orders: next })
-    .eq("id", 1);
-
-  if (error) return { error: "تعذّر تحديث الحالة" };
-
-  await supabase.from("audit_log").insert({
-    employee_id: session.employeeId,
-    action_type: "settings_change",
-    description: next
-      ? "إعادة تفعيل استقبال طلبات القائمة الإلكترونية"
-      : "إغلاق استقبال طلبات القائمة الإلكترونية يدوياً",
-  });
-
-  revalidatePath("/");
   revalidatePath("/settings");
   return {};
 }

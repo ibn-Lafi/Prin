@@ -7,6 +7,20 @@ import { createSession } from "@/lib/session";
 
 export type LoginResult = { error?: string };
 export type EmployeeOption = { id: string; full_name: string };
+export type BranchOption = { id: string; name: string };
+
+/** قائمة الفروع النشطة — تُعرض بشاشة اختيار فرع هذا الجهاز (قبل أي تسجيل
+ * دخول موظف)، فما تحتاج جلسة موظف أصلاً. */
+export async function listActiveBranchesAction(): Promise<BranchOption[]> {
+  const supabase = createSupabaseServiceRoleClient();
+  const { data } = await supabase
+    .from("branches")
+    .select("id, name")
+    .eq("is_active", true)
+    .order("display_order");
+
+  return data ?? [];
+}
 
 /** قائمة موظفي الكاشير النشطين (الاسم فقط) لعرضها كخطوة اختيار قبل إدخال
  * الـPIN — الموظفون بصلاحية "مدير" مستثنون عمداً، لأن دخولهم يصير من لوحة

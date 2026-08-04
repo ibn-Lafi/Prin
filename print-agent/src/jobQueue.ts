@@ -3,6 +3,7 @@ import type { KitchenPrintPayload, CustomerPrintPayload } from "@brin/utils";
 import { config } from "./config";
 import { getPrinter } from "./printers";
 import { renderKitchenTicket, renderCustomerReceipt } from "./receipts";
+import { getStationBranchId } from "./settingsSync";
 
 const MAX_ATTEMPTS = 5;
 const SWEEP_INTERVAL_MS = 15_000;
@@ -13,6 +14,7 @@ type PrintJobRow = {
   payload: unknown;
   attempts: number;
   station_id: string | null;
+  branch_id: string;
 };
 
 const supabase = createSupabaseServiceRoleClient();
@@ -56,6 +58,10 @@ async function processJob(job: PrintJobRow): Promise<void> {
 
   try {
     if (job.station_id === null) {
+      // مهمة بدون جهاز محدد (طلب إلكتروني) — تُقيَّد بفرع هذه المحطة، حتى لو
+      // كانت المحطة شغّالة وجاهزة، عشان ما تُطبع تذكرة فرع ثاني هنا بالغلط.
+      if (job.branch_id !== getStationBranchId()) return;
+
       const claimed = await claimUnassignedJob(job.id);
       if (!claimed) return;
     }
@@ -102,11 +108,16 @@ async function processJob(job: PrintJobRow): Promise<void> {
 }
 
 async function sweepPendingJobs(): Promise<void> {
+  const branchId = getStationBranchId();
+  const orFilter = branchId
+    ? `station_id.eq.${config.stationId},and(station_id.is.null,branch_id.eq.${branchId})`
+    : `station_id.eq.${config.stationId}`;
+
   const { data, error } = await supabase
     .from("print_jobs")
-    .select("id, target, payload, attempts, station_id")
+    .select("id, target, payload, attempts, station_id, branch_id")
     .eq("status", "pending")
-    .or(`station_id.eq.${config.stationId},station_id.is.null`)
+    .or(orFilter)
     .order("created_at", { ascending: true });
 
   if (error || !data) return;
@@ -132,6 +143,7 @@ export function startJobQueue(): void {
         const job = payload.new as PrintJobRow;
         if (!job.target || !job.payload) return;
         if (job.station_id !== null && job.station_id !== config.stationId) return;
+        if (job.station_id === null && job.branch_id !== getStationBranchId()) return;
         void processJob(job);
       },
     )

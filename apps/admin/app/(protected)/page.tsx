@@ -1,7 +1,7 @@
 import { ShoppingBag, Wallet, Utensils, Monitor } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
-import { AcceptingOrdersToggle } from "@/components/AcceptingOrdersToggle";
+import { BranchesAcceptingOrdersList } from "@/components/BranchesAcceptingOrdersList";
 
 function todayInRiyadh(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
@@ -11,13 +11,17 @@ export default async function DashboardPage() {
   const supabase = createSupabaseServiceRoleClient();
   const today = todayInRiyadh();
 
-  const [{ data: orders }, { data: settings }] = await Promise.all([
+  const [{ data: orders }, { data: branches }] = await Promise.all([
     supabase
       .from("orders")
       .select("total, channel")
       .eq("order_date", today)
       .in("status", ["received", "accepted", "completed"]),
-    supabase.from("restaurant_settings").select("is_accepting_orders").eq("id", 1).maybeSingle(),
+    supabase
+      .from("branches")
+      .select("id, name, is_accepting_orders")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true }),
   ]);
 
   const orderCount = orders?.length ?? 0;
@@ -36,7 +40,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">الرئيسية</h1>
 
-      <AcceptingOrdersToggle isAcceptingOrders={settings?.is_accepting_orders ?? true} />
+      <BranchesAcceptingOrdersList branches={branches ?? []} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {stats.map((stat) => (

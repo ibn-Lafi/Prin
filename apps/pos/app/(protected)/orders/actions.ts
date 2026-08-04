@@ -26,6 +26,7 @@ export type CreateOrderInput = {
   rewardId: string | null;
   discountCode: string | null;
   stationId: string | null;
+  branchId: string | null;
 };
 
 export type CreateOrderResult = {
@@ -44,6 +45,10 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     return { error: "التذكرة فارغة" };
   }
 
+  if (!input.branchId) {
+    return { error: "فرع هذا الجهاز غير مضبوط — راجع صفحة إعدادات الطباعة" };
+  }
+
   // توحيد صيغة الجوال لـ E.164 قبل حفظه — نفس الصيغة اللي يستخدمها المنيو
   // الإلكتروني (OTP) بالضبط، وإلا عميل مسجّل مسبقاً بالمنيو (أو يسجّل لاحقاً)
   // يصير له صفّان منفصلان بجدول customers ونقاطه تتوزّع بينهما بدل حساب واحد.
@@ -58,6 +63,7 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
   const supabase = createSupabaseServiceRoleClient();
   const { data, error } = await supabase.rpc("create_pos_order", {
     p_employee_id: session.employeeId,
+    p_branch_id: input.branchId,
     p_customer_phone: normalizedPhone,
     p_customer_name: input.customerName,
     p_items: input.items,

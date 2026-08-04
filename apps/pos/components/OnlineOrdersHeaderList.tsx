@@ -10,7 +10,7 @@ import {
   listActiveOnlineOrdersAction,
 } from "@/app/(protected)/actions";
 import type { ActiveOnlineOrder } from "@/lib/types";
-import { getStationId } from "@/lib/device";
+import { getStationId, getBranchId } from "@/lib/device";
 import { CollectPaymentDialog } from "@/components/CollectPaymentDialog";
 import { OnlineOrderDetailModal } from "@/components/OnlineOrderDetailModal";
 
@@ -30,7 +30,7 @@ export function OnlineOrdersHeaderList() {
     let cancelled = false;
 
     async function load() {
-      const result = await listActiveOnlineOrdersAction();
+      const result = await listActiveOnlineOrdersAction(getBranchId());
       if (!cancelled) setOrders(result);
     }
 
@@ -53,7 +53,7 @@ export function OnlineOrdersHeaderList() {
   }, []);
 
   async function refresh() {
-    setOrders(await listActiveOnlineOrdersAction());
+    setOrders(await listActiveOnlineOrdersAction(getBranchId()));
   }
 
   function handleAccept(orderId: string) {

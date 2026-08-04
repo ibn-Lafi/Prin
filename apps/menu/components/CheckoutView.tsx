@@ -1,29 +1,31 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, Clock, MapPin, Phone, Store, Tag, X } from "lucide-react";
-import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
+import { calculateTax, formatCurrency, isRestaurantOpen, roundMoney } from "@brin/utils";
 import { useCart } from "@/hooks/useCart";
+import { useBranch } from "@/hooks/useBranch";
 import { lookupDiscountCodeAction, placeOrderAction, type CheckoutItem } from "@/app/checkout/actions";
-import type { DiscountCodePreview, Reward } from "@/lib/types";
+import type { Branch, DiscountCodePreview, Reward } from "@/lib/types";
 
 export function CheckoutView({
   customerPhone,
   taxRatePercent,
-  isOpen,
+  branches,
   pointsBalance,
   rewards,
 }: {
   customerPhone: string;
   taxRatePercent: number;
-  isOpen: boolean;
+  branches: Branch[];
   pointsBalance: number;
   rewards: Reward[];
 }) {
   const router = useRouter();
   const { items, itemTotal, subtotal, clear, selectedRewardId } = useCart();
+  const { selectedBranchId, selectBranch } = useBranch();
 
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCodePreview | null>(null);
@@ -32,6 +34,22 @@ export function CheckoutView({
   const [orderError, setOrderError] = useState<string | null>(null);
   const [isPlacing, startPlacing] = useTransition();
   const [notes, setNotes] = useState("");
+  const [isChoosingBranch, setIsChoosingBranch] = useState(false);
+
+  const selectedBranch = branches.find((b) => b.id === selectedBranchId) ?? null;
+
+  // فرع وحيد؟ نختاره تلقائياً بدل ما نطلب من العميل خطوة إضافية بلا داعي —
+  // أكثر من فرع نشط يبقى يتطلب اختياراً صريحاً دائماً.
+  useEffect(() => {
+    const onlyBranch = branches.length === 1 ? branches[0] : null;
+    if (!selectedBranch && onlyBranch) {
+      selectBranch(onlyBranch.id);
+    }
+  }, [selectedBranch, branches, selectBranch]);
+
+  const isOpen = selectedBranch
+    ? isRestaurantOpen(selectedBranch.opening_time, selectedBranch.closing_time, selectedBranch.is_accepting_orders)
+    : false;
 
   // نفس ترتيب create_online_order بالضبط: المكافأة أولاً على المجموع الأصلي،
   // ثم الكود على الناتج. نقيّد الاختيار الفعّال بالمكافآت المقدور عليها فعلاً —
@@ -73,6 +91,7 @@ export function CheckoutView({
   }
 
   function handlePlaceOrder() {
+    if (!selectedBranch) return;
     setOrderError(null);
     const checkoutItems: CheckoutItem[] = items.map((item) => ({
       kind: item.kind,
@@ -84,6 +103,7 @@ export function CheckoutView({
     startPlacing(async () => {
       const result = await placeOrderAction(
         checkoutItems,
+        selectedBranch.id,
         appliedCode?.code ?? null,
         notes.trim() || null,
         selectedReward?.id ?? null,
@@ -118,10 +138,58 @@ export function CheckoutView({
           <Phone className="h-4 w-4" strokeWidth={1.75} />
           {customerPhone}
         </p>
-        <p className="flex items-center gap-2 text-sm text-[var(--color-brand-muted)]">
-          <MapPin className="h-4 w-4" strokeWidth={1.75} />
-          استلام من الفرع (Counter Service)
-        </p>
+
+        {selectedBranch && !isChoosingBranch ? (
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-2 text-sm text-[var(--color-brand-muted)]">
+              <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+              استلام من {selectedBranch.name}
+              {selectedBranch.address ? ` — ${selectedBranch.address}` : ""}
+            </p>
+            {branches.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setIsChoosingBranch(true)}
+                className="shrink-0 text-xs font-medium text-[var(--color-brand-primary)] underline"
+              >
+                تغيير
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <p className="flex items-center gap-2 text-sm font-medium">
+              <MapPin className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+              اختر فرع الاستلام
+            </p>
+            {branches.length === 0 ? (
+              <p className="text-sm text-[var(--color-brand-muted)]">لا توجد فروع متاحة حالياً</p>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {branches.map((branch) => (
+                  <button
+                    key={branch.id}
+                    type="button"
+                    onClick={() => {
+                      selectBranch(branch.id);
+                      setIsChoosingBranch(false);
+                    }}
+                    className={`rounded-xl border px-3 py-2 text-right text-sm ${
+                      selectedBranchId === branch.id
+                        ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
+                        : "border-[var(--color-brand-border)]"
+                    }`}
+                  >
+                    <span className="font-medium">{branch.name}</span>
+                    {branch.address && (
+                      <span className="block text-xs text-[var(--color-brand-muted)]">{branch.address}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="mb-4 flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
@@ -224,7 +292,12 @@ export function CheckoutView({
       </section>
 
       <section className="rounded-2xl border border-dashed border-[var(--color-brand-border)] p-4 text-center">
-        {isOpen ? (
+        {!selectedBranch ? (
+          <>
+            <MapPin className="mx-auto mb-2 h-6 w-6 text-[var(--color-brand-primary)]" strokeWidth={1.5} />
+            <p className="mb-3 text-sm font-medium text-[var(--color-brand-primary)]">اختر فرع الاستلام أولاً</p>
+          </>
+        ) : isOpen ? (
           <>
             <Clock
               className="mx-auto mb-2 h-6 w-6 text-[var(--color-brand-muted)]"
@@ -241,7 +314,7 @@ export function CheckoutView({
               strokeWidth={1.5}
             />
             <p className="mb-3 text-sm font-medium text-[var(--color-brand-primary)]">
-              المطعم مغلق حالياً خارج ساعات العمل — الطلبات الإلكترونية غير متاحة الآن.
+              هذا الفرع مغلق حالياً خارج ساعات العمل — الطلبات الإلكترونية غير متاحة الآن.
             </p>
           </>
         )}
@@ -250,7 +323,7 @@ export function CheckoutView({
         )}
         <button
           type="button"
-          disabled={!isOpen || isPlacing}
+          disabled={!selectedBranch || !isOpen || isPlacing}
           onClick={handlePlaceOrder}
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:bg-[var(--color-brand-border)] disabled:text-[var(--color-brand-muted)]"
         >

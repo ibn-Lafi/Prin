@@ -5,6 +5,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 
 type OrderForPrint = {
   id: string;
+  branch_id: string;
   order_date: string;
   daily_order_number: number;
   channel: string;
@@ -35,14 +36,16 @@ type OrderForPrint = {
 // المنيو الإلكتروني عند تحصيل الدفع (إيصال العميل فقط).
 async function buildPrintPayloads(
   orderId: string,
-): Promise<{ kitchenPayload: KitchenPrintPayload; customerPayload: CustomerPrintPayload } | null> {
+): Promise<
+  { kitchenPayload: KitchenPrintPayload; customerPayload: CustomerPrintPayload; branchId: string } | null
+> {
   const supabase = createSupabaseServiceRoleClient();
 
   const [{ data: rawOrder, error: orderError }, { data: settings }] = await Promise.all([
     supabase
       .from("orders")
       .select(
-        `id, order_date, daily_order_number, channel, subtotal, tax_amount, total, discount_amount, code_discount_amount, created_at, notes,
+        `id, branch_id, order_date, daily_order_number, channel, subtotal, tax_amount, total, discount_amount, code_discount_amount, created_at, notes,
          customers ( full_name, phone ),
          rewards ( name ),
          discount_codes ( code ),
@@ -112,20 +115,33 @@ async function buildPrintPayloads(
     zatcaQrBase64,
   };
 
-  return { kitchenPayload, customerPayload };
+  return { kitchenPayload, customerPayload, branchId: order.branch_id };
 }
 
 // يبني ويُدرج مهمتي طباعة (مطبخ + عميل) بعد نجاح إنشاء/استلام أي طلب —
 // stationId (معرّف جهاز الكاشير المحلي) يحدد أي عامل طباعة يلتقط المهمتين —
-// بدونه تبقى المهمتان بدون جهاز مستهدف وما يطبعها أي عامل طباعة.
+// بدونه تبقى المهمتان بدون جهاز مستهدف، لكن branch_id يبقى يقيّدها لفرع
+// الطلب نفسه، فما تُطبَع بالغلط على طابعة فرع ثاني (راجع migration 0042).
 export async function queueOrderPrintJobs(orderId: string, stationId: string | null): Promise<void> {
   const payloads = await buildPrintPayloads(orderId);
   if (!payloads) return;
 
   const supabase = createSupabaseServiceRoleClient();
   await supabase.from("print_jobs").insert([
-    { order_id: orderId, target: "kitchen", payload: payloads.kitchenPayload as unknown as Json, station_id: stationId },
-    { order_id: orderId, target: "customer", payload: payloads.customerPayload as unknown as Json, station_id: stationId },
+    {
+      order_id: orderId,
+      branch_id: payloads.branchId,
+      target: "kitchen",
+      payload: payloads.kitchenPayload as unknown as Json,
+      station_id: stationId,
+    },
+    {
+      order_id: orderId,
+      branch_id: payloads.branchId,
+      target: "customer",
+      payload: payloads.customerPayload as unknown as Json,
+      station_id: stationId,
+    },
   ]);
 }
 
@@ -139,6 +155,7 @@ export async function queueOnlineOrderCustomerReceipt(orderId: string, stationId
   const supabase = createSupabaseServiceRoleClient();
   await supabase.from("print_jobs").insert({
     order_id: orderId,
+    branch_id: payloads.branchId,
     target: "customer",
     payload: payloads.customerPayload as unknown as Json,
     station_id: stationId,

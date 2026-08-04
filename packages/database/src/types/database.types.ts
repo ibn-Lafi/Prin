@@ -7,6 +7,48 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      branches: {
+        Row: {
+          id: string;
+          name: string;
+          address: string | null;
+          phone: string | null;
+          opening_time: string;
+          closing_time: string;
+          is_accepting_orders: boolean;
+          is_active: boolean;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          address?: string | null;
+          phone?: string | null;
+          opening_time?: string;
+          closing_time?: string;
+          is_accepting_orders?: boolean;
+          is_active?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          address?: string | null;
+          phone?: string | null;
+          opening_time?: string;
+          closing_time?: string;
+          is_accepting_orders?: boolean;
+          is_active?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       cash_closings: {
         Row: {
           id: string;
@@ -376,14 +418,17 @@ export type Database = {
       };
       order_daily_counters: {
         Row: {
+          branch_id: string;
           order_date: string;
           last_number: number;
         };
         Insert: {
+          branch_id: string;
           order_date: string;
           last_number?: number;
         };
         Update: {
+          branch_id?: string;
           order_date?: string;
           last_number?: number;
         };
@@ -446,6 +491,7 @@ export type Database = {
       orders: {
         Row: {
           id: string;
+          branch_id: string;
           order_date: string;
           daily_order_number: number;
           channel: string;
@@ -470,6 +516,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          branch_id: string;
           order_date: string;
           daily_order_number: number;
           channel: string;
@@ -494,6 +541,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          branch_id?: string;
           order_date?: string;
           daily_order_number?: number;
           channel?: string;
@@ -575,6 +623,7 @@ export type Database = {
       print_agent_status: {
         Row: {
           id: string;
+          branch_id: string | null;
           last_heartbeat_at: string | null;
           printer_connected: boolean;
           printer_interface: string | null;
@@ -582,6 +631,7 @@ export type Database = {
         };
         Insert: {
           id: string;
+          branch_id?: string | null;
           last_heartbeat_at?: string | null;
           printer_connected?: boolean;
           printer_interface?: string | null;
@@ -589,6 +639,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          branch_id?: string | null;
           last_heartbeat_at?: string | null;
           printer_connected?: boolean;
           printer_interface?: string | null;
@@ -600,6 +651,7 @@ export type Database = {
         Row: {
           id: string;
           order_id: string;
+          branch_id: string;
           target: string;
           status: string;
           payload: Json;
@@ -613,6 +665,7 @@ export type Database = {
         Insert: {
           id?: string;
           order_id: string;
+          branch_id: string;
           target: string;
           status?: string;
           payload: Json;
@@ -626,6 +679,7 @@ export type Database = {
         Update: {
           id?: string;
           order_id?: string;
+          branch_id?: string;
           target?: string;
           status?: string;
           payload?: Json;
@@ -710,9 +764,6 @@ export type Database = {
           restaurant_name: string;
           vat_number: string | null;
           tax_rate_percent: number;
-          opening_time: string;
-          closing_time: string;
-          is_accepting_orders: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -721,9 +772,6 @@ export type Database = {
           restaurant_name?: string;
           vat_number?: string | null;
           tax_rate_percent?: number;
-          opening_time?: string;
-          closing_time?: string;
-          is_accepting_orders?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -732,9 +780,6 @@ export type Database = {
           restaurant_name?: string;
           vat_number?: string | null;
           tax_rate_percent?: number;
-          opening_time?: string;
-          closing_time?: string;
-          is_accepting_orders?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -788,12 +833,13 @@ export type Database = {
     };
     Functions: {
       next_daily_order_number: {
-        Args: { p_date: string };
+        Args: { p_branch_id: string; p_date: string };
         Returns: number;
       };
       create_pos_order: {
         Args: {
           p_employee_id: string;
+          p_branch_id: string;
           p_customer_phone: string | null;
           p_customer_name: string | null;
           p_items: Json;
@@ -813,6 +859,7 @@ export type Database = {
       create_online_order: {
         Args: {
           p_auth_user_id: string;
+          p_branch_id: string;
           p_items: Json;
           p_discount_code?: string | null;
           p_notes?: string | null;

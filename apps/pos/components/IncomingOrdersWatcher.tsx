@@ -5,6 +5,7 @@ import { createSupabaseBrowserClient } from "@brin/database";
 import type { IncomingOrder } from "@/lib/types";
 import { fetchIncomingOrderDetailsAction } from "@/app/(protected)/actions";
 import { playAlertSound } from "@/lib/alertSound";
+import { getBranchId } from "@/lib/device";
 import { IncomingOrderPopup } from "@/components/IncomingOrderPopup";
 
 // يستمع لأي طلب إلكتروني جديد (INSERT بجدول orders، channel=online) — الطلب
@@ -23,8 +24,9 @@ export function IncomingOrdersWatcher() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "orders", filter: "channel=eq.online" },
         (payload) => {
-          const order = payload.new as { id: string } | undefined;
+          const order = payload.new as { id: string; branch_id: string } | undefined;
           if (!order) return;
+          if (order.branch_id !== getBranchId()) return;
 
           fetchIncomingOrderDetailsAction(order.id).then((details) => {
             if (!details) return;

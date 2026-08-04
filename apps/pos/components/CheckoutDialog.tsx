@@ -7,7 +7,7 @@ import { useOrderTicket } from "@/hooks/useOrderTicket";
 import { useCheckoutCustomer, ensureRewardsLoaded, resetCheckoutCustomer } from "@/hooks/useCheckoutCustomer";
 import { createOrderAction, lookupDiscountCodeAction } from "@/app/(protected)/orders/actions";
 import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
-import { getStationId } from "@/lib/device";
+import { getStationId, getBranchId } from "@/lib/device";
 import type { DiscountCodePreview } from "@/lib/types";
 
 export function CheckoutDialog({
@@ -133,6 +133,7 @@ export function CheckoutDialog({
         rewardId: selectedReward?.id ?? null,
         discountCode: appliedCode?.code ?? null,
         stationId: getStationId(),
+        branchId: getBranchId(),
       });
 
       if (result.error) {

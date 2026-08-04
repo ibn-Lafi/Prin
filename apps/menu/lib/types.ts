@@ -1,3 +1,13 @@
+export type Branch = {
+  id: string;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  opening_time: string;
+  closing_time: string;
+  is_accepting_orders: boolean;
+};
+
 export type Category = {
   id: string;
   name: string;

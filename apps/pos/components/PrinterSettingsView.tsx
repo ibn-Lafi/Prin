@@ -2,14 +2,16 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { Pencil } from "lucide-react";
-import { useStationId, setStationId } from "@/lib/device";
+import { useStationId, setStationId, useBranchId } from "@/lib/device";
 import {
   getStationPrinterSettingsAction,
   saveStationPrinterSettingsAction,
+  linkStationBranchAction,
 } from "@/app/(protected)/printer-settings/actions";
 
 export function PrinterSettingsView() {
   const stationId = useStationId();
+  const branchId = useBranchId();
   const [editingRequested, setEditingRequested] = useState(false);
   const isEditingStationId = editingRequested || !stationId;
   const [stationIdDraft, setStationIdDraft] = useState("");
@@ -32,6 +34,13 @@ export function PrinterSettingsView() {
       cancelled = true;
     };
   }, [stationId]);
+
+  // يربط محطة الطباعة بفرع الجهاز تلقائياً كلما توفّر الاثنان معاً — عشان
+  // مهام الطباعة غير المُسندة (طلبات إلكترونية) تنحصر بطابعات نفس الفرع.
+  useEffect(() => {
+    if (!stationId || !branchId) return;
+    void linkStationBranchAction(stationId, branchId);
+  }, [stationId, branchId]);
 
   function handleSaveStationId() {
     const trimmed = stationIdDraft.trim();
