@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, Circle, Minus, Plus, UtensilsCrossed, X } from "lucide-react";
+import { CheckCircle2, Circle, Flame, Minus, Plus, UtensilsCrossed, X } from "lucide-react";
 import { formatCurrency, roundMoney } from "@brin/utils";
 import type { ModifierGroup } from "@/lib/types";
 import { useCart, type CartModifier } from "@/hooks/useCart";
@@ -85,43 +85,49 @@ export function ProductModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
       <div className="flex max-h-[92vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-[var(--color-brand-card)] sm:rounded-3xl">
-        <div className="relative flex aspect-[16/10] w-full shrink-0 items-center justify-center bg-[var(--color-brand-primary-light)]">
-          {item.image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
-          ) : (
-            <UtensilsCrossed
-              className="h-14 w-14 text-[var(--color-brand-primary)]/40"
-              strokeWidth={1.5}
-            />
-          )}
+        <div className="relative shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[var(--color-brand-text)] shadow"
+            className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-brand-background)] shadow-sm"
             aria-label="إغلاق"
           >
-            <X className="h-4 w-4" strokeWidth={2} />
+            <X className="h-5 w-5" strokeWidth={2} />
           </button>
-        </div>
-
-        <div className="flex w-full shrink-0 items-center justify-between bg-[var(--color-brand-primary)] p-4">
-          <div className="flex flex-col">
-            <span className="font-semibold text-white">{item.name}</span>
-            {item.calories != null && <span className="text-xs text-white/70">{item.calories} سعرة</span>}
+          <div className="flex aspect-[4/3] w-full items-center justify-center px-12 pt-14 pb-6">
+            {item.image_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={item.image_url} alt={item.name} className="h-full w-full object-contain" />
+            ) : (
+              <UtensilsCrossed
+                className="h-16 w-16 text-[var(--color-brand-primary)]/30"
+                strokeWidth={1.25}
+              />
+            )}
           </div>
-          <span className="font-bold text-white">{formatCurrency(item.price)}</span>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto px-5 pb-5">
+          <h2 className="text-xl font-bold text-[var(--color-brand-text)]">{item.name}</h2>
           {item.description && (
-            <p className="text-sm text-[var(--color-brand-muted)]">{item.description}</p>
+            <p className="mt-2 text-sm leading-relaxed text-[var(--color-brand-muted)]">
+              {item.description}
+            </p>
           )}
+          {item.calories != null && (
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-[var(--color-brand-muted)]">
+              <Flame className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {item.calories} سعرة حرارية
+            </p>
+          )}
+          <p className="mt-3 text-lg font-extrabold text-[var(--color-brand-text)]">
+            {formatCurrency(item.price)}
+          </p>
 
           {item.modifier_groups.map((group) => {
             const selectedCount = selections[group.id]?.length ?? 0;
             return (
-              <fieldset key={group.id} className="mt-5">
+              <fieldset key={group.id} className="mt-6">
                 <legend className="mb-1 flex w-full items-center justify-between">
                   <span className="font-semibold">
                     {group.name}
@@ -135,16 +141,13 @@ export function ProductModal({
                     {selectedCount}/{group.max_select}
                   </span>
                 </legend>
-                <div className="flex flex-col">
+                <div className="flex flex-col divide-y divide-[var(--color-brand-border)]">
                   {group.modifiers
                     .filter((m) => m.is_available)
                     .map((modifier) => {
                       const checked = (selections[group.id] ?? []).includes(modifier.id);
                       return (
-                        <label
-                          key={modifier.id}
-                          className="flex items-center justify-between border-b border-[var(--color-brand-border)] py-3 last:border-0"
-                        >
+                        <label key={modifier.id} className="flex items-center justify-between py-3">
                           <span className="flex items-center gap-2.5">
                             <input
                               type={group.max_select === 1 ? "radio" : "checkbox"}
@@ -181,39 +184,40 @@ export function ProductModal({
         </div>
 
         <div className="shrink-0 border-t border-[var(--color-brand-border)] p-4">
-          <div className="mb-3 flex items-center justify-center gap-4">
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-background)] text-[var(--color-brand-text)] ring-1 ring-[var(--color-brand-border)]"
-              aria-label="إنقاص الكمية"
-            >
-              <Minus className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <span className="min-w-6 text-center text-lg font-bold">{quantity}</span>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => q + 1)}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-brand-background)] text-[var(--color-brand-text)] ring-1 ring-[var(--color-brand-border)]"
-              aria-label="زيادة الكمية"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2} />
-            </button>
-          </div>
-
           {missingRequiredGroups.length > 0 && (
             <p className="mb-2 text-center text-sm text-[var(--color-brand-primary)]">
               يرجى اختيار: {missingRequiredGroups.map((g) => g.name).join("، ")}
             </p>
           )}
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            disabled={missingRequiredGroups.length > 0}
-            className="w-full rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:opacity-50"
-          >
-            أضف للسلة — {formatCurrency(totalPrice)}
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-brand-background)] px-3 py-2.5 ring-1 ring-[var(--color-brand-border)]">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="text-[var(--color-brand-text)]"
+                aria-label="إنقاص الكمية"
+              >
+                <Minus className="h-4 w-4" strokeWidth={2} />
+              </button>
+              <span className="min-w-5 text-center font-bold">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                className="text-[var(--color-brand-text)]"
+                aria-label="زيادة الكمية"
+              >
+                <Plus className="h-4 w-4" strokeWidth={2} />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={missingRequiredGroups.length > 0}
+              className="flex-1 rounded-2xl bg-[var(--color-brand-primary)] px-4 py-3.5 font-semibold text-white disabled:opacity-50"
+            >
+              أضف إلى السلة — {formatCurrency(totalPrice)}
+            </button>
+          </div>
         </div>
       </div>
     </div>
