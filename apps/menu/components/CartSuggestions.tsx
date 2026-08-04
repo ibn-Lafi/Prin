@@ -1,18 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, UtensilsCrossed } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
-import type { Product } from "@/lib/types";
+import type { CartSuggestionLink, Product } from "@/lib/types";
 import { useCart } from "@/hooks/useCart";
 import { ProductModal } from "@/components/ProductModal";
 
-// اقتراحات إضافة سريعة يختارها الإدمن يدوياً لكل صنف (مثل: أضف مشروب/صوص) —
-// تظهر بصفحة السلة عند وجود عناصر بها. الصنف بلا تعديلات إجبارية يُضاف
-// مباشرة بضغطة واحدة، وإلا تُفتح نافذة اختيار التعديلات كالمعتاد.
-export function CartSuggestions({ suggestions }: { suggestions: Product[] }) {
-  const { addItem } = useCart();
+// اقتراحات إضافة سريعة سياقية يربطها الإدمن بصنف "مُحفِّز" مُحدَّد (مثل:
+// إضافة برجر تقترح مشروب/صوص) — تظهر فقط لو المُحفِّز فعلاً بالسلة حالياً.
+// الصنف بلا تعديلات إجبارية يُضاف مباشرة بضغطة واحدة، وإلا تُفتح نافذة
+// اختيار التعديلات كالمعتاد.
+export function CartSuggestions({ links }: { links: CartSuggestionLink[] }) {
+  const { items, addItem } = useCart();
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
+
+  const triggeredProductIds = useMemo(
+    () => new Set(items.filter((item) => item.kind === "product").map((item) => item.refId)),
+    [items],
+  );
+
+  const suggestions = useMemo(() => {
+    const seen = new Set<string>();
+    const result: Product[] = [];
+    for (const link of links) {
+      if (!triggeredProductIds.has(link.triggerProductId)) continue;
+      if (seen.has(link.product.id)) continue;
+      seen.add(link.product.id);
+      result.push(link.product);
+    }
+    return result;
+  }, [links, triggeredProductIds]);
 
   if (suggestions.length === 0) return null;
 

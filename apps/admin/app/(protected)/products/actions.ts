@@ -17,7 +17,6 @@ export type ProductInput = {
   price: number;
   imageUrl: string;
   pointsPerUnit: number;
-  isCartSuggestion: boolean;
 };
 
 function validateProduct(input: ProductInput): string | null {
@@ -51,7 +50,6 @@ export async function createProductAction(input: ProductInput): Promise<CreateRe
       price: input.price,
       image_url: input.imageUrl.trim() || null,
       points_per_unit: input.pointsPerUnit,
-      is_cart_suggestion: input.isCartSuggestion,
     })
     .select("id")
     .single();
@@ -86,7 +84,6 @@ export async function updateProductAction(productId: string, input: ProductInput
       price: input.price,
       image_url: input.imageUrl.trim() || null,
       points_per_unit: input.pointsPerUnit,
-      is_cart_suggestion: input.isCartSuggestion,
     })
     .eq("id", productId);
 
@@ -348,6 +345,38 @@ export async function toggleModifierAvailabilityAction(
     .eq("id", modifierId);
 
   if (error) return { error: "تعذّر التحديث" };
+
+  revalidatePath(`/products/${productId}`);
+  return {};
+}
+
+/** يستبدل كامل قائمة اقتراحات السلة السياقية لهذا الصنف (الصنف "المُحفِّز")
+ * بالقائمة الجديدة المرسلة — مثلاً: عند إضافة "برجر كلاسيك" اقترح "بيبسي" و"صوص حار". */
+export async function setCartSuggestionsAction(
+  productId: string,
+  suggestedProductIds: string[],
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session) return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
+
+  const supabase = createSupabaseServiceRoleClient();
+
+  const { error: deleteError } = await supabase
+    .from("product_cart_suggestions")
+    .delete()
+    .eq("trigger_product_id", productId);
+  if (deleteError) return { error: "تعذّر تحديث الاقتراحات" };
+
+  const uniqueIds = [...new Set(suggestedProductIds)].filter((id) => id !== productId);
+  if (uniqueIds.length > 0) {
+    const { error: insertError } = await supabase.from("product_cart_suggestions").insert(
+      uniqueIds.map((suggestedProductId) => ({
+        trigger_product_id: productId,
+        suggested_product_id: suggestedProductId,
+      })),
+    );
+    if (insertError) return { error: "تعذّر تحديث الاقتراحات" };
+  }
 
   revalidatePath(`/products/${productId}`);
   return {};

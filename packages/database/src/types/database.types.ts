@@ -650,7 +650,6 @@ export type Database = {
           is_available: boolean;
           deleted_at: string | null;
           points_per_unit: number;
-          is_cart_suggestion: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -665,7 +664,6 @@ export type Database = {
           is_available?: boolean;
           deleted_at?: string | null;
           points_per_unit?: number;
-          is_cart_suggestion?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -680,9 +678,29 @@ export type Database = {
           is_available?: boolean;
           deleted_at?: string | null;
           points_per_unit?: number;
-          is_cart_suggestion?: boolean;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      product_cart_suggestions: {
+        Row: {
+          id: string;
+          trigger_product_id: string;
+          suggested_product_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          trigger_product_id: string;
+          suggested_product_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          trigger_product_id?: string;
+          suggested_product_id?: string;
+          created_at?: string;
         };
         Relationships: [];
       };

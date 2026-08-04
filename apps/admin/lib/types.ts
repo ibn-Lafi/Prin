@@ -73,7 +73,6 @@ export type Product = {
   is_available: boolean;
   deleted_at: string | null;
   points_per_unit: number;
-  is_cart_suggestion: boolean;
 };
 
 export type ProductWithModifiers = Product & { modifier_groups: ModifierGroup[] };

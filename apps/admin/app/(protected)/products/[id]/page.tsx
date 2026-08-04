@@ -3,6 +3,7 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { ProductForm } from "@/components/ProductForm";
 import { ProductStatusActions } from "@/components/ProductStatusActions";
 import { ModifierGroupsManager } from "@/components/ModifierGroupsManager";
+import { CartSuggestionsManager } from "@/components/CartSuggestionsManager";
 import type { ModifierGroup, Product } from "@/lib/types";
 
 type ProductRow = Product & { modifier_groups: ModifierGroup[] };
@@ -11,18 +12,26 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const supabase = createSupabaseServiceRoleClient();
 
-  const [{ data: categories }, { data: rawProduct }] = await Promise.all([
-    supabase.from("categories").select("id, name").order("display_order", { ascending: true }),
-    supabase
-      .from("products")
-      .select(
-        `id, category_id, name, description, calories, price, image_url, is_available, deleted_at, points_per_unit, is_cart_suggestion,
-         modifier_groups ( id, name, is_required, min_select, max_select, display_order,
-           modifiers ( id, name, price_delta, is_available, display_order ) )`,
-      )
-      .eq("id", id)
-      .maybeSingle(),
-  ]);
+  const [{ data: categories }, { data: rawProduct }, { data: otherProducts }, { data: suggestionRows }] =
+    await Promise.all([
+      supabase.from("categories").select("id, name").order("display_order", { ascending: true }),
+      supabase
+        .from("products")
+        .select(
+          `id, category_id, name, description, calories, price, image_url, is_available, deleted_at, points_per_unit,
+           modifier_groups ( id, name, is_required, min_select, max_select, display_order,
+             modifiers ( id, name, price_delta, is_available, display_order ) )`,
+        )
+        .eq("id", id)
+        .maybeSingle(),
+      supabase
+        .from("products")
+        .select("id, name")
+        .is("deleted_at", null)
+        .neq("id", id)
+        .order("name"),
+      supabase.from("product_cart_suggestions").select("suggested_product_id").eq("trigger_product_id", id),
+    ]);
 
   const product = rawProduct as unknown as ProductRow | null;
   if (!product) notFound();
@@ -37,6 +46,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           productId={product.id}
           isAvailable={product.is_available}
           isDeleted={product.deleted_at !== null}
+        />
+        <CartSuggestionsManager
+          productId={product.id}
+          allProducts={otherProducts ?? []}
+          initialSelectedIds={(suggestionRows ?? []).map((row) => row.suggested_product_id)}
         />
       </div>
 

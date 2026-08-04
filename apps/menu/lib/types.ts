@@ -35,6 +35,13 @@ export type Product = {
   modifier_groups: ModifierGroup[];
 };
 
+// ربط سياقي: هذا الصنف يظهر كاقتراح إضافة سريعة بالسلة فقط لو صنف
+// "triggerProductId" فعلاً مضاف بالسلة حالياً — يحدده الإدمن لكل صنف.
+export type CartSuggestionLink = {
+  triggerProductId: string;
+  product: Product;
+};
+
 export type Combo = {
   id: string;
   name: string;
