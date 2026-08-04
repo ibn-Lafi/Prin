@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Clock, Gift, MapPin, Phone, Store, Tag, X } from "lucide-react";
+import { Check, Clock, MapPin, Phone, Store, Tag, X } from "lucide-react";
 import { calculateTax, formatCurrency, roundMoney } from "@brin/utils";
 import { useCart } from "@/hooks/useCart";
 import { lookupDiscountCodeAction, placeOrderAction, type CheckoutItem } from "@/app/checkout/actions";
@@ -23,7 +23,7 @@ export function CheckoutView({
   rewards: Reward[];
 }) {
   const router = useRouter();
-  const { items, itemTotal, subtotal, clear, selectedRewardId, selectReward } = useCart();
+  const { items, itemTotal, subtotal, clear, selectedRewardId } = useCart();
 
   const [discountCodeInput, setDiscountCodeInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCodePreview | null>(null);
@@ -144,51 +144,6 @@ export function CheckoutView({
           </div>
         ))}
       </section>
-
-      {rewards.length > 0 && (
-        <section className="mb-4 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
-          <p className="mb-2 flex items-center gap-1.5 font-semibold">
-            <Gift className="h-4 w-4 text-[var(--color-brand-primary)]" strokeWidth={1.75} />
-            استبدال النقاط — رصيدك: {pointsBalance} نقطة
-          </p>
-          <div className="flex flex-col gap-1.5">
-            <button
-              type="button"
-              onClick={() => selectReward(null)}
-              className={`rounded-xl border px-3 py-2 text-right text-sm ${
-                selectedRewardId === null
-                  ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
-                  : "border-[var(--color-brand-border)]"
-              }`}
-            >
-              بدون استبدال
-            </button>
-            {rewards.map((reward) => {
-              const affordable = canAfford(reward);
-              return (
-                <button
-                  key={reward.id}
-                  type="button"
-                  disabled={!affordable}
-                  onClick={() => selectReward(reward.id)}
-                  className={`flex items-center justify-between rounded-xl border px-3 py-2 text-right text-sm ${
-                    !affordable
-                      ? "cursor-not-allowed border-[var(--color-brand-border)] opacity-50"
-                      : selectedRewardId === reward.id
-                        ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary-light)]"
-                        : "border-[var(--color-brand-border)]"
-                  }`}
-                >
-                  <span>{reward.name} — {reward.points_cost} نقطة</span>
-                  <span className="text-[var(--color-brand-muted)]">
-                    {affordable ? `-${formatCurrency(reward.discount_amount)}` : "رصيد غير كافٍ"}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       <section className="mb-4 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
         <p className="mb-2 font-semibold">كود خصم</p>
