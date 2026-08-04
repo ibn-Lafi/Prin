@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { href: "/", label: "الرئيسية", icon: Home },
   { href: "/cart", label: "السلة", icon: ShoppingBag },
   { href: "/orders", label: "الطلبات", icon: ClipboardList },
-  { href: "/account", label: "حسابي", icon: User },
+  { href: "/account", label: "الحساب", icon: User },
 ];
 
 export function BottomNav() {
