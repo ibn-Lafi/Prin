@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search } from "lucide-react";
+import { Gift, Search, UtensilsCrossed, type LucideIcon } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
 import { useCart } from "@/hooks/useCart";
 import type { Category, Combo, Product, Reward } from "@/lib/types";
@@ -45,6 +45,40 @@ function TabRow({ children }: { children: React.ReactNode }) {
     <div className="flex divide-x divide-x-reverse divide-[var(--color-brand-border)] overflow-x-auto border-b border-[var(--color-brand-border)] px-4">
       {children}
     </div>
+  );
+}
+
+// مفتاح القسم الرئيسي (برجر/مكافآت): كبسولة عائمة، أيقونة فوق نص، والقسم
+// النشط يأخذ خلفية دائرية ملوّنة بدل خط سفلي — مستوى مختلف كلياً عن FlatTab.
+function IconTab({
+  label,
+  icon: Icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon: LucideIcon;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-1 flex-col items-center gap-1 rounded-full px-5 py-2.5 transition-colors ${
+        active ? "bg-[var(--color-brand-primary-light)]" : ""
+      }`}
+    >
+      <Icon
+        className={active ? "h-5 w-5 text-[var(--color-brand-primary)]" : "h-5 w-5 text-[var(--color-brand-text)]"}
+        strokeWidth={active ? 2.25 : 1.75}
+      />
+      <span
+        className={`text-xs ${active ? "font-semibold text-[var(--color-brand-text)]" : "text-[var(--color-brand-muted)]"}`}
+      >
+        {label}
+      </span>
+    </button>
   );
 }
 
@@ -171,11 +205,23 @@ export function MenuBrowser({
         </label>
       </div>
 
-      <div className="sticky top-0 z-20 mt-5 bg-[var(--color-brand-background)]/95 backdrop-blur">
-        <TabRow>
-          <FlatTab label="برجر" active={topSection === "food"} onClick={() => setTopSection("food")} />
-          <FlatTab label="مكافآت" active={topSection === "rewards"} onClick={() => setTopSection("rewards")} />
-        </TabRow>
+      <div className="sticky top-0 z-20 mt-5 bg-[var(--color-brand-background)]/95 pb-1 backdrop-blur">
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-1 rounded-[28px] bg-[var(--color-brand-card)] p-1.5 shadow-lg shadow-black/10 ring-1 ring-black/5">
+            <IconTab
+              label="برجر"
+              icon={UtensilsCrossed}
+              active={topSection === "food"}
+              onClick={() => setTopSection("food")}
+            />
+            <IconTab
+              label="مكافآت"
+              icon={Gift}
+              active={topSection === "rewards"}
+              onClick={() => setTopSection("rewards")}
+            />
+          </div>
+        </div>
 
         <TabRow>
           {topSection === "food" ? (
