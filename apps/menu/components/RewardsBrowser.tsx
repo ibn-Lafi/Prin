@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { useCart } from "@/hooks/useCart";
-import type { Reward } from "@/lib/types";
+import type { Branch, Reward } from "@/lib/types";
 import { RewardCard } from "@/components/RewardCard";
 import { SectionSwitcher } from "@/components/SectionSwitcher";
+import { BranchSelectorCard } from "@/components/BranchSelectorCard";
 
 function matchesQuery(name: string, query: string): boolean {
   return !query || name.toLowerCase().includes(query);
@@ -15,9 +16,11 @@ function matchesQuery(name: string, query: string): boolean {
 export function RewardsBrowser({
   rewards,
   pointsBalance,
+  branches,
 }: {
   rewards: Reward[];
   pointsBalance: number | null;
+  branches: Branch[];
 }) {
   const [query, setQuery] = useState("");
   const router = useRouter();
@@ -58,6 +61,10 @@ export function RewardsBrowser({
             className="w-full bg-transparent text-sm text-[var(--color-brand-text)] outline-none placeholder:text-[var(--color-brand-muted)]"
           />
         </label>
+      </div>
+
+      <div className="mt-3 px-4">
+        <BranchSelectorCard branches={branches} />
       </div>
 
       <div className="sticky top-0 z-20 mt-5 bg-[var(--color-brand-background)]/95 pb-2 backdrop-blur">
