@@ -7,7 +7,6 @@ import { useCart } from "@/hooks/useCart";
 import type { Reward } from "@/lib/types";
 import { RewardCard } from "@/components/RewardCard";
 import { SectionSwitcher } from "@/components/SectionSwitcher";
-import { FlatTab, TabRow } from "@/components/MenuTabs";
 
 function matchesQuery(name: string, query: string): boolean {
   return !query || name.toLowerCase().includes(query);
@@ -61,12 +60,8 @@ export function RewardsBrowser({
         </label>
       </div>
 
-      <div className="sticky top-0 z-20 mt-5 bg-[var(--color-brand-background)]/95 pb-1 backdrop-blur">
+      <div className="sticky top-0 z-20 mt-5 bg-[var(--color-brand-background)]/95 pb-2 backdrop-blur">
         <SectionSwitcher />
-
-        <TabRow>
-          <FlatTab label="استبدل" active onClick={() => {}} />
-        </TabRow>
       </div>
 
       <div className="px-4 pt-4">
