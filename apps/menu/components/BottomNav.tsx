@@ -19,7 +19,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-4 z-40 flex justify-center px-4">
-      <div className="flex items-center gap-1 rounded-full bg-[var(--color-brand-text)] p-1.5 shadow-xl shadow-black/25">
+      <div className="flex items-center gap-1 rounded-[28px] border border-white/50 bg-white/70 p-1.5 shadow-xl shadow-black/10 backdrop-blur-xl">
         {NAV_ITEMS.map((item) => {
           const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -27,14 +27,23 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex items-center gap-1.5 rounded-full px-4 py-2.5 text-xs font-semibold transition-colors duration-150 ${
-                active ? "bg-[var(--color-brand-primary)] text-white" : "text-white/70"
+              className={`relative flex flex-col items-center gap-1 rounded-full px-4 py-2.5 transition-colors duration-150 ${
+                active ? "bg-[var(--color-brand-primary-light)]" : ""
               }`}
             >
-              <Icon className="h-4.5 w-4.5" strokeWidth={2} />
-              {active && <span>{item.label}</span>}
+              <Icon
+                className={`h-5 w-5 ${active ? "text-[var(--color-brand-primary)]" : "text-[var(--color-brand-text)]"}`}
+                strokeWidth={active ? 2.25 : 1.75}
+              />
+              <span
+                className={`text-xs ${
+                  active ? "font-semibold text-[var(--color-brand-text)]" : "text-[var(--color-brand-muted)]"
+                }`}
+              >
+                {item.label}
+              </span>
               {item.href === "/cart" && cartCount > 0 && (
-                <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[9px] font-bold text-[var(--color-brand-primary)]">
+                <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-brand-primary)] px-1 text-[9px] font-bold text-white">
                   {cartCount}
                 </span>
               )}
