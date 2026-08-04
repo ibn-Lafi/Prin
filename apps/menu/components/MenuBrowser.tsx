@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Gift, Search, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { Search } from "lucide-react";
 import { createSupabaseBrowserClient } from "@brin/database";
-import { useCart } from "@/hooks/useCart";
-import type { Category, Combo, Product, Reward } from "@/lib/types";
+import type { Category, Combo, Product } from "@/lib/types";
 import { ProductCard } from "@/components/ProductCard";
 import { ComboCard } from "@/components/ComboCard";
-import { RewardCard } from "@/components/RewardCard";
 import { ProductModal } from "@/components/ProductModal";
+import { SectionSwitcher } from "@/components/SectionSwitcher";
+import { FlatTab, TabRow } from "@/components/MenuTabs";
 
 const COMBOS_TAB_ID = "__combos__";
 
@@ -21,81 +20,15 @@ function matchesQuery(name: string, query: string): boolean {
   return !query || name.toLowerCase().includes(query);
 }
 
-// شريط تبويبات مسطّح (نص + خط سفلي عند التفعيل، فواصل رأسية بين العناصر) —
-// يُستخدم للمستويين معاً (القسم الرئيسي وتبويبات القسم الفرعي).
-function FlatTab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="relative shrink-0 whitespace-nowrap px-3.5 py-3 text-[15px] transition-colors"
-    >
-      <span className={active ? "font-bold text-[var(--color-brand-text)]" : "text-[var(--color-brand-muted)]"}>
-        {label}
-      </span>
-      {active && (
-        <span className="absolute inset-x-3.5 -bottom-px h-0.5 rounded-full bg-[var(--color-brand-primary)]" />
-      )}
-    </button>
-  );
-}
-
-function TabRow({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex divide-x divide-x-reverse divide-[var(--color-brand-border)] overflow-x-auto border-b border-[var(--color-brand-border)] px-4">
-      {children}
-    </div>
-  );
-}
-
-// مفتاح القسم الرئيسي (برجر/مكافآت): كبسولة عائمة، أيقونة فوق نص، والقسم
-// النشط يأخذ خلفية دائرية ملوّنة بدل خط سفلي — مستوى مختلف كلياً عن FlatTab.
-function IconTab({
-  label,
-  icon: Icon,
-  active,
-  onClick,
-}: {
-  label: string;
-  icon: LucideIcon;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex flex-1 flex-col items-center gap-1 rounded-full px-5 py-2.5 transition-colors ${
-        active ? "bg-[var(--color-brand-primary-light)]" : ""
-      }`}
-    >
-      <Icon
-        className={active ? "h-5 w-5 text-[var(--color-brand-primary)]" : "h-5 w-5 text-[var(--color-brand-text)]"}
-        strokeWidth={active ? 2.25 : 1.75}
-      />
-      <span
-        className={`text-xs ${active ? "font-semibold text-[var(--color-brand-text)]" : "text-[var(--color-brand-muted)]"}`}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
 export function MenuBrowser({
   categories,
   products: initialProducts,
   combos: initialCombos,
-  rewards,
-  pointsBalance,
 }: {
   categories: Category[];
   products: Product[];
   combos: Combo[];
-  rewards: Reward[];
-  pointsBalance: number | null;
 }) {
-  const [topSection, setTopSection] = useState<"food" | "rewards">("food");
   const [activeTab, setActiveTab] = useState<string>(categories[0]?.id ?? COMBOS_TAB_ID);
   const [selectedItem, setSelectedItem] = useState<
     { kind: "product"; item: Product } | { kind: "combo"; item: Combo } | null
@@ -103,27 +36,6 @@ export function MenuBrowser({
   const [products, setProducts] = useState(initialProducts);
   const [combos, setCombos] = useState(initialCombos);
   const [query, setQuery] = useState("");
-  const router = useRouter();
-  const { selectedRewardId, selectReward, addItem } = useCart();
-
-  // مكافأة مربوطة بصنف/وجبة حقيقية (مثل "وجبة كلاسيك مجانية") يُقدر يستبدلها
-  // العميل لوحدها بدون شراء أي شيء إضافي — الصنف/الوجبة نفسها تُضاف للسلة
-  // تلقائياً هنا (خصمها لاحقاً بالدفع = سعرها بالضبط، فتصير مجانية فعلياً).
-  // مكافأة عامة (خصم نقدي بدون ربط) تبقى تحتاج العميل يضيف صنفاً بنفسه.
-  function handleRewardTap(reward: Reward) {
-    if (reward.linkedItem && selectedRewardId !== reward.id) {
-      addItem({
-        kind: reward.linkedItem.kind,
-        refId: reward.linkedItem.refId,
-        name: reward.name,
-        unitPrice: reward.discount_amount,
-        quantity: 1,
-        modifiers: [],
-      });
-    }
-    selectReward(reward.id);
-    router.push("/cart");
-  }
 
   // العميل يتصفح ويضيف للسلة عادي بأي وقت — تقييد ساعات العمل يظهر فقط
   // بصفحة الدفع (/checkout)، مو أثناء التصفح.
@@ -169,7 +81,6 @@ export function MenuBrowser({
     activeTab === COMBOS_TAB_ID
       ? []
       : allProducts.filter((p) => p.category_id === activeTab && matchesQuery(p.name, q));
-  const visibleRewards = rewards.filter((r) => matchesQuery(r.name, q));
 
   // ترتيب تبويبات قسم "برجر" المطلوب: برجر - اضافات - وجبة - مشروبات —
   // تبويب الوجبات يُدرج مباشرة بعد صنف الإضافات.
@@ -206,82 +117,38 @@ export function MenuBrowser({
       </div>
 
       <div className="sticky top-0 z-20 mt-5 bg-[var(--color-brand-background)]/95 pb-1 backdrop-blur">
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-1 rounded-[28px] bg-[var(--color-brand-card)] p-1.5 shadow-lg shadow-black/10 ring-1 ring-black/5">
-            <IconTab
-              label="برجر"
-              icon={UtensilsCrossed}
-              active={topSection === "food"}
-              onClick={() => setTopSection("food")}
-            />
-            <IconTab
-              label="مكافآت"
-              icon={Gift}
-              active={topSection === "rewards"}
-              onClick={() => setTopSection("rewards")}
-            />
-          </div>
-        </div>
+        <SectionSwitcher />
 
         <TabRow>
-          {topSection === "food" ? (
-            categoryTabs.map((tab) => (
-              <FlatTab
-                key={tab.id}
-                label={tab.label}
-                active={activeTab === tab.id}
-                onClick={() => setActiveTab(tab.id)}
-              />
-            ))
-          ) : (
-            <FlatTab label="استبدل" active onClick={() => {}} />
-          )}
+          {categoryTabs.map((tab) => (
+            <FlatTab
+              key={tab.id}
+              label={tab.label}
+              active={activeTab === tab.id}
+              onClick={() => setActiveTab(tab.id)}
+            />
+          ))}
         </TabRow>
       </div>
 
       <div className="px-4 pt-4">
-        {topSection === "rewards" ? (
-          <div className="flex flex-col gap-4">
-            <p className="text-xs text-[var(--color-brand-muted)]">
-              اختر مكافأة لاستبدالها — تُطبَّق تلقائياً على طلبك بصفحة السلة.
-            </p>
-
-            {visibleRewards.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
-                لا توجد مكافآت متاحة حالياً.
-              </p>
-            ) : (
-              <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-                {visibleRewards.map((reward) => (
-                  <RewardCard
-                    key={reward.id}
-                    reward={reward}
-                    pointsBalance={pointsBalance}
-                    onSelect={() => handleRewardTap(reward)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-            {activeTab === COMBOS_TAB_ID &&
-              visibleCombos.map((combo) => (
-                <ComboCard
-                  key={combo.id}
-                  combo={combo}
-                  onSelect={() => setSelectedItem({ kind: "combo", item: combo })}
-                />
-              ))}
-            {visibleProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onSelect={() => setSelectedItem({ kind: "product", item: product })}
+        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
+          {activeTab === COMBOS_TAB_ID &&
+            visibleCombos.map((combo) => (
+              <ComboCard
+                key={combo.id}
+                combo={combo}
+                onSelect={() => setSelectedItem({ kind: "combo", item: combo })}
               />
             ))}
-          </div>
-        )}
+          {visibleProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onSelect={() => setSelectedItem({ kind: "product", item: product })}
+            />
+          ))}
+        </div>
       </div>
 
       {selectedItem && (
