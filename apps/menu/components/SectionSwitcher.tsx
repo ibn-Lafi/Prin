@@ -9,7 +9,7 @@ const SECTIONS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/rewards", label: "مكافآت", icon: Gift },
 ];
 
-function SectionCard({
+function SectionTab({
   href,
   label,
   icon: Icon,
@@ -23,34 +23,31 @@ function SectionCard({
   return (
     <Link
       href={href}
-      className={`flex flex-1 flex-col items-center gap-2 rounded-3xl bg-[var(--color-brand-card)] px-4 py-5 shadow-sm shadow-black/5 ring-1 transition-colors ${
-        active ? "ring-[var(--color-brand-primary)]/40" : "ring-black/5"
+      className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm transition-colors ${
+        active
+          ? "bg-[var(--color-brand-primary-light)] font-bold text-[var(--color-brand-text)]"
+          : "font-medium text-[var(--color-brand-muted)]"
       }`}
     >
-      <span
-        className={`flex h-14 w-14 items-center justify-center rounded-full ${
-          active ? "bg-[var(--color-brand-primary)]" : "bg-[var(--color-brand-primary-light)]"
-        }`}
-      >
-        <Icon
-          className={`h-7 w-7 ${active ? "text-white" : "text-[var(--color-brand-primary)]"}`}
-          strokeWidth={1.75}
-        />
-      </span>
-      <span className="text-sm font-bold text-[var(--color-brand-text)]">{label}</span>
+      <Icon
+        className={`h-4 w-4 ${active ? "text-[var(--color-brand-primary)]" : ""}`}
+        strokeWidth={active ? 2.25 : 1.75}
+      />
+      {label}
     </Link>
   );
 }
 
-// كل قسم (برجر / مكافآت) صفحة مستقلة فعلياً — نفس أسلوب بطاقات الصورة
-// المرجعية (أيقونة داخل دائرة أعلى بطاقة بيضاء مدورة، والاسم أسفلها).
+// كل قسم (برجر / مكافآت) صفحة مستقلة فعلياً — مفتاح مدمج (segmented
+// control) بحاوية واحدة وظل واحد بدل بطاقتين منفصلتين، أخف وأبسط بصرياً
+// وبارتفاع أصغر بكثير من نمط البطاقات السابق.
 export function SectionSwitcher() {
   const pathname = usePathname();
 
   return (
-    <div className="grid grid-cols-2 gap-3 px-4 pb-3">
+    <div className="mx-4 mb-3 flex items-center gap-1 rounded-2xl bg-[var(--color-brand-card)] p-1.5 shadow-sm shadow-black/5">
       {SECTIONS.map((section) => (
-        <SectionCard
+        <SectionTab
           key={section.href}
           href={section.href}
           label={section.label}
