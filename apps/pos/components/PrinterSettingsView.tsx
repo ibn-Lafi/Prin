@@ -20,6 +20,7 @@ export function PrinterSettingsView() {
   const [pairedDeviceName, setPairedDeviceName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<"idle" | "success" | "error">("idle");
+  const [testError, setTestError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -41,22 +42,24 @@ export function PrinterSettingsView() {
         const device = await requestPrinterPairing();
         setCurrentDevice(device);
         setPairedDeviceName(device.productName ?? "طابعة USB");
-      } catch {
-        setError("لم يتم اختيار طابعة");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "لم يتم اختيار طابعة");
       }
     });
   }
 
   function handleTestPrint() {
     setTestResult("idle");
+    setTestError(null);
     setError(null);
     startTransition(async () => {
       try {
         if (!getCurrentDevice()) throw new Error("لا توجد طابعة متصلة");
         await printBytes(renderTestTicket());
         setTestResult("success");
-      } catch {
+      } catch (err) {
         setTestResult("error");
+        setTestError(err instanceof Error ? err.message : String(err));
       }
     });
   }
@@ -126,9 +129,9 @@ export function PrinterSettingsView() {
               </p>
             )}
             {testResult === "error" && (
-              <p className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-brand-primary)]">
-                <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-                تعذّرت الطباعة التجريبية — تحقق من توصيل الطابعة
+              <p className="flex items-start gap-1.5 text-sm font-medium text-[var(--color-brand-primary)]">
+                <AlertTriangle className="h-4 w-4 shrink-0 translate-y-0.5" strokeWidth={1.75} />
+                <span>تعذّرت الطباعة التجريبية{testError ? `: ${testError}` : ""}</span>
               </p>
             )}
           </>

@@ -71,7 +71,17 @@ async function ensureOpenAndClaimed(device: USBDevice): Promise<{ endpointNumber
     throw new Error("تعذّر العثور على منفذ إخراج USB متوافق بهذه الطابعة");
   }
 
-  await device.claimInterface(found.interfaceNumber);
+  try {
+    await device.claimInterface(found.interfaceNumber);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // السبب الأشيع: نظام التشغيل يربط تعريف طابعة افتراضياً بنفس منفذ USB
+    // (usblp بلينكس، أو تعريف الطباعة القياسي بويندوز) قبل ما يوصل المتصفح،
+    // فيمنع WebUSB من حجز الواجهة حصرياً — يحتاج استبدال التعريف (WinUSB عبر
+    // Zadig بويندوز) أو تعطيل usblp لهذا الجهاز تحديداً (udev rule بلينكس).
+    throw new Error(`تعذّر حجز الطابعة (${message}) — على الأغلب نظام التشغيل يستخدم تعريفاً افتراضياً لنفس المنفذ ويمنع الوصول المباشر`);
+  }
+
   return { endpointNumber: found.endpointNumber };
 }
 
