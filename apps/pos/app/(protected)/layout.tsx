@@ -5,7 +5,6 @@ import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { IncomingOrdersWatcher } from "@/components/IncomingOrdersWatcher";
 import { OnlineOrdersHeaderList } from "@/components/OnlineOrdersHeaderList";
-import { PrinterConnectionBanner } from "@/components/PrinterConnectionBanner";
 import { PrintJobProcessor } from "@/components/PrintJobProcessor";
 import { LogoutButton } from "@/components/LogoutButton";
 
@@ -46,7 +45,6 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           <LogoutButton />
         </div>
       </header>
-      <PrinterConnectionBanner />
       {children}
       <IncomingOrdersWatcher />
       <PrintJobProcessor />

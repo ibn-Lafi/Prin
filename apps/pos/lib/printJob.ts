@@ -2,14 +2,28 @@
 
 import type { KitchenPrintPayload, CustomerPrintPayload } from "@brin/utils";
 import { markPrintedAction, markFailedAction } from "@/app/(protected)/printer-settings/actions";
-import { renderKitchenTicket, renderCustomerReceipt } from "./escpos";
-import { printBytes, runOnPrinter } from "./webUsbPrinter";
+import { renderKitchenTicketHtml, renderCustomerReceiptHtml } from "./receiptHtml";
+import { printHtml } from "./printViaBrowser";
+
+// تسلسل الطباعة داخل التبويب — يضمن عدم تداخل طباعة فاتورتين (مطبخ ثم عميل)
+// لو وصلتا بنفس اللحظة تقريباً، ولا يفتح أكثر من نافذة طباعة بنفس الوقت.
+let printQueue: Promise<void> = Promise.resolve();
+
+function runOnPrinter(task: () => Promise<void>): Promise<void> {
+  const result = printQueue.then(task, task);
+  printQueue = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
 
 // نقطة الطباعة الفعلية المشتركة — يستدعيها كل من: التبويب المُنشئ للمهمة
 // (طباعة فورية فور نجاح الطلب، بدون أي جولة realtime، راجع CheckoutDialog/
-// CollectPaymentDialog) ومعالج المهام غير المُسندة (PrintJobProcessor). عند
-// الفشل تُحرَّر المهمة (markFailedAction) ليقدر أي تبويب آخر بنفس الفرع
-// يلتقطها لاحقاً — نفس دور sweepPendingJobs بالنظام القديم.
+// CollectPaymentDialog) ومعالج المهام غير المُسندة (PrintJobProcessor). طباعة
+// عادية عبر المتصفح (window.print) على الطابعة المضبوطة كطابعة نظام بجهاز
+// الكاشير — بدون أي إقران أو تعريف خاص. عند الفشل تُحرَّر المهمة
+// (markFailedAction) ليقدر أي تبويب آخر بنفس الفرع يلتقطها لاحقاً.
 export async function printJob(
   jobId: string,
   target: "kitchen" | "customer",
@@ -17,11 +31,11 @@ export async function printJob(
 ): Promise<void> {
   try {
     await runOnPrinter(async () => {
-      const bytes =
+      const html =
         target === "kitchen"
-          ? renderKitchenTicket(payload as KitchenPrintPayload)
-          : renderCustomerReceipt(payload as CustomerPrintPayload);
-      await printBytes(bytes);
+          ? renderKitchenTicketHtml(payload as KitchenPrintPayload)
+          : await renderCustomerReceiptHtml(payload as CustomerPrintPayload);
+      await printHtml(html);
     });
     await markPrintedAction(jobId);
   } catch (err) {
