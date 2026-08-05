@@ -9,12 +9,15 @@
 export function printHtml(html: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const iframe = document.createElement("iframe");
+    // مهم: إطار بمساحة صفر (width/height: 0) يُنتج طباعة فارغة تماماً بمتصفحات
+    // كروميوم بغض النظر عن تنسيق الطباعة (@page) — لازم أبعاد حقيقية، فقط
+    // موضوعة خارج الشاشة المرئية بدل إخفائها بالكامل.
     iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
+    iframe.style.width = "80mm";
+    iframe.style.height = "297mm";
     iframe.style.border = "0";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
     iframe.setAttribute("aria-hidden", "true");
 
     let settled = false;
@@ -32,17 +35,27 @@ export function printHtml(html: string): Promise<void> {
     const fallbackTimer = setTimeout(settle, 15_000);
 
     iframe.onload = () => {
-      try {
-        const win = iframe.contentWindow;
-        if (!win) throw new Error("تعذّر تحضير نافذة الطباعة");
-        win.addEventListener("afterprint", settle);
-        win.focus();
-        win.print();
-      } catch (err) {
-        clearTimeout(fallbackTimer);
-        iframe.remove();
-        reject(err instanceof Error ? err : new Error(String(err)));
-      }
+      void (async () => {
+        try {
+          const win = iframe.contentWindow;
+          if (!win) throw new Error("تعذّر تحضير نافذة الطباعة");
+
+          // ضمان اكتمال رسم صورة QR قبل الطباعة — عادة تُحمَّل فوراً (data URI)
+          // لكن بعض المتصفحات تحتاج تكة إضافية لإتمام decode() قبل الطباعة.
+          const images = Array.from(win.document.images);
+          await Promise.all(
+            images.map((img) => (img.complete ? Promise.resolve() : img.decode().catch(() => undefined))),
+          );
+
+          win.addEventListener("afterprint", settle);
+          win.focus();
+          win.print();
+        } catch (err) {
+          clearTimeout(fallbackTimer);
+          iframe.remove();
+          reject(err instanceof Error ? err : new Error(String(err)));
+        }
+      })();
     };
 
     document.body.appendChild(iframe);
