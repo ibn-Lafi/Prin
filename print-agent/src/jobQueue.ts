@@ -68,7 +68,7 @@ async function processJob(job: PrintJobRow): Promise<void> {
 
     await runOnPrinter(async () => {
       const printer = getPrinter();
-      if (!printer) throw new Error("الطابعة غير مهيّأة — اضبط عنوانها من صفحة إعدادات الطباعة بالكاشير");
+      if (!printer) throw new Error("لا توجد طابعة USB متصلة بهذا الجهاز");
 
       printer.clear();
       if (job.target === "kitchen") {
