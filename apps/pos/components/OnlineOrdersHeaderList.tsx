@@ -10,7 +10,8 @@ import {
   listActiveOnlineOrdersAction,
 } from "@/app/(protected)/actions";
 import type { ActiveOnlineOrder } from "@/lib/types";
-import { getStationId, getBranchId } from "@/lib/device";
+import { getDeviceId, getBranchId } from "@/lib/device";
+import { printJob } from "@/lib/printJob";
 import { CollectPaymentDialog } from "@/components/CollectPaymentDialog";
 import { OnlineOrderDetailModal } from "@/components/OnlineOrderDetailModal";
 
@@ -58,7 +59,11 @@ export function OnlineOrdersHeaderList() {
 
   function handleAccept(orderId: string) {
     startTransition(async () => {
-      await acceptIncomingOrderAction(orderId, getStationId());
+      const result = await acceptIncomingOrderAction(orderId, getDeviceId());
+      if (result.print) {
+        void printJob(result.print.kitchen.id, "kitchen", result.print.kitchen.payload);
+        void printJob(result.print.customer.id, "customer", result.print.customer.payload);
+      }
       await refresh();
     });
   }

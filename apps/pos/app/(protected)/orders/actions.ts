@@ -1,6 +1,7 @@
 "use server";
 
 import { normalizeSaudiPhone } from "@brin/utils";
+import type { KitchenPrintPayload, CustomerPrintPayload } from "@brin/utils";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession } from "@/lib/session";
 import { queueOrderPrintJobs } from "@/lib/printing";
@@ -33,6 +34,10 @@ export type CreateOrderResult = {
   error?: string;
   orderId?: string;
   dailyOrderNumber?: number;
+  print?: {
+    kitchen: { id: string; payload: KitchenPrintPayload };
+    customer: { id: string; payload: CustomerPrintPayload };
+  };
 };
 
 export async function createOrderAction(input: CreateOrderInput): Promise<CreateOrderResult> {
@@ -81,9 +86,13 @@ export async function createOrderAction(input: CreateOrderInput): Promise<Create
     return { error: "تعذّر إنشاء الطلب" };
   }
 
-  await queueOrderPrintJobs(created.order_id, input.stationId);
+  const print = await queueOrderPrintJobs(created.order_id, input.stationId);
 
-  return { orderId: created.order_id, dailyOrderNumber: created.daily_order_number };
+  return {
+    orderId: created.order_id,
+    dailyOrderNumber: created.daily_order_number,
+    print: print ?? undefined,
+  };
 }
 
 /** يُستدعى عند إدخال جوال العميل بالدفع، لعرض رصيد نقاطه والمكافآت المتاحة له. */

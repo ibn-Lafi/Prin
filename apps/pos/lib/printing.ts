@@ -118,46 +118,99 @@ async function buildPrintPayloads(
   return { kitchenPayload, customerPayload, branchId: order.branch_id };
 }
 
+export type QueuedPrintJob<T> = { id: string; payload: T };
+
+// يُدرج إشعاراً خفيفاً لكل مهمة طباعة (بدون أي بيانات حساسة، فقط "توجد مهمة
+// طباعة جديدة لهذا الفرع") — يسمح لأي تبويب كاشير مفتوح بنفس الفرع بالاشتراك
+// اللحظي عبره ثم جلب المحتوى الفعلي عبر Server Action محمية بجلسة موظف. مفيد
+// حتى للمهام التي يطبعها التبويب المنشئ لها فوراً بنفسه — شبكة أمان إضافية
+// لو فشلت طباعتها الفورية وتحرّرت لاحقاً (راجع markFailedAction).
+async function notifyPrintJobs(
+  jobs: { id: string; branch_id: string; target: string }[],
+): Promise<void> {
+  if (jobs.length === 0) return;
+  const supabase = createSupabaseServiceRoleClient();
+  await supabase.from("print_job_notifications").insert(
+    jobs.map((job) => ({ print_job_id: job.id, branch_id: job.branch_id, target: job.target })),
+  );
+}
+
 // يبني ويُدرج مهمتي طباعة (مطبخ + عميل) بعد نجاح إنشاء/استلام أي طلب —
-// stationId (معرّف جهاز الكاشير المحلي) يحدد أي عامل طباعة يلتقط المهمتين —
-// بدونه تبقى المهمتان بدون جهاز مستهدف، لكن branch_id يبقى يقيّدها لفرع
-// الطلب نفسه، فما تُطبَع بالغلط على طابعة فرع ثاني (راجع migration 0042).
-export async function queueOrderPrintJobs(orderId: string, stationId: string | null): Promise<void> {
+// stationId (معرّف جهاز الكاشير المحلي، يُولَّد تلقائياً بالمتصفح) يحدد أي
+// تبويب يلتقط المهمتين — بدونه تبقيان بدون جهاز مستهدف (تُلتقطان عبر
+// الاشتراك اللحظي من أي تبويب بنفس الفرع)، وbranch_id يقيّدهما لفرع الطلب
+// نفسه دائماً، فما تُطبَعان بالغلط على طابعة فرع ثاني (راجع migration 0042).
+// يُرجع الحمولتين الجاهزتين للطباعة الفورية بنفس التبويب المستدعي، بلا أي
+// جولة realtime — الاشتراك اللحظي يبقى فقط لمهام لا يصاحبها تبويب كاشير
+// وقت إدراجها (طلبات المنيو الإلكتروني).
+export async function queueOrderPrintJobs(
+  orderId: string,
+  stationId: string | null,
+): Promise<{ kitchen: QueuedPrintJob<KitchenPrintPayload>; customer: QueuedPrintJob<CustomerPrintPayload> } | null> {
   const payloads = await buildPrintPayloads(orderId);
-  if (!payloads) return;
+  if (!payloads) return null;
 
   const supabase = createSupabaseServiceRoleClient();
-  await supabase.from("print_jobs").insert([
-    {
-      order_id: orderId,
-      branch_id: payloads.branchId,
-      target: "kitchen",
-      payload: payloads.kitchenPayload as unknown as Json,
-      station_id: stationId,
-    },
-    {
-      order_id: orderId,
-      branch_id: payloads.branchId,
-      target: "customer",
-      payload: payloads.customerPayload as unknown as Json,
-      station_id: stationId,
-    },
-  ]);
+  const { data, error } = await supabase
+    .from("print_jobs")
+    .insert([
+      {
+        order_id: orderId,
+        branch_id: payloads.branchId,
+        target: "kitchen",
+        payload: payloads.kitchenPayload as unknown as Json,
+        station_id: stationId,
+      },
+      {
+        order_id: orderId,
+        branch_id: payloads.branchId,
+        target: "customer",
+        payload: payloads.customerPayload as unknown as Json,
+        station_id: stationId,
+      },
+    ])
+    .select("id, target, branch_id");
+
+  if (error || !data) return null;
+
+  await notifyPrintJobs(data);
+
+  const kitchenRow = data.find((row) => row.target === "kitchen");
+  const customerRow = data.find((row) => row.target === "customer");
+  if (!kitchenRow || !customerRow) return null;
+
+  return {
+    kitchen: { id: kitchenRow.id, payload: payloads.kitchenPayload },
+    customer: { id: customerRow.id, payload: payloads.customerPayload },
+  };
 }
 
 // يُستخدم فقط عند تحصيل دفع طلب إلكتروني (pay-at-cashier) بالكاشير — مهمة
 // طباعة المطبخ سبق وطُبعت فوراً وقت إنشاء الطلب بالمنيو الإلكتروني (بدون
 // جهاز محدد)، فهنا نطبع إيصال العميل فقط، على جهاز الكاشير اللي حصّل الدفع.
-export async function queueOnlineOrderCustomerReceipt(orderId: string, stationId: string | null): Promise<void> {
+export async function queueOnlineOrderCustomerReceipt(
+  orderId: string,
+  stationId: string | null,
+): Promise<QueuedPrintJob<CustomerPrintPayload> | null> {
   const payloads = await buildPrintPayloads(orderId);
-  if (!payloads) return;
+  if (!payloads) return null;
 
   const supabase = createSupabaseServiceRoleClient();
-  await supabase.from("print_jobs").insert({
-    order_id: orderId,
-    branch_id: payloads.branchId,
-    target: "customer",
-    payload: payloads.customerPayload as unknown as Json,
-    station_id: stationId,
-  });
+  const { data, error } = await supabase
+    .from("print_jobs")
+    .insert({
+      order_id: orderId,
+      branch_id: payloads.branchId,
+      target: "customer",
+      payload: payloads.customerPayload as unknown as Json,
+      station_id: stationId,
+    })
+    .select("id, target, branch_id")
+    .single();
+
+  if (error || !data) return null;
+
+  await notifyPrintJobs([data]);
+
+  return { id: data.id, payload: payloads.customerPayload };
 }

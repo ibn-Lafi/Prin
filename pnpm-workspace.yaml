@@ -1,7 +1,6 @@
 packages:
   - "apps/*"
   - "packages/*"
-  - "print-agent"
 allowBuilds:
   esbuild: true
   sharp: true

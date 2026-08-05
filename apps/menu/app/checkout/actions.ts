@@ -74,12 +74,13 @@ type RawOrderForKitchenPrint = {
   }[];
 };
 
-/** يبني ويُدرج مهمة طباعة المطبخ فقط (بدون جهاز محدد — أول عامل طباعة بنفس
- * فرع الطلب يحجزها ذرّياً، راجع print-agent/src/jobQueue.ts) فور إنشاء
- * الطلب مباشرة — المطبخ يبدأ التحضير قبل ما العميل يوصل ويدفع. إيصال
- * العميل يُطبع لاحقاً بالكاشير وقت تحصيل الدفع (station_id محدد حينها).
- * نعيد جلب الطلب كامل من قاعدة البيانات دائماً (مو من بيانات السلة
- * المرسلة)، نفس مبدأ apps/pos/lib/printing.ts. */
+/** يبني ويُدرج مهمة طباعة المطبخ فقط (بدون جهاز محدد — أول تبويب كاشير مفتوح
+ * بنفس فرع الطلب يحجزها ذرّياً عبر اشتراك print_job_notifications اللحظي،
+ * راجع apps/pos/components/PrintJobProcessor.tsx) فور إنشاء الطلب مباشرة —
+ * المطبخ يبدأ التحضير قبل ما العميل يوصل ويدفع. إيصال العميل يُطبع لاحقاً
+ * بالكاشير وقت تحصيل الدفع (station_id محدد حينها). نعيد جلب الطلب كامل من
+ * قاعدة البيانات دائماً (مو من بيانات السلة المرسلة)، نفس مبدأ
+ * apps/pos/lib/printing.ts. */
 async function queueKitchenPrintJob(orderId: string): Promise<void> {
   const supabase = createSupabaseServiceRoleClient();
   const { data: rawOrder } = await supabase
@@ -109,12 +110,24 @@ async function queueKitchenPrintJob(orderId: string): Promise<void> {
     })),
   };
 
-  await supabase.from("print_jobs").insert({
-    order_id: orderId,
+  const { data: inserted, error } = await supabase
+    .from("print_jobs")
+    .insert({
+      order_id: orderId,
+      branch_id: order.branch_id,
+      target: "kitchen",
+      payload: payload as unknown as Json,
+      station_id: null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) return;
+
+  await supabase.from("print_job_notifications").insert({
+    print_job_id: inserted.id,
     branch_id: order.branch_id,
     target: "kitchen",
-    payload: payload as unknown as Json,
-    station_id: null,
   });
 }
 

@@ -1,34 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pencil, Usb } from "lucide-react";
-import { useStationId, setStationId, useBranchId } from "@/lib/device";
-import { linkStationBranchAction } from "@/app/(protected)/printer-settings/actions";
+import { useEffect, useState, useTransition } from "react";
+import { Usb, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useDeviceId } from "@/lib/device";
+import {
+  isWebUsbSupported,
+  requestPrinterPairing,
+  getPairedPrinter,
+  setCurrentDevice,
+  getCurrentDevice,
+  printBytes,
+} from "@/lib/webUsbPrinter";
+import { renderTestTicket } from "@/lib/escpos";
 
 export function PrinterSettingsView() {
-  const stationId = useStationId();
-  const branchId = useBranchId();
-  const [editingRequested, setEditingRequested] = useState(false);
-  const isEditingStationId = editingRequested || !stationId;
-  const [stationIdDraft, setStationIdDraft] = useState("");
+  const deviceId = useDeviceId();
+
+  const [supported, setSupported] = useState(true);
+  const [pairedDeviceName, setPairedDeviceName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<"idle" | "success" | "error">("idle");
+  const [isPending, startTransition] = useTransition();
 
-  // يربط محطة الطباعة بفرع الجهاز تلقائياً كلما توفّر الاثنان معاً — عشان
-  // مهام الطباعة غير المُسندة (طلبات إلكترونية) تنحصر بطابعات نفس الفرع.
   useEffect(() => {
-    if (!stationId || !branchId) return;
-    void linkStationBranchAction(stationId, branchId);
-  }, [stationId, branchId]);
-
-  function handleSaveStationId() {
-    const trimmed = stationIdDraft.trim();
-    if (!trimmed) {
-      setError("معرّف الجهاز مطلوب");
-      return;
+    async function init() {
+      setSupported(isWebUsbSupported());
+      const device = await getPairedPrinter();
+      if (device) {
+        setCurrentDevice(device);
+        setPairedDeviceName(device.productName ?? "طابعة USB");
+      }
     }
+    void init();
+  }, []);
+
+  function handleConnect() {
     setError(null);
-    setStationId(trimmed);
-    setEditingRequested(false);
+    startTransition(async () => {
+      try {
+        const device = await requestPrinterPairing();
+        setCurrentDevice(device);
+        setPairedDeviceName(device.productName ?? "طابعة USB");
+      } catch {
+        setError("لم يتم اختيار طابعة");
+      }
+    });
+  }
+
+  function handleTestPrint() {
+    setTestResult("idle");
+    setError(null);
+    startTransition(async () => {
+      try {
+        if (!getCurrentDevice()) throw new Error("لا توجد طابعة متصلة");
+        await printBytes(renderTestTicket());
+        setTestResult("success");
+      } catch {
+        setTestResult("error");
+      }
+    });
   }
 
   return (
@@ -36,61 +66,76 @@ export function PrinterSettingsView() {
       <div className="flex flex-col gap-2 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
         <p className="text-sm font-semibold">معرّف هذا الجهاز</p>
         <p className="text-xs text-[var(--color-brand-muted)]">
-          يجب أن يطابق تماماً STATION_ID المضبوط في ملف .env لعامل الطباعة المثبّت على هذا الجهاز فعلياً — يُخزَّن
-          في متصفح هذا الجهاز فقط، بمعزل عن تسجيل دخول الموظف.
+          يُولَّد تلقائياً ويُخزَّن بمتصفح هذا الجهاز فقط — للاستخدام الداخلي عند تشخيص مشاكل الطباعة، بلا حاجة لأي
+          إدخال يدوي.
         </p>
-        {isEditingStationId ? (
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={stationIdDraft}
-              onChange={(e) => setStationIdDraft(e.target.value)}
-              placeholder="مثال: cashier-1"
-              className="flex-1 rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
-            />
-            <button
-              type="button"
-              onClick={handleSaveStationId}
-              className="shrink-0 rounded-xl bg-[var(--color-brand-primary)] px-4 py-2.5 text-sm font-semibold text-white"
-            >
-              حفظ
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between rounded-xl bg-[var(--color-brand-background)] px-3 py-2.5">
-            <span className="font-mono text-sm">{stationId}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setStationIdDraft(stationId ?? "");
-                setEditingRequested(true);
-              }}
-              className="flex items-center gap-1 text-xs font-medium text-[var(--color-brand-muted)]"
-            >
-              <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} />
-              تغيير
-            </button>
-          </div>
-        )}
+        <div className="flex items-center justify-between rounded-xl bg-[var(--color-brand-background)] px-3 py-2.5">
+          <span className="font-mono text-xs text-[var(--color-brand-muted)]">{deviceId ?? "..."}</span>
+        </div>
       </div>
 
-      {stationId && !isEditingStationId && (
-        <div className="flex flex-col gap-2 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
-          <p className="flex items-center gap-1.5 text-sm font-semibold">
-            <Usb className="h-4 w-4 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
-            الطابعة
-          </p>
-          <p className="text-xs text-[var(--color-brand-muted)]">
-            وصّل طابعة الفواتير الحرارية بمنفذ USB بهذا الجهاز — عامل الطباعة يكتشفها ويطبع عليها تلقائياً بدون أي
-            إعداد إضافي، خلال 15 ثانية من توصيلها. طابعة واحدة فقط تطبع فاتورة المطبخ ثم فاتورة العميل تباعاً، كل
-            واحدة تُقص لوحدها.
-          </p>
-        </div>
-      )}
+      <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
+        <p className="flex items-center gap-1.5 text-sm font-semibold">
+          <Usb className="h-4 w-4 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
+          الطابعة
+        </p>
 
-      {error && isEditingStationId && (
-        <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>
-      )}
+        {!supported ? (
+          <p className="text-sm font-medium text-[var(--color-brand-primary)]">
+            هذا المتصفح لا يدعم الطباعة التلقائية — استخدم Chrome أو Edge.
+          </p>
+        ) : (
+          <>
+            <p className="text-xs text-[var(--color-brand-muted)]">
+              وصّل طابعة الفواتير الحرارية بمنفذ USB بهذا الجهاز ثم اضغط &quot;توصيل الطابعة&quot; — إذن يُمنح مرة واحدة فقط،
+              وبعدها تتصل الطابعة تلقائياً بكل فتح لهذه الصفحة. طابعة واحدة فقط تطبع فاتورة المطبخ ثم فاتورة العميل
+              تباعاً، كل واحدة تُقص لوحدها.
+            </p>
+
+            {pairedDeviceName ? (
+              <div className="flex items-center gap-2 rounded-xl bg-green-50 px-3 py-2.5 text-sm font-medium text-green-700">
+                <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                متصل: {pairedDeviceName}
+              </div>
+            ) : (
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleConnect}
+                className="rounded-xl bg-[var(--color-brand-primary)] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                توصيل الطابعة
+              </button>
+            )}
+
+            {pairedDeviceName && (
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={handleTestPrint}
+                className="rounded-xl bg-[var(--color-brand-background)] px-4 py-2.5 text-sm font-medium ring-1 ring-[var(--color-brand-border)] disabled:opacity-50"
+              >
+                طباعة تجريبية
+              </button>
+            )}
+
+            {testResult === "success" && (
+              <p className="flex items-center gap-1.5 text-sm font-medium text-green-700">
+                <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                تمت الطباعة — تحقق من الورق الخارج من الطابعة
+              </p>
+            )}
+            {testResult === "error" && (
+              <p className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-brand-primary)]">
+                <AlertTriangle className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+                تعذّرت الطباعة التجريبية — تحقق من توصيل الطابعة
+              </p>
+            )}
+          </>
+        )}
+
+        {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
+      </div>
     </div>
   );
 }

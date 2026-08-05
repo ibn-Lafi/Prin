@@ -7,7 +7,8 @@ import { useOrderTicket } from "@/hooks/useOrderTicket";
 import { useCheckoutCustomer, ensureRewardsLoaded, resetCheckoutCustomer } from "@/hooks/useCheckoutCustomer";
 import { createOrderAction, lookupDiscountCodeAction } from "@/app/(protected)/orders/actions";
 import { PrintStatusIndicator } from "@/components/PrintStatusIndicator";
-import { getStationId, getBranchId } from "@/lib/device";
+import { getDeviceId, getBranchId } from "@/lib/device";
+import { printJob } from "@/lib/printJob";
 import type { DiscountCodePreview } from "@/lib/types";
 
 export function CheckoutDialog({
@@ -132,7 +133,7 @@ export function CheckoutDialog({
         payments,
         rewardId: selectedReward?.id ?? null,
         discountCode: appliedCode?.code ?? null,
-        stationId: getStationId(),
+        stationId: getDeviceId(),
         branchId: getBranchId(),
       });
 
@@ -144,6 +145,11 @@ export function CheckoutDialog({
       clear();
       resetCheckoutCustomer();
       setConfirmation({ orderId: result.orderId!, dailyOrderNumber: result.dailyOrderNumber! });
+
+      if (result.print) {
+        void printJob(result.print.kitchen.id, "kitchen", result.print.kitchen.payload);
+        void printJob(result.print.customer.id, "customer", result.print.customer.payload);
+      }
     });
   }
 

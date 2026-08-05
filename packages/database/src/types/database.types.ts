@@ -626,30 +626,6 @@ export type Database = {
         };
         Relationships: [];
       };
-      print_agent_status: {
-        Row: {
-          id: string;
-          branch_id: string | null;
-          last_heartbeat_at: string | null;
-          printer_connected: boolean;
-          updated_at: string;
-        };
-        Insert: {
-          id: string;
-          branch_id?: string | null;
-          last_heartbeat_at?: string | null;
-          printer_connected?: boolean;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          branch_id?: string | null;
-          last_heartbeat_at?: string | null;
-          printer_connected?: boolean;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
       print_jobs: {
         Row: {
           id: string;
@@ -692,6 +668,30 @@ export type Database = {
           station_id?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      print_job_notifications: {
+        Row: {
+          id: string;
+          print_job_id: string;
+          branch_id: string;
+          target: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          print_job_id: string;
+          branch_id: string;
+          target: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          print_job_id?: string;
+          branch_id?: string;
+          target?: string;
+          created_at?: string;
         };
         Relationships: [];
       };

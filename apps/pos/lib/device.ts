@@ -2,22 +2,12 @@
 
 import { useSyncExternalStore } from "react";
 
-const STATION_ID_KEY = "brin_pos_station_id";
+const DEVICE_ID_KEY = "brin_pos_device_id";
 const BRANCH_ID_KEY = "brin_pos_branch_id";
 const listeners = new Set<() => void>();
 
-function getSnapshot(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(STATION_ID_KEY);
-}
-
 function getServerSnapshot(): string | null {
   return null;
-}
-
-function getBranchSnapshot(): string | null {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem(BRANCH_ID_KEY);
 }
 
 function subscribe(listener: () => void) {
@@ -25,29 +15,43 @@ function subscribe(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-/** معرّف جهاز الكاشير الحالي — يخزَّن بمتصفح هذا الجهاز فقط (localStorage)،
- * مستقل عن جلسة الموظف (نفس الموظف ممكن يسجّل دخول من أي جهاز، لكن معرّف
- * الجهاز ثابت). لازم يطابق STATION_ID بملف .env لعامل الطباعة المثبّت
- * فعلياً على نفس الجهاز — راجع صفحة إعدادات الطباعة. نسخة الـ hook تتفاعل
- * تلقائياً مع أي تغيير عبر setStationId (آمنة لهيدريشن Next.js، ترجع null
- * بالسيرفر دائماً)، ونسخة الدالة العادية للقراءة الفورية بمعالِجات الأحداث. */
-export function useStationId(): string | null {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+// معرّف جهاز الكاشير الحالي — يُولَّد تلقائياً (بدون أي إدخال يدوي) عند أول
+// قراءة بالمتصفح ويبقى ثابتاً بعدها بـ localStorage. يحدد أي طلبات/مهام
+// طباعة تخص هذا الجهاز تحديداً، ويحل محل معرّف المحطة اليدوي القديم.
+function getDeviceIdSnapshot(): string | null {
+  if (typeof window === "undefined") return null;
+  let id = window.localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    window.localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
 }
 
-export function getStationId(): string | null {
-  return getSnapshot();
+export function useDeviceId(): string | null {
+  return useSyncExternalStore(subscribe, getDeviceIdSnapshot, getServerSnapshot);
 }
 
-export function setStationId(stationId: string): void {
+export function getDeviceId(): string | null {
+  return getDeviceIdSnapshot();
+}
+
+// منفذ طوارئ فقط (مثلاً استبدال جهاز الكاشير فعلياً) — يمسح المعرّف الحالي
+// فيُولَّد واحد جديد تلقائياً عند أول قراءة تالية.
+export function resetDeviceId(): void {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STATION_ID_KEY, stationId);
+  window.localStorage.removeItem(DEVICE_ID_KEY);
   listeners.forEach((listener) => listener());
+}
+
+function getBranchSnapshot(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(BRANCH_ID_KEY);
 }
 
 /** فرع هذا الجهاز — يُضبط مرة وحدة (شاشة اختيار الفرع قبل أول تسجيل دخول)
  * ويبقى ثابتاً لكل طلبات/ورديات/مهام طباعة هذا الجهاز، بمعزل عن أي موظف
- * يسجّل دخول عليه. نفس مبدأ station_id بالضبط. */
+ * يسجّل دخول عليه. */
 export function useBranchId(): string | null {
   return useSyncExternalStore(subscribe, getBranchSnapshot, getServerSnapshot);
 }

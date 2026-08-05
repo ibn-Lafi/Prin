@@ -2,16 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { roundMoney } from "@brin/utils";
+import type { KitchenPrintPayload, CustomerPrintPayload } from "@brin/utils";
 import { createSupabaseServiceRoleClient } from "@/lib/supabaseClient";
 import { getSession, clearSession } from "@/lib/session";
 import { queueOrderPrintJobs, queueOnlineOrderCustomerReceipt } from "@/lib/printing";
-import type {
-  ActiveOnlineOrder,
-  IncomingOrder,
-  PrintAgentStatus,
-  PrintJobStatus,
-  ShiftSummary,
-} from "@/lib/types";
+import type { ActiveOnlineOrder, IncomingOrder, PrintJobStatus, ShiftSummary } from "@/lib/types";
 
 // شكل نتيجة الاستعلام المتداخل (Nested Select) — نصرّحه يدوياً ونكسره بـ "as"
 // عند القراءة، بنفس نمط apps/menu، لأن database.types.ts لا يحمل معلومات
@@ -96,11 +91,19 @@ export async function fetchIncomingOrderDetailsAction(
   };
 }
 
+export type AcceptIncomingOrderResult = {
+  error?: string;
+  print?: {
+    kitchen: { id: string; payload: KitchenPrintPayload };
+    customer: { id: string; payload: CustomerPrintPayload };
+  };
+};
+
 /** يحوّل الطلب من "received" إلى "accepted" — بضمان ذرّي ضد استلام مزدوج من جهازين. */
 export async function acceptIncomingOrderAction(
   orderId: string,
   stationId: string | null,
-): Promise<{ error?: string }> {
+): Promise<AcceptIncomingOrderResult> {
   const session = await getSession();
   if (!session) {
     return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
@@ -126,9 +129,9 @@ export async function acceptIncomingOrderAction(
     return { error: "الطلب تم استلامه مسبقاً من جهاز آخر" };
   }
 
-  await queueOrderPrintJobs(orderId, stationId);
+  const print = await queueOrderPrintJobs(orderId, stationId);
 
-  return {};
+  return { print: print ?? undefined };
 }
 
 /** قائمة الطلبات الإلكترونية النشطة (بانتظار القبول أو قيد التحضير) — تغذّي
@@ -201,11 +204,16 @@ export async function completeOnlineOrderAction(orderId: string): Promise<{ erro
 /** يحصّل دفع طلب إلكتروني (كاش/شبكة) وقت استلام العميل له بالكاشير — يستدعي
  * RPC ذرّية (collect_online_order_payment) تمنع التحصيل المزدوج وتمنح نقاط
  * الاكتساب، ثم يطبع إيصال العميل على جهاز هذا الكاشير تحديداً. */
+export type CollectOnlinePaymentResult = {
+  error?: string;
+  print?: { id: string; payload: CustomerPrintPayload };
+};
+
 export async function collectOnlinePaymentAction(
   orderId: string,
   payments: { method: "cash" | "card_terminal"; amount: number }[],
   stationId: string | null,
-): Promise<{ error?: string }> {
+): Promise<CollectOnlinePaymentResult> {
   const session = await getSession();
   if (!session) {
     return { error: "الجلسة منتهية — سجّل الدخول من جديد" };
@@ -226,9 +234,9 @@ export async function collectOnlinePaymentAction(
     return { error: error.message || "تعذّر تحصيل الدفع" };
   }
 
-  await queueOnlineOrderCustomerReceipt(orderId, stationId);
+  const print = await queueOnlineOrderCustomerReceipt(orderId, stationId);
 
-  return {};
+  return { print: print ?? undefined };
 }
 
 type ShiftPosOrderRow = {
@@ -319,26 +327,4 @@ export async function getPrintJobStatusAction(orderId: string): Promise<PrintJob
     .eq("order_id", orderId);
 
   return (data ?? []) as PrintJobStatus[];
-}
-
-/** يُستطلَع دورياً بواجهة الكاشير لإظهار تنبيه فقد اتصال الطابعة/جهاز الطباعة —
- * مقيّد بجهاز الكاشير الحالي (stationId) بدل حالة عامة لكل المطعم، حتى لا يشوف
- * كاشير جهاز A تنبيهاً بسبب طابعة جهاز B. */
-export async function getPrintAgentStatusAction(stationId: string | null): Promise<PrintAgentStatus | null> {
-  const session = await getSession();
-  if (!session || !stationId) return null;
-
-  const supabase = createSupabaseServiceRoleClient();
-  const { data } = await supabase
-    .from("print_agent_status")
-    .select("last_heartbeat_at, printer_connected")
-    .eq("id", stationId)
-    .maybeSingle();
-
-  if (!data) return null;
-
-  return {
-    lastHeartbeatAt: data.last_heartbeat_at,
-    printerConnected: data.printer_connected,
-  };
 }

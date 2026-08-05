@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { X } from "lucide-react";
 import { formatCurrency, roundMoney } from "@brin/utils";
 import { collectOnlinePaymentAction } from "@/app/(protected)/actions";
-import { getStationId } from "@/lib/device";
+import { getDeviceId } from "@/lib/device";
+import { printJob } from "@/lib/printJob";
 
 export function CollectPaymentDialog({
   orderId,
@@ -55,10 +56,13 @@ export function CollectPaymentDialog({
     }
 
     startTransition(async () => {
-      const result = await collectOnlinePaymentAction(orderId, payments, getStationId());
+      const result = await collectOnlinePaymentAction(orderId, payments, getDeviceId());
       if (result.error) {
         setError(result.error);
         return;
+      }
+      if (result.print) {
+        void printJob(result.print.id, "customer", result.print.payload);
       }
       onCollected();
     });
