@@ -24,20 +24,23 @@ async function ensureStationRow(): Promise<void> {
     .upsert({ id: config.stationId }, { onConflict: "id", ignoreDuplicates: true });
 }
 
-async function syncPrinterSettings(): Promise<void> {
+async function syncBranch(): Promise<void> {
   const { data, error } = await supabase
     .from("print_agent_status")
-    .select("printer_interface, branch_id")
+    .select("branch_id")
     .eq("id", config.stationId)
     .maybeSingle();
 
   if (error || !data) return;
 
-  configurePrinter(data.printer_interface);
   stationBranchId = data.branch_id;
 }
 
 export function startSettingsSync(): void {
-  void ensureStationRow().then(() => syncPrinterSettings());
-  setInterval(() => void syncPrinterSettings(), SYNC_INTERVAL_MS);
+  void ensureStationRow().then(() => syncBranch());
+  configurePrinter();
+  setInterval(() => {
+    void syncBranch();
+    configurePrinter();
+  }, SYNC_INTERVAL_MS);
 }

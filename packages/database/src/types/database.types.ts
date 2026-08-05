@@ -632,7 +632,6 @@ export type Database = {
           branch_id: string | null;
           last_heartbeat_at: string | null;
           printer_connected: boolean;
-          printer_interface: string | null;
           updated_at: string;
         };
         Insert: {
@@ -640,7 +639,6 @@ export type Database = {
           branch_id?: string | null;
           last_heartbeat_at?: string | null;
           printer_connected?: boolean;
-          printer_interface?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -648,7 +646,6 @@ export type Database = {
           branch_id?: string | null;
           last_heartbeat_at?: string | null;
           printer_connected?: boolean;
-          printer_interface?: string | null;
           updated_at?: string;
         };
         Relationships: [];

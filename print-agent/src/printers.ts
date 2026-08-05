@@ -1,8 +1,15 @@
+import fs from "node:fs";
+import path from "node:path";
 import pkg from "node-thermal-printer";
 import type { ThermalPrinter } from "node-thermal-printer";
 import { config } from "./config";
 
 const { ThermalPrinter: ThermalPrinterClass, PrinterTypes, CharacterSet } = pkg;
+
+// مسار منافذ USB الخام القياسي بلينكس لطابعات ESC/POS الحرارية (تعريف
+// usblp بالنواة) — لا يتطلب تعريف أي عنوان يدوي من الكاشير، توصيل الطابعة
+// بمنفذ USB يكفي.
+const USB_PRINTER_DIR = "/dev/usb";
 
 function buildPrinter(printerInterface: string): ThermalPrinter {
   return new ThermalPrinterClass({
@@ -15,7 +22,19 @@ function buildPrinter(printerInterface: string): ThermalPrinter {
   });
 }
 
-let printerInterface: string | null = config.printerInterfaceFallback;
+function detectUsbPrinterInterface(): string | null {
+  try {
+    const device = fs
+      .readdirSync(USB_PRINTER_DIR)
+      .filter((name) => /^lp\d+$/.test(name))
+      .sort()[0];
+    return device ? path.join(USB_PRINTER_DIR, device) : null;
+  } catch {
+    return null;
+  }
+}
+
+let printerInterface: string | null = detectUsbPrinterInterface() ?? config.printerInterfaceFallback;
 let printer: ThermalPrinter | null = printerInterface ? buildPrinter(printerInterface) : null;
 
 export function getPrinter(): ThermalPrinter | null {
@@ -23,21 +42,21 @@ export function getPrinter(): ThermalPrinter | null {
 }
 
 /**
- * تُستدعى دورياً بعد قراءة إعدادات الطباعة من print_agent_status — تعيد بناء
- * كائن الطابعة فقط لو تغيّرت واجهتها فعلاً، تفادياً لإعادة اتصال بلا داعٍ كل
- * دورة استطلاع. القيمة null أو الفارغة من قاعدة البيانات ترجع للاحتياطي
- * (متغير البيئة المحلي) إن وُجد.
+ * تُستدعى دورياً — تعيد فحص منافذ USB المتصلة وتبني كائن الطابعة تلقائياً،
+ * فقط لو تغيّرت واجهتها فعلاً (طابعة اتصلت أو انفصلت)، تفادياً لإعادة اتصال
+ * بلا داعٍ كل دورة استطلاع. PRINTER_INTERFACE بمتغيرات البيئة يبقى احتياطياً
+ * فقط لو ما فيه طابعة USB مكتشفة (مثل طابعة شبكة tcp://).
  */
-export function configurePrinter(dbInterface: string | null): void {
-  const resolved = dbInterface || config.printerInterfaceFallback;
+export function configurePrinter(): void {
+  const resolved = detectUsbPrinterInterface() ?? config.printerInterfaceFallback;
 
   if (resolved && resolved !== printerInterface) {
     printerInterface = resolved;
     printer = buildPrinter(resolved);
-    console.log(`[printers] تحديث واجهة الطابعة: ${resolved}`);
+    console.log(`[printers] طابعة USB مكتشفة: ${resolved}`);
   } else if (!resolved && printerInterface) {
     printerInterface = null;
     printer = null;
-    console.log("[printers] الطابعة غير مهيّأة (لا يوجد عنوان)");
+    console.log("[printers] لا توجد طابعة USB متصلة");
   }
 }

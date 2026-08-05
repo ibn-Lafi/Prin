@@ -1,13 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Pencil, Usb } from "lucide-react";
 import { useStationId, setStationId, useBranchId } from "@/lib/device";
-import {
-  getStationPrinterSettingsAction,
-  saveStationPrinterSettingsAction,
-  linkStationBranchAction,
-} from "@/app/(protected)/printer-settings/actions";
+import { linkStationBranchAction } from "@/app/(protected)/printer-settings/actions";
 
 export function PrinterSettingsView() {
   const stationId = useStationId();
@@ -15,25 +11,7 @@ export function PrinterSettingsView() {
   const [editingRequested, setEditingRequested] = useState(false);
   const isEditingStationId = editingRequested || !stationId;
   const [stationIdDraft, setStationIdDraft] = useState("");
-  const [printerInterface, setPrinterInterface] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!stationId) return;
-
-    let cancelled = false;
-    async function loadSettings() {
-      const settings = await getStationPrinterSettingsAction(stationId!);
-      if (cancelled) return;
-      setPrinterInterface(settings?.printerInterface ?? "");
-    }
-    void loadSettings();
-    return () => {
-      cancelled = true;
-    };
-  }, [stationId]);
 
   // يربط محطة الطباعة بفرع الجهاز تلقائياً كلما توفّر الاثنان معاً — عشان
   // مهام الطباعة غير المُسندة (طلبات إلكترونية) تنحصر بطابعات نفس الفرع.
@@ -51,22 +29,6 @@ export function PrinterSettingsView() {
     setError(null);
     setStationId(trimmed);
     setEditingRequested(false);
-  }
-
-  function handleSavePrinters() {
-    if (!stationId) return;
-    setError(null);
-    setSaved(false);
-    startTransition(async () => {
-      const result = await saveStationPrinterSettingsAction(stationId, {
-        printerInterface,
-      });
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      setSaved(true);
-    });
   }
 
   return (
@@ -113,34 +75,16 @@ export function PrinterSettingsView() {
       </div>
 
       {stationId && !isEditingStationId && (
-        <div className="flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
-          <p className="text-sm font-semibold">إعدادات الطباعة</p>
-          <label className="flex flex-col gap-1 text-sm text-[var(--color-brand-muted)]">
-            عنوان الطابعة
-            <input
-              type="text"
-              value={printerInterface}
-              onChange={(e) => setPrinterInterface(e.target.value)}
-              placeholder="printer:/dev/usb/lp0 أو tcp://192.168.1.50:9100"
-              className="rounded-xl border border-[var(--color-brand-border)] px-3 py-2.5 text-[var(--color-brand-text)] outline-none focus:border-[var(--color-brand-primary)]"
-            />
-          </label>
-          <p className="text-xs text-[var(--color-brand-muted)]">
-            طابعة واحدة فقط تطبع فاتورة المطبخ ثم فاتورة العميل تباعاً، كل واحدة تُقص لوحدها — يقرأها عامل الطباعة
-            تلقائياً خلال 15 ثانية من الحفظ، بدون إعادة تشغيل، بشرط تطابق STATION_ID.
+        <div className="flex flex-col gap-2 rounded-2xl bg-[var(--color-brand-card)] p-5 ring-1 ring-[var(--color-brand-border)]">
+          <p className="flex items-center gap-1.5 text-sm font-semibold">
+            <Usb className="h-4 w-4 text-[var(--color-brand-muted)]" strokeWidth={1.75} />
+            الطابعة
           </p>
-
-          {error && <p className="text-sm font-medium text-[var(--color-brand-primary)]">{error}</p>}
-          {saved && !error && <p className="text-sm font-medium text-green-700">تم الحفظ</p>}
-
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={handleSavePrinters}
-            className="rounded-xl bg-[var(--color-brand-primary)] px-4 py-2.5 font-semibold text-white disabled:opacity-50"
-          >
-            {isPending ? "جارِ الحفظ..." : "حفظ التغييرات"}
-          </button>
+          <p className="text-xs text-[var(--color-brand-muted)]">
+            وصّل طابعة الفواتير الحرارية بمنفذ USB بهذا الجهاز — عامل الطباعة يكتشفها ويطبع عليها تلقائياً بدون أي
+            إعداد إضافي، خلال 15 ثانية من توصيلها. طابعة واحدة فقط تطبع فاتورة المطبخ ثم فاتورة العميل تباعاً، كل
+            واحدة تُقص لوحدها.
+          </p>
         </div>
       )}
 
