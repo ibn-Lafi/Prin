@@ -77,13 +77,24 @@ export function MenuBrowser({
   }, []);
 
   const q = query.trim().toLowerCase();
+  const isSearching = q.length > 0;
   const allProducts = products.filter(isVisible);
   const allCombos = combos.filter(isVisible);
-  const visibleCombos = allCombos.filter((c) => matchesQuery(c.name, q));
-  const visibleProducts =
-    activeTab === COMBOS_TAB_ID
+
+  // أثناء البحث نتجاهل التبويب النشط ونطابق القائمة كاملة — قبل هذا التعديل
+  // كان البحث يقتصر على تبويب الصنف الحالي فقط، فيرجع نتيجة فارغة لصنف موجود
+  // فعلاً بتبويب آخر، وهذا مربك جداً للعميل. خارج البحث نرجع لتصفح التبويبات
+  // العادي كالمعتاد.
+  const visibleCombos = isSearching
+    ? allCombos.filter((c) => matchesQuery(c.name, q))
+    : activeTab === COMBOS_TAB_ID
+      ? allCombos
+      : [];
+  const visibleProducts = isSearching
+    ? allProducts.filter((p) => matchesQuery(p.name, q))
+    : activeTab === COMBOS_TAB_ID
       ? []
-      : allProducts.filter((p) => p.category_id === activeTab && matchesQuery(p.name, q));
+      : allProducts.filter((p) => p.category_id === activeTab);
 
   // ترتيب تبويبات قسم "برجر" المطلوب: برجر - اضافات - وجبة - مشروبات —
   // تبويب الوجبات يُدرج مباشرة بعد صنف الإضافات.
@@ -139,23 +150,29 @@ export function MenuBrowser({
       </div>
 
       <div className="px-4 pt-4">
-        <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
-          {activeTab === COMBOS_TAB_ID &&
-            visibleCombos.map((combo) => (
-              <ComboCard
-                key={combo.id}
-                combo={combo}
-                onSelect={() => setSelectedItem({ kind: "combo", item: combo })}
+        {isSearching && visibleCombos.length === 0 && visibleProducts.length === 0 ? (
+          <p className="py-10 text-center text-sm text-[var(--color-brand-muted)]">
+            لا توجد نتائج لـ &quot;{query.trim()}&quot;
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4">
+            {(isSearching || activeTab === COMBOS_TAB_ID) &&
+              visibleCombos.map((combo) => (
+                <ComboCard
+                  key={combo.id}
+                  combo={combo}
+                  onSelect={() => setSelectedItem({ kind: "combo", item: combo })}
+                />
+              ))}
+            {visibleProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onSelect={() => setSelectedItem({ kind: "product", item: product })}
               />
             ))}
-          {visibleProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onSelect={() => setSelectedItem({ kind: "product", item: product })}
-            />
-          ))}
-        </div>
+          </div>
+        )}
       </div>
 
       {selectedItem && (
