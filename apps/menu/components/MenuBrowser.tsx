@@ -105,7 +105,7 @@ export function MenuBrowser({
   }
 
   return (
-    <main className="mx-auto max-w-5xl pb-32">
+    <main className="mx-auto max-w-5xl pb-44">
       <div className="relative z-10 -mt-7 px-4">
         <label className="flex items-center gap-2.5 rounded-full bg-[var(--color-brand-card)] px-4 py-3.5 shadow-lg shadow-black/10 ring-1 ring-black/5">
           <Search className="h-4.5 w-4.5 shrink-0 text-[var(--color-brand-muted)]" strokeWidth={2} />

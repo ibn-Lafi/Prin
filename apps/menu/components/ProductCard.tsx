@@ -3,14 +3,35 @@
 import { Plus, UtensilsCrossed } from "lucide-react";
 import { formatCurrency } from "@brin/utils";
 import type { Product } from "@/lib/types";
+import { useCart } from "@/hooks/useCart";
 
+// نفس منطق ComboCard وCartSuggestions بالضبط: صنف بلا أي مجموعة تعديلات
+// يُضاف مباشرة بضغطة واحدة (أسرع للعميل)، وإلا تُفتح نافذة الاختيار كالمعتاد.
 export function ProductCard({ product, onSelect }: { product: Product; onSelect: () => void }) {
+  const { addItem } = useCart();
   const available = product.is_available;
+  const hasModifiers = product.modifier_groups.length > 0;
+
+  function handleClick() {
+    if (!available) return;
+    if (hasModifiers) {
+      onSelect();
+      return;
+    }
+    addItem({
+      kind: "product",
+      refId: product.id,
+      name: product.name,
+      unitPrice: product.price,
+      quantity: 1,
+      modifiers: [],
+    });
+  }
 
   return (
     <button
       type="button"
-      onClick={available ? onSelect : undefined}
+      onClick={available ? handleClick : undefined}
       disabled={!available}
       className="flex w-full flex-col overflow-hidden rounded-2xl bg-[var(--color-brand-card)] text-right shadow-md shadow-black/5 disabled:opacity-70"
     >

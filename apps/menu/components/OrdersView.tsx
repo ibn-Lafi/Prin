@@ -97,7 +97,7 @@ export function OrdersView({ orders }: { orders: OrderWithItems[] }) {
   const previousOrders = orders.filter((o) => !CURRENT_STATUSES.includes(o.status));
 
   return (
-    <main className="mx-auto max-w-md px-4 py-6 pb-28">
+    <main className="mx-auto max-w-md px-4 py-6 pb-40">
       <h1 className="mb-4 text-xl font-bold">الطلبات</h1>
 
       <div className="mb-5 flex rounded-full bg-[var(--color-brand-card)] p-1 shadow-sm">

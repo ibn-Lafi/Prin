@@ -3,6 +3,7 @@ import "./globals.css";
 import { getSupabaseServerClient } from "@/lib/supabaseClient";
 import { MenuHeader } from "../components/MenuHeader";
 import { BottomNav } from "../components/BottomNav";
+import { CartBar } from "../components/CartBar";
 
 export const metadata: Metadata = {
   title: "BRIN — القائمة الإلكترونية",
@@ -29,6 +30,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <MenuHeader pointsBalance={pointsBalance} />
         {children}
+        <CartBar />
         <BottomNav />
       </body>
     </html>

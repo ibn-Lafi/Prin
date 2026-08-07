@@ -33,7 +33,7 @@ export function AccountView({
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 py-6 pb-28">
+    <main className="mx-auto max-w-md px-4 py-6 pb-40">
       <h1 className="mb-4 text-xl font-bold">حسابي</h1>
 
       <section className="mb-6 flex flex-col gap-3 rounded-2xl bg-[var(--color-brand-card)] p-4 shadow-sm">
